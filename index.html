@@ -184,6 +184,9 @@
         const SUPABASE_URL = 'https://akyewbyhbgcvlclbkerb.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_dU4LsS18yL-zdM_3FBe7ew_ONjxhPvr';
 
+        // TMDB Token Configuration
+        const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1OTJmMGE5Yjg2NTgwZGMyYWFlMzNlMDg6YTkxMTZjYiIsIm5iZiI6MTY5MjcyODA4NS4wNzcsInN1YiI6IjY0ZTRmYjE1NTk0Yzk0MDBlMjVlMTkwMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.JAeOqtwf_D_nlynRqlUsc9QpLjZoNJ7zBhP9To7glQQ';
+
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let items = [];
@@ -313,7 +316,7 @@
         function handleCategoryChange() {
             const cat = document.getElementById('formCategory').value;
             const subLabel = document.getElementById('subtitleLabel');
-            if (cat === 'movie' || cat === 'tv') subLabel.textContent = 'Director / Creador';
+            if (cat === 'movie' || cat === 'tv') subLabel.textContent = 'Año / Director';
             else if (cat === 'book' || cat === 'comic') subLabel.textContent = 'Autor / Ilustrador';
             else if (cat === 'game') subLabel.textContent = 'Desarrollador / Plataforma';
             else if (cat === 'travel') subLabel.textContent = 'País / Ciudad';
@@ -364,7 +367,7 @@
             }
         }
 
-        // Auto Cover Search (Open Multi-Source API)
+        // Auto Cover Search (TMDB + Google Books)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
@@ -376,19 +379,30 @@
 
             try {
                 if (cat === 'movie' || cat === 'tv') {
-                    // Search via iTunes Public Search API (High quality posters, no API key needed)
-                    const entity = cat === 'movie' ? 'movie' : 'tvSeason';
-                    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=${entity}&limit=1`);
+                    // Search via TMDB API v3/v4
+                    const type = cat === 'movie' ? 'movie' : 'tv';
+                    const url = `https://api.themoviedb.org/3/search/${type}?query=${encodeURIComponent(title)}&language=es-ES`;
+                    
+                    const res = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${TMDB_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
                     const data = await res.json();
                     
                     if (data.results && data.results.length > 0) {
-                        const item = data.results[0];
-                        // Convert 100x100 thumbnail to 600x600 HD artwork
-                        const hdCover = item.artworkUrl100.replace('100x100bb', '600x600bb');
-                        document.getElementById('formCover').value = hdCover;
-                        document.getElementById('formSubtitle').value = item.artistName || item.primaryGenreName || '';
+                        const media = data.results[0];
+                        if (media.poster_path) {
+                            document.getElementById('formCover').value = `https://image.tmdb.org/t/p/w500${media.poster_path}`;
+                        }
+                        const releaseDate = media.release_date || media.first_air_date || '';
+                        const year = releaseDate ? releaseDate.split('-')[0] : '';
+                        document.getElementById('formTitle').value = media.title || media.name;
+                        document.getElementById('formSubtitle').value = year ? `Año: ${year}` : '';
                     } else {
-                        alert('No se encontraron resultados automáticos. Puedes pegar el enlace de la imagen manualmente.');
+                        alert('No se encontraron resultados en TMDB.');
                     }
                 } else if (cat === 'book' || cat === 'comic') {
                     // Search via Google Books API
@@ -410,7 +424,7 @@
                 }
             } catch (e) {
                 console.error('Error buscando información:', e);
-                alert('Ocurrió un error al buscar. Puedes pegar la URL de la imagen manualmente.');
+                alert('Ocurrió un error en la búsqueda.');
             } finally {
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
