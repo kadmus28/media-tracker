@@ -20,7 +20,7 @@
             }
         }
     </script>
-    <!-- FontAwesome icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -116,7 +116,7 @@
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Título</label>
                     <div class="flex gap-2">
-                        <input type="text" id="formTitle" required placeholder="Ej: Inception, Dune, Japón..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="formTitle" required placeholder="Ej: Batman, Dune, Inception..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
                         <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <span>Buscar</span>
@@ -183,14 +183,14 @@
         </div>
     </div>
 
-    <!-- Script Application Logic -->
+    <!-- Application JavaScript Logic -->
     <script>
         // Supabase Configuration
         const SUPABASE_URL = 'https://akyewbyhbgcvlclbkerb.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_dU4LsS18yL-zdM_3FBe7ew_ONjxhPvr';
 
-        // TMDB Token Configuration
-        const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1OTJmMGE5Yjg2NTgwZGMyYWFlMzNlMDg6YTkxMTZjYiIsIm5iZiI6MTY5MjcyODA4NS4wNzcsInN1YiI6IjY0ZTRmYjE1NTk0Yzk0MDBlMjVlMTkwMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.JAeOqtwf_D_nlynRqlUsc9QpLjZoNJ7zBhP9To7glQQ';
+        // TMDB API Key v3
+        const TMDB_API_KEY = '592f0a9b86580dc2aae33e086a9116cb';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -390,15 +390,9 @@
             try {
                 if (cat === 'movie' || cat === 'tv') {
                     const type = cat === 'movie' ? 'movie' : 'tv';
-                    const url = `https://api.themoviedb.org/3/search/${type}?query=${encodeURIComponent(title)}&language=es-ES`;
+                    const url = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`;
                     
-                    const res = await fetch(url, {
-                        headers: {
-                            'Authorization': `Bearer ${TMDB_TOKEN}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
+                    const res = await fetch(url);
                     const data = await res.json();
                     
                     if (data.results && data.results.length > 0) {
