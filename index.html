@@ -124,6 +124,11 @@
                     </div>
                 </div>
 
+                <!-- Results List for Selection -->
+                <div id="searchResults" class="hidden mb-4 bg-slate-900 rounded-lg p-2 border border-slate-700 max-h-48 overflow-y-auto space-y-2">
+                    <!-- Dynamic list of search matches -->
+                </div>
+
                 <!-- Subtitle / Author / Director -->
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Creador</label>
@@ -305,6 +310,8 @@
         // Modal Handlers
         function openModal() {
             document.getElementById('mediaForm').reset();
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('searchResults').innerHTML = '';
             handleCategoryChange();
             document.getElementById('itemModal').classList.remove('hidden');
         }
@@ -367,19 +374,21 @@
             }
         }
 
-        // Auto Cover Search (TMDB + Google Books)
+        // Auto Cover Search (List matches)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
             const searchBtn = document.getElementById('searchBtn');
+            const resultsDiv = document.getElementById('searchResults');
 
             if (!title) return alert('Escribe primero el título a buscar');
 
             searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.add('hidden');
 
             try {
                 if (cat === 'movie' || cat === 'tv') {
-                    // Search via TMDB API v3/v4
                     const type = cat === 'movie' ? 'movie' : 'tv';
                     const url = `https://api.themoviedb.org/3/search/${type}?query=${encodeURIComponent(title)}&language=es-ES`;
                     
@@ -393,34 +402,57 @@
                     const data = await res.json();
                     
                     if (data.results && data.results.length > 0) {
-                        const media = data.results[0];
-                        if (media.poster_path) {
-                            document.getElementById('formCover').value = `https://image.tmdb.org/t/p/w500${media.poster_path}`;
-                        }
-                        const releaseDate = media.release_date || media.first_air_date || '';
-                        const year = releaseDate ? releaseDate.split('-')[0] : '';
-                        document.getElementById('formTitle').value = media.title || media.name;
-                        document.getElementById('formSubtitle').value = year ? `Año: ${year}` : '';
+                        resultsDiv.classList.remove('hidden');
+                        data.results.slice(0, 5).forEach(item => {
+                            const name = item.title || item.name;
+                            const releaseDate = item.release_date || item.first_air_date || '';
+                            const year = releaseDate ? releaseDate.split('-')[0] : 'N/A';
+                            const poster = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : 'https://via.placeholder.com/92x138?text=No+Img';
+                            const fullPoster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+
+                            const row = document.createElement('div');
+                            row.className = 'flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition';
+                            row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster);
+                            
+                            row.innerHTML = `
+                                <img src="${poster}" class="w-10 h-14 object-cover rounded">
+                                <div class="overflow-hidden">
+                                    <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
+                                    <p class="text-xs text-slate-400">${year}</p>
+                                </div>
+                            `;
+                            resultsDiv.appendChild(row);
+                        });
                     } else {
-                        alert('No se encontraron resultados en TMDB.');
+                        alert('No se encontraron coincidencias.');
                     }
                 } else if (cat === 'book' || cat === 'comic') {
-                    // Search via Google Books API
                     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}`);
                     const data = await res.json();
                     if (data.items && data.items.length > 0) {
-                        const book = data.items[0].volumeInfo;
-                        if (book.imageLinks?.thumbnail) {
-                            document.getElementById('formCover').value = book.imageLinks.thumbnail.replace('http:', 'https:');
-                        }
-                        if (book.authors) {
-                            document.getElementById('formSubtitle').value = book.authors.join(', ');
-                        }
+                        resultsDiv.classList.remove('hidden');
+                        data.items.slice(0, 5).forEach(item => {
+                            const book = item.volumeInfo;
+                            const bTitle = book.title;
+                            const authors = book.authors ? book.authors.join(', ') : '';
+                            const thumb = book.imageLinks?.thumbnail ? book.imageLinks.thumbnail.replace('http:', 'https:') : '';
+
+                            const row = document.createElement('div');
+                            row.className = 'flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition';
+                            row.onclick = () => selectResult(bTitle, authors, thumb);
+                            
+                            row.innerHTML = `
+                                <img src="${thumb || 'https://via.placeholder.com/92x138?text=No+Img'}" class="w-10 h-14 object-cover rounded">
+                                <div class="overflow-hidden">
+                                    <p class="text-sm font-semibold text-slate-200 truncate">${bTitle}</p>
+                                    <p class="text-xs text-slate-400 truncate">${authors}</p>
+                                </div>
+                            `;
+                            resultsDiv.appendChild(row);
+                        });
                     } else {
-                        alert('No se encontró el libro/cómic.');
+                        alert('No se encontraron coincidencias.');
                     }
-                } else {
-                    alert('Para esta categoría introduce directamente la URL de la imagen.');
                 }
             } catch (e) {
                 console.error('Error buscando información:', e);
@@ -428,6 +460,13 @@
             } finally {
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
+        }
+
+        function selectResult(title, subtitle, coverUrl) {
+            document.getElementById('formTitle').value = title;
+            document.getElementById('formSubtitle').value = subtitle;
+            if (coverUrl) document.getElementById('formCover').value = coverUrl;
+            document.getElementById('searchResults').classList.add('hidden');
         }
     </script>
 </body>
