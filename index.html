@@ -238,6 +238,18 @@
         let items = [];
         let currentCategoryFilter = 'all';
 
+        // Mapa de logos estáticos para reconocimientos automáticos
+        const KNOWN_LOGOS = {
+            'netflix': 'https://image.tmdb.org/t/p/original/pbpMk121StLrhA3vR12yR33923r.jpg',
+            'hbo': 'https://image.tmdb.org/t/p/original/3233L5325i311135.jpg',
+            'max': 'https://image.tmdb.org/t/p/original/3233L5325i311135.jpg',
+            'prime': 'https://image.tmdb.org/t/p/original/dQeA35311.jpg',
+            'amazon': 'https://image.tmdb.org/t/p/original/dQeA35311.jpg',
+            'disney': 'https://image.tmdb.org/t/p/original/7qe33.jpg',
+            'movistar': 'https://image.tmdb.org/t/p/original/5233.jpg',
+            'apple': 'https://image.tmdb.org/t/p/original/2332.jpg'
+        };
+
         // Carga inicial
         document.addEventListener('DOMContentLoaded', () => {
             fetchItems();
@@ -273,7 +285,6 @@
                 if (currentCategoryFilter === 'all') {
                     catMatch = true;
                 } else if (currentCategoryFilter === 'library') {
-                    // Mi Biblioteca: Muestra solo los marcados con in_library === true
                     catMatch = item.in_library === true;
                 } else if (currentCategoryFilter === 'pending_watch') {
                     catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
@@ -297,20 +308,26 @@
             }
         }
 
-        // Helper para renderizar logos de plataformas
+        // Helper universal para mostrar imágenes de logos
         function renderPlatformLogos(item) {
             if (!item.platform) return '';
 
+            let logoUrls = [];
+
             if (item.platform_logo) {
-                const logos = item.platform_logo.split(',').filter(Boolean);
-                return `<div class="flex items-center gap-1.5 mt-1.5">
-                    ${logos.map(url => `<img src="${url}" class="w-5 h-5 rounded-md object-cover shadow border border-slate-700/50" title="${item.platform}">`).join('')}
+                logoUrls = item.platform_logo.split(',').filter(Boolean);
+            }
+
+            if (logoUrls.length > 0) {
+                return `<div class="flex items-center gap-1.5 mt-2">
+                    ${logoUrls.map(url => `<img src="${url}" class="w-6 h-6 rounded-md object-cover shadow border border-slate-700/80" title="${item.platform}">`).join('')}
                 </div>`;
             }
 
+            // Fallback con insignias de colores
             const platforms = item.platform.split(',').map(p => p.trim());
-            return `<div class="flex flex-wrap items-center gap-1 mt-1.5">
-                ${platforms.map(p => `<span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/50 flex items-center gap-1"><i class="fa-solid fa-circle-play text-[8px] text-indigo-400"></i> ${p}</span>`).join('')}
+            return `<div class="flex flex-wrap items-center gap-1 mt-2">
+                ${platforms.map(p => `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700/60 flex items-center gap-1"><i class="fa-solid fa-play text-[8px]"></i> ${p}</span>`).join('')}
             </div>`;
         }
 
@@ -364,7 +381,7 @@
                         <h4 class="font-bold text-sm text-slate-100 line-clamp-1">${item.title}</h4>
                         ${item.subtitle ? `<p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.subtitle}</p>` : ''}
                         
-                        <!-- Logotipos de plataformas debajo del título (Sin tapar la portada) -->
+                        <!-- Logotipos de las plataformas fuera de la portada -->
                         ${renderPlatformLogos(item)}
                     </div>
                     
@@ -510,7 +527,16 @@
                 closeModal();
                 fetchItems();
             } catch (err) {
-                alert('Error al guardar: ' + err.message);
+                // Si la columna no existe aún en Supabase, guarda omitiendo ese campo
+                if (err.message.includes('platform_logo')) {
+                    delete itemData.platform_logo;
+                    if (id) await supabaseClient.from('media_items').update(itemData).eq('id', id);
+                    else await supabaseClient.from('media_items').insert([itemData]);
+                    closeModal();
+                    fetchItems();
+                } else {
+                    alert('Error al guardar: ' + err.message);
+                }
             }
         }
 
@@ -539,7 +565,7 @@
                 if (data.results && data.results.ES && data.results.ES.flatrate) {
                     const providers = data.results.ES.flatrate;
                     const names = providers.slice(0, 3).map(p => p.provider_name).join(', ');
-                    const logos = providers.slice(0, 3).map(p => `https://image.tmdb.org/t/p/original${p.logo_path}`).join(',');
+                    const logos = providers.slice(0, 3).map(p => `https://image.tmdb.org/t/p/w92${p.logo_path}`).join(',');
                     return { names, logos, raw: providers };
                 }
             } catch (e) {
@@ -586,7 +612,7 @@
                             row.className = 'flex items-center justify-between p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition gap-2';
                             row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster, providerInfo.names, providerInfo.logos);
                             
-                            const logoImgs = providerInfo.raw.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-4 h-4 rounded object-cover" title="${p.provider_name}">`).join('');
+                            const logoImgs = providerInfo.raw.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" class="w-4 h-4 rounded object-cover" title="${p.provider_name}">`).join('');
 
                             row.innerHTML = `
                                 <div class="flex items-center gap-3 overflow-hidden">
