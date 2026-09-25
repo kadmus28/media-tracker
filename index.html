@@ -45,10 +45,10 @@
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-40 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
             
-            <!-- Logotipo Estilizado Integrado -->
+            <!-- Logotipo Integrado y Limpio -->
             <div onclick="resetToHome()" class="flex items-center space-x-3 cursor-pointer group py-1">
-                <div class="relative transition-transform duration-200 group-hover:scale-105">
-                    <img src="https://i.ibb.co/3yk56q0k/Gemini-Generated-Image-cqpkc5cqpkc5cqpk.jpg" alt="Media Tracker Logo" class="h-12 w-auto object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.6)] rounded-lg border border-amber-500/20">
+                <div class="relative transition-transform duration-200 group-hover:scale-105 flex items-center">
+                    <img src="https://i.ibb.co/3yk56q0k/Gemini-Generated-Image-cqpkc5cqpkc5cqpk.jpg" alt="Media Tracker Logo" class="h-10 w-auto object-contain rounded drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 </div>
             </div>
 
@@ -145,11 +145,12 @@
     <!-- Modal de Detalle / Ficha Completa -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+            <!-- Botón Cerrar (X) separado de las opciones -->
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
                 <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
 
-            <div class="flex flex-col md:flex-row gap-6" id="detailModalContent">
+            <div class="flex flex-col md:flex-row gap-6 pt-2" id="detailModalContent">
                 <!-- Inyectado dinámicamente -->
             </div>
         </div>
@@ -158,7 +159,7 @@
     <!-- Modal Formulario Añadir / Editar -->
     <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-lg w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
 
@@ -274,7 +275,7 @@
     <script>
         const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
-        const TMDB_API_KEY = 'bfeebc72cb63d4a06f85a63290e5206f'; // Inserta aquí tu nueva clave segura de TMDB
+        const TMDB_API_KEY = '592f0a9b86580dc2aae33e086a9116cb';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -282,7 +283,7 @@
         let currentCategoryFilter = 'all';
         let searchQuery = '';
         let currentPage = 1;
-        const ITEMS_PER_PAGE = 18; // 18 carátulas por página (3 estantes de 6)
+        const ITEMS_PER_PAGE = 18;
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchItems();
@@ -303,7 +304,6 @@
             }
         }
 
-        // Volver al inicio al clicar en el logo integrado
         function resetToHome() {
             currentCategoryFilter = 'all';
             searchQuery = '';
@@ -327,7 +327,6 @@
             renderItems();
         }
 
-        // Función para buscar directamente al hacer clic en un actor, director o año desde el modal
         function searchByTag(tagText) {
             closeDetailModal();
             const cleanTag = tagText.trim();
@@ -493,11 +492,13 @@
 
                 <div class="w-full md:w-2/3 flex flex-col justify-between">
                     <div>
-                        <div class="flex items-start justify-between gap-2">
+                        <!-- Título y botones de acción bien separados del botón de cierre superior -->
+                        <div class="flex items-start justify-between gap-3 pr-10">
                             <h2 class="text-2xl font-bold text-amber-100">${item.title}</h2>
-                            <div class="flex items-center gap-2">
-                                <button onclick="editItem('${item.id}')" class="text-amber-400 hover:text-amber-300 p-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteItem('${item.id}')" class="text-rose-400 hover:text-rose-300 p-1" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
+                                <button onclick="editItem('${item.id}')" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <span class="border-r border-amber-900/60 h-4"></span>
+                                <button onclick="deleteItem('${item.id}')" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
 
