@@ -55,18 +55,25 @@
             <!-- Category Tabs -->
             <div class="flex flex-wrap gap-1" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
-                <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-clock"></i> Pendiente de ver
-                </button>
-                <button onclick="setCategoryFilter('shopping_list')" data-cat="shopping_list" class="cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-cart-shopping"></i> Comprar (Físico)
-                </button>
                 <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
                 <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
                 <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
                 <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
                 <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
                 <button onclick="setCategoryFilter('travel')" data-cat="travel" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Viajes</button>
+                
+                <span class="border-r border-slate-700 my-1 mx-1"></span>
+
+                <!-- Pestañas especiales al final -->
+                <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-boxes-stacked"></i> Mi Biblioteca
+                </button>
+                <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock"></i> Pendiente de ver
+                </button>
+                <button onclick="setCategoryFilter('shopping_list')" data-cat="shopping_list" class="cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-cart-shopping"></i> Comprar (Físico)
+                </button>
             </div>
 
             <!-- Status Filter -->
@@ -106,6 +113,7 @@
 
             <form id="mediaForm" onsubmit="saveItem(event)">
                 <input type="hidden" id="editingItemId" value="">
+                <input type="hidden" id="formPlatformLogo" value="">
 
                 <!-- Category Picker -->
                 <div class="mb-4">
@@ -155,7 +163,7 @@
                     <input type="url" id="formCover" required placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
                 </div>
 
-                <!-- Status & Rating Grid (0 to 10 rating) -->
+                <!-- Status & Rating Grid -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Estado</label>
@@ -254,6 +262,9 @@
 
                 if (currentCategoryFilter === 'all') {
                     catMatch = true;
+                } else if (currentCategoryFilter === 'library') {
+                    // Mi Biblioteca: Comprado en físico o guardado en colección
+                    catMatch = item.to_buy === false || !item.to_buy;
                 } else if (currentCategoryFilter === 'pending_watch') {
                     catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
                 } else if (currentCategoryFilter === 'shopping_list') {
@@ -274,6 +285,25 @@
                     grid.appendChild(createMediaCard(item));
                 });
             }
+        }
+
+        // Helper para renderizar logos de plataformas
+        function renderPlatformLogos(item) {
+            if (!item.platform) return '';
+
+            // Si hay logos guardados como URLs
+            if (item.platform_logo) {
+                const logos = item.platform_logo.split(',').filter(Boolean);
+                return `<div class="flex items-center gap-1.5 mt-1.5">
+                    ${logos.map(url => `<img src="${url}" class="w-5 h-5 rounded-md object-cover shadow border border-slate-700/50" title="${item.platform}">`).join('')}
+                </div>`;
+            }
+
+            // Fallback elegante con badges de texto
+            const platforms = item.platform.split(',').map(p => p.trim());
+            return `<div class="flex flex-wrap items-center gap-1 mt-1.5">
+                ${platforms.map(p => `<span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/50 flex items-center gap-1"><i class="fa-solid fa-circle-play text-[8px] text-indigo-400"></i> ${p}</span>`).join('')}
+            </div>`;
         }
 
         // Crear la tarjeta visual del elemento
@@ -301,14 +331,9 @@
                         <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border backdrop-blur-md ${badgeColor}">
                             ${statusText}
                         </span>
-                        ${item.platform ? `
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
-                                <i class="fa-solid fa-tv text-[9px]"></i> ${item.platform}
-                            </span>
-                        ` : ''}
                         ${item.to_buy ? `
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
-                                <i class="fa-solid fa-cart-shopping text-[9px]"></i> Compra física
+                                <i class="fa-solid fa-cart-shopping text-[9px]"></i> Compra
                             </span>
                         ` : ''}
                     </div>
@@ -320,11 +345,16 @@
                         </div>
                     ` : ''}
                 </div>
+                
                 <div class="p-3 flex-1 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-sm text-slate-100 line-clamp-1">${item.title}</h4>
                         ${item.subtitle ? `<p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.subtitle}</p>` : ''}
+                        
+                        <!-- Logotipos de plataformas debajo del título (Sin tapar la portada) -->
+                        ${renderPlatformLogos(item)}
                     </div>
+                    
                     <div class="mt-3 pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
                         <span class="capitalize">${getCategoryName(item.category)}</span>
                         <div class="flex items-center gap-2">
@@ -351,6 +381,8 @@
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if (btn.dataset.cat === cat) {
                     btn.className = 'cat-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                } else if (btn.dataset.cat === 'library') {
+                    btn.className = 'cat-btn text-indigo-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
                 } else if (btn.dataset.cat === 'pending_watch') {
                     btn.className = 'cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
                 } else if (btn.dataset.cat === 'shopping_list') {
@@ -365,6 +397,7 @@
         // Gestión del Modal
         function openModal() {
             document.getElementById('editingItemId').value = '';
+            document.getElementById('formPlatformLogo').value = '';
             document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
             document.getElementById('searchResults').classList.add('hidden');
@@ -410,6 +443,7 @@
             document.getElementById('formTitle').value = item.title || '';
             document.getElementById('formSubtitle').value = item.subtitle || '';
             document.getElementById('formPlatform').value = item.platform || '';
+            document.getElementById('formPlatformLogo').value = item.platform_logo || '';
             document.getElementById('formCover').value = item.cover_url || '';
             document.getElementById('formStatus').value = item.status || 'planned';
             document.getElementById('formRating').value = item.rating || 0;
@@ -432,6 +466,7 @@
                 title: document.getElementById('formTitle').value,
                 subtitle: document.getElementById('formSubtitle').value,
                 platform: document.getElementById('formPlatform').value,
+                platform_logo: document.getElementById('formPlatformLogo').value,
                 cover_url: document.getElementById('formCover').value,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
@@ -480,20 +515,22 @@
             }
         }
 
-        // Consultar plataformas donde ver la película/serie en España
+        // Consultar plataformas y logotipos oficiales en España
         async function fetchWatchProviders(type, tmdbId) {
             try {
                 const res = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
                 const data = await res.json();
                 
                 if (data.results && data.results.ES && data.results.ES.flatrate) {
-                    const providers = data.results.ES.flatrate.map(p => p.provider_name);
-                    return providers.slice(0, 2).join(', ');
+                    const providers = data.results.ES.flatrate;
+                    const names = providers.slice(0, 3).map(p => p.provider_name).join(', ');
+                    const logos = providers.slice(0, 3).map(p => `https://image.tmdb.org/t/p/original${p.logo_path}`).join(',');
+                    return { names, logos, raw: providers };
                 }
             } catch (e) {
                 console.error('Error obteniendo plataformas:', e);
             }
-            return '';
+            return { names: '', logos: '', raw: [] };
         }
 
         // Búsqueda automática de portadas (TMDB / Google Books)
@@ -527,13 +564,15 @@
                             const poster = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : 'https://via.placeholder.com/92x138?text=No+Img';
                             const fullPoster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
                             
-                            // Obtener plataforma
-                            const providerName = await fetchWatchProviders(type, item.id);
+                            // Obtener plataformas y logotipos
+                            const providerInfo = await fetchWatchProviders(type, item.id);
 
                             const row = document.createElement('div');
                             row.className = 'flex items-center justify-between p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition gap-2';
-                            row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster, providerName);
+                            row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster, providerInfo.names, providerInfo.logos);
                             
+                            const logoImgs = providerInfo.raw.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-4 h-4 rounded object-cover" title="${p.provider_name}">`).join('');
+
                             row.innerHTML = `
                                 <div class="flex items-center gap-3 overflow-hidden">
                                     <img src="${poster}" class="w-10 h-14 object-cover rounded flex-shrink-0">
@@ -542,7 +581,9 @@
                                         <p class="text-xs text-slate-400">${year}</p>
                                     </div>
                                 </div>
-                                ${providerName ? `<span class="text-[10px] bg-indigo-600/80 text-white px-2 py-1 rounded font-medium text-right flex-shrink-0">${providerName}</span>` : ''}
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                    ${logoImgs}
+                                </div>
                             `;
                             resultsDiv.appendChild(row);
                         }
@@ -562,7 +603,7 @@
 
                             const row = document.createElement('div');
                             row.className = 'flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition';
-                            row.onclick = () => selectResult(bTitle, authors, thumb, '');
+                            row.onclick = () => selectResult(bTitle, authors, thumb, '', '');
                             
                             row.innerHTML = `
                                 <img src="${thumb || 'https://via.placeholder.com/92x138?text=No+Img'}" class="w-10 h-14 object-cover rounded flex-shrink-0">
@@ -585,11 +626,12 @@
             }
         }
 
-        function selectResult(title, subtitle, coverUrl, platform) {
+        function selectResult(title, subtitle, coverUrl, platform, platformLogo) {
             document.getElementById('formTitle').value = title;
             document.getElementById('formSubtitle').value = subtitle;
             if (coverUrl) document.getElementById('formCover').value = coverUrl;
             if (platform) document.getElementById('formPlatform').value = platform;
+            if (platformLogo) document.getElementById('formPlatformLogo').value = platformLogo;
             document.getElementById('searchResults').classList.add('hidden');
         }
     </script>
