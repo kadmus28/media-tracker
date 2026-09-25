@@ -66,7 +66,7 @@
 
                 <!-- Pestañas especiales al final -->
                 <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-boxes-stacked"></i> Mi Biblioteca
+                    <i class="fa-solid fa-house"></i> Mi Biblioteca
                 </button>
                 <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-clock"></i> Pendiente de ver
@@ -179,13 +179,23 @@
                     </div>
                 </div>
 
-                <!-- Buy Physical Copy Checkbox -->
-                <div class="mb-4 p-3 bg-slate-900/60 rounded-lg border border-slate-700/80 flex items-center gap-3">
-                    <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-slate-800 border-slate-600 rounded focus:ring-emerald-500 focus:ring-offset-slate-900">
-                    <label for="formToBuy" class="text-xs font-medium text-slate-200 cursor-pointer flex items-center gap-1.5">
-                        <i class="fa-solid fa-cart-shopping text-emerald-400"></i>
-                        Añadir a lista de la compra (Deseo comprarlo en físico)
-                    </label>
+                <!-- Collection / Ownership Checkboxes -->
+                <div class="space-y-2 mb-4">
+                    <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-700/80 flex items-center gap-3">
+                        <input type="checkbox" id="formInLibrary" class="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600 rounded focus:ring-indigo-500 focus:ring-offset-slate-900">
+                        <label for="formInLibrary" class="text-xs font-medium text-slate-200 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-house text-indigo-400"></i>
+                            Añadir a Mi Biblioteca (Tengo este elemento en propiedad física)
+                        </label>
+                    </div>
+
+                    <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-700/80 flex items-center gap-3">
+                        <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-slate-800 border-slate-600 rounded focus:ring-emerald-500 focus:ring-offset-slate-900">
+                        <label for="formToBuy" class="text-xs font-medium text-slate-200 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-cart-shopping text-emerald-400"></i>
+                            Añadir a Lista de la Compra (Deseo comprarlo en físico)
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Progress Trackers -->
@@ -263,8 +273,8 @@
                 if (currentCategoryFilter === 'all') {
                     catMatch = true;
                 } else if (currentCategoryFilter === 'library') {
-                    // Mi Biblioteca: Comprado en físico o guardado en colección
-                    catMatch = item.to_buy === false || !item.to_buy;
+                    // Mi Biblioteca: Muestra solo los marcados con in_library === true
+                    catMatch = item.in_library === true;
                 } else if (currentCategoryFilter === 'pending_watch') {
                     catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
                 } else if (currentCategoryFilter === 'shopping_list') {
@@ -291,7 +301,6 @@
         function renderPlatformLogos(item) {
             if (!item.platform) return '';
 
-            // Si hay logos guardados como URLs
             if (item.platform_logo) {
                 const logos = item.platform_logo.split(',').filter(Boolean);
                 return `<div class="flex items-center gap-1.5 mt-1.5">
@@ -299,7 +308,6 @@
                 </div>`;
             }
 
-            // Fallback elegante con badges de texto
             const platforms = item.platform.split(',').map(p => p.trim());
             return `<div class="flex flex-wrap items-center gap-1 mt-1.5">
                 ${platforms.map(p => `<span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/50 flex items-center gap-1"><i class="fa-solid fa-circle-play text-[8px] text-indigo-400"></i> ${p}</span>`).join('')}
@@ -331,6 +339,11 @@
                         <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border backdrop-blur-md ${badgeColor}">
                             ${statusText}
                         </span>
+                        ${item.in_library ? `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
+                                <i class="fa-solid fa-house text-[9px]"></i> Biblioteca
+                            </span>
+                        ` : ''}
                         ${item.to_buy ? `
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
                                 <i class="fa-solid fa-cart-shopping text-[9px]"></i> Compra
@@ -447,6 +460,7 @@
             document.getElementById('formCover').value = item.cover_url || '';
             document.getElementById('formStatus').value = item.status || 'planned';
             document.getElementById('formRating').value = item.rating || 0;
+            document.getElementById('formInLibrary').checked = item.in_library || false;
             document.getElementById('formToBuy').checked = item.to_buy || false;
             document.getElementById('formCurrentProg').value = item.current_progress || 0;
             document.getElementById('formTotalProg').value = item.total_progress || 0;
@@ -470,6 +484,7 @@
                 cover_url: document.getElementById('formCover').value,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
+                in_library: document.getElementById('formInLibrary').checked,
                 to_buy: document.getElementById('formToBuy').checked,
                 current_progress: parseInt(document.getElementById('formCurrentProg').value) || 0,
                 total_progress: parseInt(document.getElementById('formTotalProg').value) || 0,
