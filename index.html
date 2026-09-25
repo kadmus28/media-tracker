@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Tracker - Estantería</title>
+    <title>Media Tracker - Estantería Clara</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -11,48 +11,51 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Fondo de paneles de madera realista */
-        .wood-wall-bg {
-            background-color: #1e100a;
+        /* Fondo de pared con tablas de madera clara */
+        .light-wood-wall {
+            background-color: #d8b28a;
             background-image: 
-                linear-gradient(90deg, rgba(0,0,0,0.4) 0%, transparent 2%, transparent 98%, rgba(0,0,0,0.4) 100%),
-                repeating-linear-gradient(0deg, #2c1810, #2c1810 120px, #24130c 120px, #24130c 240px);
-            background-size: 100% 100%, 100% 240px;
+                linear-gradient(90deg, rgba(120, 75, 40, 0.15) 0%, transparent 2%, transparent 98%, rgba(120, 75, 40, 0.15) 100%),
+                repeating-linear-gradient(0deg, #e4c49f, #e4c49f 110px, #daaf83 110px, #daaf83 220px);
+            background-size: 100% 100%, 100% 220px;
         }
-        /* Balda de madera con volumen y bisel */
-        .wood-shelf {
-            background: linear-gradient(to bottom, #d2a679 0%, #a3703f 30%, #6d4520 70%, #422810 100%);
-            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.8), inset 0 2px 3px rgba(255, 255, 255, 0.35);
-            border-bottom: 5px solid #231308;
+
+        /* Baldas de estantería en madera pulida clara */
+        .light-wood-shelf {
+            background: linear-gradient(to bottom, #f2d3ac 0%, #e1b480 35%, #ca965c 75%, #a87238 100%);
+            box-shadow: 0 12px 20px rgba(60, 30, 10, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.6);
+            border-bottom: 5px solid #825324;
         }
+
+        /* Sombras realistas para las carátulas apoyadas */
         .case-shadow {
-            box-shadow: 8px 12px 18px rgba(0, 0, 0, 0.75), -1px 0 3px rgba(255, 255, 255, 0.25);
+            box-shadow: 6px 12px 16px rgba(40, 20, 5, 0.5), -1px 0 3px rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
-<body class="wood-wall-bg text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="light-wood-wall text-stone-900 min-h-screen font-sans flex flex-col">
 
     <!-- Header / Navbar -->
-    <header class="border-b border-amber-950/80 bg-stone-950/90 backdrop-blur sticky top-0 z-40">
+    <header class="border-b border-amber-800/30 bg-amber-950/90 text-amber-50 backdrop-blur sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-amber-700 rounded-lg text-white shadow-md">
+                <div class="p-2 bg-amber-600 rounded-lg text-white shadow">
                     <i class="fa-solid fa-film text-xl"></i>
                 </div>
                 <div>
                     <h1 class="font-bold text-xl leading-tight text-amber-100">Media Tracker</h1>
-                    <p class="text-xs text-amber-400/80">Colección en Estantería Virtual</p>
+                    <p class="text-xs text-amber-300/80">Estantería de Madera Clara</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
-                <button onclick="document.getElementById('csvFileInput').click()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 font-medium px-3.5 py-2 rounded-lg flex items-center space-x-2 transition border border-amber-900/50 text-sm shadow">
+                <button onclick="document.getElementById('csvFileInput').click()" class="bg-amber-900/80 hover:bg-amber-800 text-amber-100 font-medium px-3.5 py-2 rounded-lg flex items-center space-x-2 transition border border-amber-700/50 text-sm shadow">
                     <i class="fa-solid fa-file-csv text-emerald-400"></i>
                     <span>Importar Letterboxd</span>
                 </button>
                 <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importLetterboxdCSV(event)">
 
-                <button onclick="openModal()" class="bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg text-sm">
+                <button onclick="openModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg text-sm">
                     <i class="fa-solid fa-plus"></i>
                     <span>Añadir Elemento</span>
                 </button>
@@ -61,35 +64,35 @@
     </header>
 
     <!-- Modal de Progreso de Importación -->
-    <div id="importProgressModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-stone-900 rounded-2xl max-w-md w-full p-6 border border-amber-900/40 shadow-2xl text-center">
+    <div id="importProgressModal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-md w-full p-6 border border-amber-700/40 shadow-2xl text-center">
             <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400 animate-bounce mb-3"></i>
             <h3 class="text-lg font-bold text-white mb-1">Importando de Letterboxd</h3>
-            <p class="text-xs text-slate-400 mb-4">Buscando carátulas, sinopsis y reparto en TMDB...</p>
+            <p class="text-xs text-stone-400 mb-4">Descargando portadas, sinopsis y reparto de TMDB...</p>
             <div class="w-full bg-stone-950 rounded-full h-3 mb-2 overflow-hidden border border-stone-800">
-                <div id="importProgressBar" class="bg-amber-600 h-full w-0 transition-all duration-200"></div>
+                <div id="importProgressBar" class="bg-amber-500 h-full w-0 transition-all duration-200"></div>
             </div>
             <p id="importProgressStatus" class="text-xs text-amber-300 font-medium">Procesando 0 / 0</p>
         </div>
     </div>
 
-    <!-- Main Content Area: Estantería de Madera -->
+    <!-- Main Content Area: Estantería de Madera Clara -->
     <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
         
         <!-- Barra de Filtros -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-stone-900/90 p-3 rounded-xl border border-amber-900/50 backdrop-blur shadow-2xl">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-amber-950/80 p-3 rounded-xl border border-amber-800/40 text-amber-100 backdrop-blur shadow-xl">
             <div class="flex flex-wrap gap-1" id="categoryTabs">
-                <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
-                <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
-                <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
-                <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
-                <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
-                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
-                <button onclick="setCategoryFilter('travel')" data-cat="travel" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Viajes</button>
+                <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
+                <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
+                <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
+                <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
+                <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
+                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
+                <button onclick="setCategoryFilter('travel')" data-cat="travel" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Viajes</button>
                 
-                <span class="border-r border-amber-900/60 my-1 mx-1"></span>
+                <span class="border-r border-amber-700/60 my-1 mx-1"></span>
 
-                <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-house"></i> Mi Biblioteca
                 </button>
                 <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
@@ -101,8 +104,8 @@
             </div>
 
             <div class="flex items-center space-x-2">
-                <label for="statusSelect" class="text-xs text-amber-300/80 font-medium uppercase tracking-wider">Estado:</label>
-                <select id="statusSelect" onchange="renderItems()" class="bg-stone-950 border border-amber-900/50 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-600">
+                <label for="statusSelect" class="text-xs text-amber-200/80 font-medium uppercase tracking-wider">Estado:</label>
+                <select id="statusSelect" onchange="renderItems()" class="bg-stone-900 border border-amber-800/60 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
                     <option value="all">Todos los estados</option>
                     <option value="completed">Completados</option>
                     <option value="in_progress">En curso</option>
@@ -113,33 +116,33 @@
 
         <!-- Contenedor de Estantes -->
         <div id="bookshelfContainer" class="flex flex-col gap-12">
-            <!-- Renderizado dinámico de baldas de madera -->
+            <!-- Balda de madera e ítems cargados aquí -->
         </div>
 
         <!-- Estado Vacío -->
-        <div id="emptyState" class="hidden text-center py-20 bg-stone-900/80 rounded-2xl border border-amber-900/40">
-            <i class="fa-solid fa-boxes-packing text-5xl text-amber-800/60 mb-4"></i>
+        <div id="emptyState" class="hidden text-center py-20 bg-amber-950/70 text-amber-100 rounded-2xl border border-amber-800/40">
+            <i class="fa-solid fa-boxes-packing text-5xl text-amber-600/60 mb-4"></i>
             <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
-            <p class="text-sm text-amber-400/60 mt-1">Añade nuevos contenidos o ajusta los filtros superiores.</p>
+            <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta los filtros superiores.</p>
         </div>
     </main>
 
-    <!-- Modal de Detalle / Ficha Completa de Película -->
+    <!-- Modal de Detalle / Ficha Completa -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-stone-900 rounded-2xl max-w-2xl w-full p-6 border border-amber-900/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
                 <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
 
             <div class="flex flex-col md:flex-row gap-6" id="detailModalContent">
-                <!-- Inyectado dinámicamente -->
+                <!-- Se inyecta dinámicamente -->
             </div>
         </div>
     </div>
 
     <!-- Modal Formulario Añadir / Editar -->
     <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-stone-900 rounded-2xl max-w-lg w-full p-6 border border-amber-900/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-lg w-full p-6 border border-amber-800/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
@@ -176,8 +179,8 @@
                 <div id="searchResults" class="hidden mb-4 bg-stone-950 rounded-lg p-2 border border-amber-900/40 max-h-48 overflow-y-auto space-y-2"></div>
 
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Creador</label>
-                    <input type="text" id="formSubtitle" placeholder="Ej: Christopher Nolan, Frank Herbert..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Reparto / Creador</label>
+                    <input type="text" id="formSubtitle" placeholder="Ej: Christopher Nolan | Reparto: Leonardo DiCaprio..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
                 <div class="mb-4" id="platformContainer">
@@ -205,7 +208,7 @@
                     </div>
                 </div>
 
-                <!-- Propiedad y Formato Físico -->
+                <!-- Propiedad Físicas y Formato -->
                 <div class="space-y-3 mb-4">
                     <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30">
                         <div class="flex items-center gap-3">
@@ -216,7 +219,6 @@
                             </label>
                         </div>
 
-                        <!-- Desplegable de formato físico -->
                         <div id="formatContainer" class="hidden mt-3 pt-2 border-t border-amber-900/30">
                             <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-1">Formato Físico:</label>
                             <select id="formFormat" class="w-full bg-stone-900 border border-amber-900/50 rounded-lg px-3 py-1.5 text-xs text-amber-100 focus:outline-none focus:border-amber-600">
@@ -241,8 +243,8 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama / Reseña</label>
-                    <textarea id="formReview" rows="3" placeholder="Sinopsis, trama o notas..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama</label>
+                    <textarea id="formReview" rows="4" placeholder="Sinopsis, trama o notas..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3">
@@ -323,7 +325,7 @@
                 });
 
                 const woodShelfBar = document.createElement('div');
-                woodShelfBar.className = 'wood-shelf h-5 w-full rounded-sm shadow-2xl mt-1';
+                woodShelfBar.className = 'light-wood-shelf h-5 w-full rounded-sm shadow-2xl mt-1';
 
                 shelfDiv.appendChild(gridDiv);
                 shelfDiv.appendChild(woodShelfBar);
@@ -347,14 +349,13 @@
                     ` : ''}
                 </div>
 
-                <div class="mt-1 bg-stone-950/90 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/50 truncate max-w-full text-center shadow-md">
+                <div class="mt-1 bg-stone-900/90 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-800/60 truncate max-w-full text-center shadow">
                     ${item.title}
                 </div>
             `;
             return wrapper;
         }
 
-        // Ficha Completa con Reparto de Actores y Trama
         function openDetailModal(id) {
             const item = items.find(i => i.id == id);
             if (!item) return;
@@ -399,7 +400,7 @@
                         <div class="mt-4 pt-4 border-t border-amber-900/30 space-y-3">
                             <div>
                                 <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> Sinopsis / Trama</h4>
-                                <p class="text-sm text-stone-300 leading-relaxed">${item.review || 'Sin descripción disponible.'}</p>
+                                <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto pr-1">${item.review || 'Sin descripción disponible.'}</p>
                             </div>
                         </div>
                     </div>
@@ -434,15 +435,15 @@
             currentCategoryFilter = cat;
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if (btn.dataset.cat === cat) {
-                    btn.className = 'cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                    btn.className = 'cat-btn bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
                 } else {
-                    btn.className = 'cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                    btn.className = 'cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
                 }
             });
             renderItems();
         }
 
-        // CSV Letterboxd Import
+        // Importación CSV con captura garantizada de Sinopsis (ES + EN) y Reparto
         async function importLetterboxdCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -493,15 +494,26 @@
                         let queryUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`;
                         if (year) queryUrl += `&year=${year}`;
 
-                        const res = await fetch(queryUrl);
-                        const tmdbData = await res.json();
+                        let res = await fetch(queryUrl);
+                        let tmdbData = await res.json();
 
                         if (tmdbData.results && tmdbData.results.length > 0) {
-                            const match = tmdbData.results[0];
-                            if (match.poster_path) coverUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
-                            overview = match.overview || '';
+                            let match = tmdbData.results[0];
 
-                            // Obtener créditos / reparto
+                            // Si no hay sinopsis en español, consultar la versión en inglés
+                            if (!match.overview) {
+                                try {
+                                    const enRes = await fetch(`https://api.themoviedb.org/3/movie/${match.id}?api_key=${TMDB_API_KEY}&language=en-US`);
+                                    const enData = await enRes.json();
+                                    overview = enData.overview || '';
+                                } catch(e) {}
+                            } else {
+                                overview = match.overview;
+                            }
+
+                            if (match.poster_path) coverUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
+
+                            // Obtener reparto de actores
                             try {
                                 const credRes = await fetch(`https://api.themoviedb.org/3/movie/${match.id}/credits?api_key=${TMDB_API_KEY}&language=es-ES`);
                                 const credData = await credRes.json();
@@ -543,7 +555,7 @@
                         if (error) throw error;
                         setTimeout(() => {
                             progressModal.classList.add('hidden');
-                            alert(`¡Éxito! Importadas ${itemsToInsert.length} películas con tramas y reparto.`);
+                            alert(`¡Éxito! Importadas ${itemsToInsert.length} películas con sus sinopsis y repartos.`);
                             fetchItems();
                         }, 500);
                     } catch (err) {
@@ -575,7 +587,7 @@
             const subLabel = document.getElementById('subtitleLabel');
             const platformContainer = document.getElementById('platformContainer');
             if (cat === 'movie' || cat === 'tv') {
-                subLabel.textContent = 'Año / Director / Reparto';
+                subLabel.textContent = 'Director / Reparto / Año';
                 platformContainer.classList.remove('hidden');
             } else {
                 subLabel.textContent = 'Autor / Creador';
@@ -700,7 +712,15 @@
                             const year = releaseDate ? releaseDate.split('-')[0] : 'N/A';
                             const poster = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : 'https://via.placeholder.com/92x138?text=No+Img';
                             const fullPoster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-                            const overview = item.overview || '';
+                            
+                            let overview = item.overview || '';
+                            if (!overview) {
+                                try {
+                                    const enRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}?api_key=${TMDB_API_KEY}&language=en-US`);
+                                    const enData = await enRes.json();
+                                    overview = enData.overview || '';
+                                } catch(e) {}
+                            }
 
                             let castText = '';
                             try {
