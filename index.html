@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Tracker - Delicious Library Style</title>
+    <title>Media Tracker - Rich Wood 3D Library Style</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -11,71 +11,117 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Pared de madera hiperrealista tipo Delicious Library */
+        /* Pared de madera hiperrealista multi-tabla con veta rica */
         .delicious-wall {
-            background-color: #3b2314;
+            background-color: #241208;
             background-image: 
-                linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 3%, transparent 97%, rgba(0,0,0,0.3) 100%),
-                repeating-linear-gradient(0deg, #4d2e1a, #4d2e1a 120px, #3b2314 120px, #3b2314 240px);
-            background-size: 100% 100%, 100% 240px;
+                linear-gradient(90deg, rgba(0,0,0,0.5) 0%, transparent 2%, transparent 98%, rgba(0,0,0,0.5) 100%),
+                repeating-linear-gradient(0deg, #3b2010 0px, #3b2010 118px, #1d0d05 118px, #1d0d05 120px);
+            background-size: 100% 100%, 100% 120px;
         }
 
-        /* Estantería de madera maciza */
+        /* Estantería de madera maciza con bisel, veta y sombra profunda proyectada */
         .delicious-shelf {
-            background: linear-gradient(to bottom, #d4a373 0%, #faedcd 8%, #ccd5ae 12%, #a3703f 25%, #6d4520 80%, #422810 100%);
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.5);
-            border-bottom: 6px solid #28160a;
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            background: linear-gradient(to bottom, 
+                #e0a86e 0%, 
+                #c48548 10%, 
+                #965825 35%, 
+                #5c3211 80%, 
+                #331906 100%);
+            box-shadow: 
+                0 22px 35px rgba(0, 0, 0, 0.9),
+                inset 0 2px 4px rgba(255, 255, 255, 0.5),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.8);
+            border-bottom: 7px solid #1a0a03;
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
         }
 
-        /* Sombras estándar */
-        .case-standard-shadow {
-            box-shadow: 4px 8px 12px rgba(0, 0, 0, 0.6);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .case-standard-shadow:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.8);
-        }
-
-        /* --- CAJAS FÍSICAS 3D (MI BIBLIOTECA) --- */
+        /* Contenedor de perspectiva 3D */
         .case-perspective-container {
-            perspective: 1000px;
+            perspective: 1200px;
         }
 
+        /* --- OBJETOS 3D E INTERACTIVIDAD (Resplandor brillante y elevación suave al pasar el ratón) --- */
+        .media-case-3d {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.28s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.28s ease;
+            box-shadow: -6px 10px 18px rgba(0,0,0,0.85), 0 4px 6px rgba(0,0,0,0.4);
+        }
+
+        /* Elevación 3D e iluminación de borde activo al pasar por encima */
+        .media-case-3d:hover {
+            transform: translateY(-10px) scale(1.05) rotateY(-3deg);
+            box-shadow: 
+                0 0 18px rgba(245, 158, 11, 0.65), 
+                -12px 20px 30px rgba(0,0,0,0.95);
+            border-color: rgba(251, 191, 36, 0.9) !important;
+        }
+
+        /* Acabado Libro (Efecto lomo izquierdo y hojas a la derecha) */
+        .case-book-3d {
+            border-left: 5px solid rgba(15, 15, 15, 0.8);
+            border-right: 4px solid #e2e8f0;
+            border-radius: 2px 5px 5px 2px;
+            aspect-ratio: 2 / 3.1;
+        }
+
+        /* Acabado Cómics (Funda de plástico transparente e iluminación suave) */
+        .case-comic-3d {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.2), -6px 10px 18px rgba(0,0,0,0.85);
+            aspect-ratio: 2 / 3;
+        }
+
+        /* Acabado Blu-ray / 4K UHD */
         .case-bluray-3d {
-            position: relative;
-            transform: rotateY(-12deg) rotateX(4deg);
-            transform-style: preserve-3d;
-            border-radius: 4px 8px 8px 4px;
-            border-top: 14px solid rgba(29, 78, 216, 0.85);
-            border-left: 7px solid #1d4ed8;
-            border-right: 2px solid #1e40af;
+            border-top: 14px solid rgba(29, 78, 216, 0.9);
+            border-left: 6px solid #1d4ed8;
+            border-right: 2px solid #1e3a8a;
             border-bottom: 3px solid #1e3a8a;
-            box-shadow: -8px 10px 20px rgba(0,0,0,0.9), inset 0 2px 5px rgba(255,255,255,0.6);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .case-bluray-3d:hover {
-            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
+            border-radius: 4px 8px 8px 4px;
+            aspect-ratio: 2 / 3;
         }
 
+        /* Acabado DVD */
         .case-dvd-3d {
-            position: relative;
-            transform: rotateY(-12deg) rotateX(4deg);
-            transform-style: preserve-3d;
-            border-radius: 3px 6px 6px 3px;
             border-top: 12px solid #111827;
-            border-left: 7px solid #1f2937;
+            border-left: 6px solid #1f2937;
             border-right: 2px solid #111827;
             border-bottom: 3px solid #000000;
-            box-shadow: -8px 10px 20px rgba(0,0,0,0.9);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .case-dvd-3d:hover {
-            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+            border-radius: 3px 6px 6px 3px;
+            aspect-ratio: 2 / 3;
         }
 
+        /* Acabado Videojuego (Caja moderna más fina) */
+        .case-game-3d {
+            border-left: 5px solid #10b981;
+            border-top: 4px solid #059669;
+            border-right: 2px solid #047857;
+            border-radius: 4px;
+            aspect-ratio: 2 / 2.9;
+        }
+
+        /* Acabado VHS (Formato ancho, grueso y mate) */
+        .case-vhs-3d {
+            border-top: 16px solid #292524;
+            border-left: 10px solid #1c1917;
+            border-right: 3px solid #0c0a09;
+            border-bottom: 4px solid #0c0a09;
+            border-radius: 2px;
+            aspect-ratio: 2 / 3.4;
+        }
+
+        /* Acabado Laserdisc / Vinilo (Cuadrado de 12 pulgadas) */
+        .case-laserdisc-3d {
+            border: 3px solid #334155;
+            border-left: 6px solid #1e293b;
+            border-radius: 2px;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* Logo de marca de la cabecera */
         .brand-logo-badge {
             background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
             border: 2px solid #facc15;
@@ -261,6 +307,8 @@
                                 <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Blu-ray" class="accent-amber-600"> Blu-ray</label>
                                 <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="DVD" class="accent-amber-600"> DVD</label>
                                 <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Steelbook" class="accent-amber-600"> Steelbook</label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="VHS" class="accent-amber-600"> VHS</label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Laserdisc" class="accent-amber-600"> Laserdisc</label>
                             </div>
                         </div>
                     </div>
@@ -509,24 +557,39 @@
             renderPagination(totalPages, filtered.length);
         }
 
+        /* Generador Dinámico de Objetos 3D según Categoría y Formato Físico */
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
             wrapper.onclick = () => openDetailModal(item.id);
 
-            let caseStyle = 'case-standard-shadow border border-white/20';
-            if (currentCategoryFilter === 'library' && item.format) {
-                const fmt = item.format.toLowerCase();
-                if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
-                else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
+            let caseStyle = 'media-case-3d border border-white/20 aspect-[2/3]'; // Estándar por defecto
+            const fmt = (item.format || '').toLowerCase();
+            const cat = (item.category || '').toLowerCase();
+
+            // Asignación de estilos 3D adaptados al tipo de medio
+            if (cat === 'book') {
+                caseStyle = 'media-case-3d case-book-3d border-stone-800';
+            } else if (cat === 'comic') {
+                caseStyle = 'media-case-3d case-comic-3d border-white/30';
+            } else if (cat === 'game') {
+                caseStyle = 'media-case-3d case-game-3d';
+            } else if (fmt.includes('vhs')) {
+                caseStyle = 'media-case-3d case-vhs-3d';
+            } else if (fmt.includes('laserdisc') || fmt.includes('vinilo')) {
+                caseStyle = 'media-case-3d case-laserdisc-3d';
+            } else if (fmt.includes('blu-ray') || fmt.includes('4k')) {
+                caseStyle = 'media-case-3d case-bluray-3d';
+            } else if (fmt.includes('dvd')) {
+                caseStyle = 'media-case-3d case-dvd-3d';
             }
 
             wrapper.innerHTML = `
-                <div class="relative rounded-sm overflow-hidden ${caseStyle} bg-black aspect-[2/3] w-full">
+                <div class="relative rounded overflow-hidden ${caseStyle} bg-black w-full">
                     <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
-                    ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
+                    ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/85 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow border border-amber-500/30"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                 </div>
-                <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
+                <div class="mt-1.5 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
                     ${item.title}
                 </div>
             `;
@@ -702,7 +765,6 @@
             });
 
             toggleFormatSelector();
-            document.getElementById('itemModal').classList.add('hidden'); // Ajuste visual
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
