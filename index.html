@@ -28,69 +28,89 @@
             border-top: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* Sombra estándar para vistas generales */
+        /* Sombra plana estándar para vistas generales */
         .case-standard-shadow {
-            box-shadow: 6px 10px 15px rgba(0, 0, 0, 0.7);
+            box-shadow: 4px 8px 12px rgba(0, 0, 0, 0.6);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .case-standard-shadow:hover {
             transform: translateY(-5px) scale(1.02);
-            box-shadow: 10px 15px 22px rgba(0, 0, 0, 0.8);
+            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.8);
         }
 
-        /* --- CAJAS FÍSICAS 3D HIPERREALISTAS (EXCLUSIVAS DE MI BIBLIOTECA) --- */
+        /* --- CAJAS FÍSICAS 3D HIPERREALISTAS (EXCLUSIVAS DE "MI BIBLIOTECA") --- */
+        .case-perspective-container {
+            perspective: 1000px;
+        }
+
+        /* Blu-ray / 4K UHD 3D */
         .case-bluray-3d {
-            border-left: 6px solid #1e3a8a;
-            border-top: 6px solid #2563eb;
-            border-right: 3px solid #1d4ed8;
-            border-bottom: 3px solid #1e40af;
-            box-shadow: 12px 16px 22px rgba(0, 0, 0, 0.85), inset 2px 2px 5px rgba(255, 255, 255, 0.3);
-            transform: perspective(800px) rotateY(-4deg);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            transform: rotateY(-12deg) rotateX(4deg);
+            transform-style: preserve-3d;
+            border-radius: 4px 8px 8px 4px;
+            border-top: 14px solid rgba(29, 78, 216, 0.85); /* Lomo transparente azul */
+            border-left: 7px solid #1d4ed8;
+            border-right: 2px solid #1e40af;
+            border-bottom: 3px solid #1e3a8a;
+            box-shadow: -8px 10px 20px rgba(0,0,0,0.9), inset 0 2px 5px rgba(255,255,255,0.6);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .case-bluray-3d:hover {
-            transform: perspective(800px) rotateY(0deg) translateY(-6px) scale(1.03);
-            box-shadow: 16px 22px 30px rgba(0, 0, 0, 0.95);
+            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95), inset 0 2px 8px rgba(255,255,255,0.8);
         }
 
+        /* DVD 3D */
         .case-dvd-3d {
-            border-left: 6px solid #111827;
-            border-top: 6px solid #374151;
-            border-right: 3px solid #1f2937;
-            border-bottom: 3px solid #111827;
-            box-shadow: 12px 16px 22px rgba(0, 0, 0, 0.85), inset 2px 2px 5px rgba(255, 255, 255, 0.2);
-            transform: perspective(800px) rotateY(-4deg);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            transform: rotateY(-12deg) rotateX(4deg);
+            transform-style: preserve-3d;
+            border-radius: 3px 6px 6px 3px;
+            border-top: 12px solid #111827;
+            border-left: 7px solid #1f2937;
+            border-right: 2px solid #111827;
+            border-bottom: 3px solid #000000;
+            box-shadow: -8px 10px 20px rgba(0,0,0,0.9), inset 0 1px 3px rgba(255,255,255,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .case-dvd-3d:hover {
-            transform: perspective(800px) rotateY(0deg) translateY(-6px) scale(1.03);
-            box-shadow: 16px 22px 30px rgba(0, 0, 0, 0.95);
+            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
         }
 
+        /* Steelbook 3D */
         .case-steelbook-3d {
-            border: 4px solid #cbd5e1;
-            background: linear-gradient(135deg, #94a3b8 0%, #334155 100%);
-            box-shadow: 12px 16px 22px rgba(0, 0, 0, 0.85), inset 0 0 15px rgba(255, 255, 255, 0.5);
-            transform: perspective(800px) rotateY(-4deg);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            transform: rotateY(-12deg) rotateX(4deg);
+            transform-style: preserve-3d;
+            border-radius: 6px;
+            border: 3px solid #cbd5e1;
+            background: linear-gradient(135deg, #e2e8f0 0%, #475569 100%);
+            box-shadow: -8px 10px 20px rgba(0,0,0,0.9), inset 0 0 12px rgba(255,255,255,0.7);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .case-steelbook-3d:hover {
-            transform: perspective(800px) rotateY(0deg) translateY(-6px) scale(1.03);
-            box-shadow: 16px 22px 30px rgba(0, 0, 0, 0.95);
+            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
         }
 
+        /* VHS 3D */
         .case-vhs-3d {
-            border-left: 10px solid #1c1917;
+            position: relative;
+            transform: rotateY(-14deg) rotateX(3deg);
+            transform-style: preserve-3d;
+            border-radius: 2px;
             border-top: 18px solid #292524;
-            border-right: 4px solid #1c1917;
-            border-bottom: 4px solid #1c1917;
-            box-shadow: 14px 18px 25px rgba(0, 0, 0, 0.9);
-            transform: perspective(800px) rotateY(-4deg);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border-left: 12px solid #1c1917;
+            border-right: 3px solid #0c0a09;
+            border-bottom: 4px solid #0c0a09;
+            box-shadow: -10px 12px 24px rgba(0,0,0,0.95);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .case-vhs-3d:hover {
-            transform: perspective(800px) rotateY(0deg) translateY(-6px) scale(1.03);
-            box-shadow: 18px 24px 32px rgba(0, 0, 0, 0.95);
+            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+            box-shadow: 0 18px 32px rgba(0, 0, 0, 0.98);
         }
 
         /* Estilo integrado para el logo corporativo de la estantería */
@@ -490,16 +510,15 @@
 
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex flex-col items-center group cursor-pointer';
+            wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
             wrapper.onclick = () => openDetailModal(item.id);
 
-            // Estilo por defecto (normal/plano para vistas generales y otras categorías)
+            // Estilo por defecto (plano sin caja)
             let caseStyle = 'case-standard-shadow border border-white/20';
 
-            // SOLO si está visualizando en la sección "Mi Biblioteca" (o el ítem está en biblioteca y estamos filtrando)
-            // aplicamos las cajas 3D hiperrealistas según su formato físico principal
-            if (currentCategoryFilter === 'library' || (currentCategoryFilter === 'all' && item.in_library)) {
-                if (item.in_library && item.format) {
+            // ÚNICA Y EXCLUSIVAMENTE SI ESTAMOS EN LA PESTAÑA "MI BIBLIOTECA"
+            if (currentCategoryFilter === 'library') {
+                if (item.format) {
                     const fmt = item.format.toLowerCase();
                     if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
                     else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
@@ -997,8 +1016,7 @@
                             row.className = 'flex items-center justify-between p-2 hover:bg-stone-800 rounded-lg cursor-pointer transition gap-2';
                             row.onclick = () => {
                                 const sub = [year ? `Año: ${year}` : '', castText ? `Reparto: ${castText}` : ''].filter(Boolean).join(' | ');
-                                selectResult(name, sub, fullPoster, providerInfo.names, providerInfo.logos);
-                                document.getElementById('formReview').value = overview;
+                                selectResult(name, sub, fullPoster, providerInfo.names, providerInfo.logos, overview);
                             };
                             
                             row.innerHTML = `
@@ -1014,7 +1032,7 @@
                         }
                     }
                 } else if (cat === 'book' || cat === 'comic') {
-                    // Búsqueda en Google Books API
+                    // Búsqueda en Google Books API (Totalmente Pública y sin restricciones)
                     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
                     const data = await res.json();
 
@@ -1026,15 +1044,19 @@
                             const authors = info.authors ? info.authors.join(', ') : 'Autor desconocido';
                             const publishedDate = info.publishedDate || '';
                             const year = publishedDate ? publishedDate.split('-')[0] : 'N/A';
-                            const thumbnail = info.imageLinks && info.imageLinks.thumbnail ? info.imageLinks.thumbnail.replace('http:', 'https:') : 'https://via.placeholder.com/92x138?text=Sin+Portada';
+                            
+                            let thumbnail = 'https://via.placeholder.com/92x138?text=Sin+Portada';
+                            if (info.imageLinks) {
+                                thumbnail = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || thumbnail;
+                                thumbnail = thumbnail.replace('http:', 'https:');
+                            }
                             const description = info.description || 'Sin sinopsis disponible.';
 
                             const row = document.createElement('div');
                             row.className = 'flex items-center justify-between p-2 hover:bg-stone-800 rounded-lg cursor-pointer transition gap-2';
                             row.onclick = () => {
                                 const sub = `Autor: ${authors} | Año: ${year}`;
-                                selectResult(name, sub, thumbnail, '', '');
-                                document.getElementById('formReview').value = description;
+                                selectResult(name, sub, thumbnail, '', '', description);
                             };
 
                             row.innerHTML = `
@@ -1050,7 +1072,7 @@
                         }
                     }
                 } else if (cat === 'game') {
-                    // Búsqueda en RAWG Video Games Database API (Pública)
+                    // Búsqueda en RAWG Video Games Database API
                     const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
                     const data = await res.json();
 
@@ -1067,8 +1089,8 @@
                             row.className = 'flex items-center justify-between p-2 hover:bg-stone-800 rounded-lg cursor-pointer transition gap-2';
                             row.onclick = () => {
                                 const sub = `Año: ${year} ${genres ? `| Género: ${genres}` : ''}`;
-                                selectResult(name, sub, cover, '', '');
-                                document.getElementById('formReview').value = `Videojuego lanzado en ${year}. Géneros: ${genres}`;
+                                const gameDesc = `Videojuego lanzado en ${year}. ${genres ? `Géneros: ${genres}.` : ''}`;
+                                selectResult(name, sub, cover, '', '', gameDesc);
                             };
 
                             row.innerHTML = `
@@ -1091,12 +1113,13 @@
             }
         }
 
-        function selectResult(title, subtitle, coverUrl, platform, platformLogo) {
+        function selectResult(title, subtitle, coverUrl, platform, platformLogo, overview = '') {
             document.getElementById('formTitle').value = title;
             document.getElementById('formSubtitle').value = subtitle;
             if (coverUrl) document.getElementById('formCover').value = coverUrl;
             if (platform) document.getElementById('formPlatform').value = platform;
             if (platformLogo) document.getElementById('formPlatformLogo').value = platformLogo;
+            if (overview) document.getElementById('formReview').value = overview;
             document.getElementById('searchResults').classList.add('hidden');
         }
     </script>
