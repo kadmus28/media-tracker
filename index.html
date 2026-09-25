@@ -102,7 +102,7 @@
 
             <div class="relative flex-1 max-w-md mx-md-4">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70 text-sm"></i>
-                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, director, autor, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
+                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, director, actor, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
             </div>
             
             <div class="flex items-center gap-3">
@@ -137,6 +137,12 @@
                 <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-house"></i> Mi Biblioteca
                 </button>
+                <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock"></i> Pendiente de ver
+                </button>
+                <button onclick="setCategoryFilter('shopping_list')" data-cat="shopping_list" class="cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-cart-shopping"></i> Comprar (Físico)
+                </button>
             </div>
 
             <div class="flex items-center space-x-2">
@@ -157,8 +163,19 @@
         <div id="emptyState" class="hidden text-center py-20 bg-amber-950/80 text-amber-100 rounded-2xl border border-amber-800/50">
             <i class="fa-solid fa-boxes-packing text-5xl text-amber-600/60 mb-4"></i>
             <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
+            <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta la búsqueda y filtros.</p>
         </div>
     </main>
+
+    <!-- Modal Detalle (Menú al hacer clic en una carátula) -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+            <div class="flex flex-col md:flex-row gap-6 pt-2" id="detailModalContent"></div>
+        </div>
+    </div>
 
     <!-- Modal Formulario -->
     <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -171,6 +188,7 @@
 
             <form id="mediaForm" onsubmit="saveItem(event)">
                 <input type="hidden" id="editingItemId" value="">
+                <input type="hidden" id="formPlatformLogo" value="">
 
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Categoría</label>
@@ -186,7 +204,7 @@
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Título</label>
                     <div class="flex gap-2">
-                        <input type="text" id="formTitle" required placeholder="Ej: El juego, Dune, Batman..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                        <input type="text" id="formTitle" required placeholder="Ej: Batman, Dune..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                         <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-amber-700 hover:bg-amber-600 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <span>Buscar</span>
@@ -198,7 +216,12 @@
 
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Reparto / Año</label>
-                    <input type="text" id="formSubtitle" placeholder="Detalles o autor..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                    <input type="text" id="formSubtitle" placeholder="Detalles..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                </div>
+
+                <div class="mb-4" id="platformContainer">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Plataforma / Dónde ver</label>
+                    <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
                 <div class="mb-4">
@@ -218,6 +241,36 @@
                     <div>
                         <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Puntuación (0 - 10)</label>
                         <input type="number" id="formRating" min="0" max="10" step="0.5" value="0" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-4">
+                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="formInLibrary" onchange="toggleFormatSelector()" class="w-4 h-4 text-amber-600 bg-stone-900 border-amber-800 rounded focus:ring-amber-500">
+                            <label for="formInLibrary" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
+                                <i class="fa-solid fa-house text-amber-400"></i>
+                                Añadir a Mi Biblioteca (Propiedad física)
+                            </label>
+                        </div>
+
+                        <div id="formatContainer" class="hidden mt-3 pt-3 border-t border-amber-900/30">
+                            <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos:</label>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-amber-100">
+                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="4K UHD Blu-ray" class="accent-amber-600"> 4K UHD Blu-ray</label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Blu-ray" class="accent-amber-600"> Blu-ray</label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="DVD" class="accent-amber-600"> DVD</label>
+                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Steelbook" class="accent-amber-600"> Steelbook</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30 flex items-center gap-3">
+                        <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-stone-900 border-amber-800 rounded focus:ring-emerald-500">
+                        <label for="formToBuy" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-cart-shopping text-emerald-400"></i>
+                            Añadir a Lista de la Compra (Deseo comprarlo)
+                        </label>
                     </div>
                 </div>
 
@@ -262,9 +315,21 @@
         function handleCategoryChange() {
             const cat = document.getElementById('formCategory').value;
             const subLabel = document.getElementById('subtitleLabel');
-            if (cat === 'movie' || cat === 'tv') subLabel.textContent = 'Director / Reparto / Año';
-            else if (cat === 'book' || cat === 'comic') subLabel.textContent = 'Autor / Año';
-            else if (cat === 'game') subLabel.textContent = 'Desarrollador / Año';
+            const platformContainer = document.getElementById('platformContainer');
+            if (cat === 'movie' || cat === 'tv') {
+                subLabel.textContent = 'Director / Reparto / Año';
+                platformContainer.classList.remove('hidden');
+            } else {
+                subLabel.textContent = 'Autor / Año / Desarrollador';
+                platformContainer.classList.add('hidden');
+            }
+        }
+
+        function toggleFormatSelector() {
+            const inLibrary = document.getElementById('formInLibrary').checked;
+            const formatContainer = document.getElementById('formatContainer');
+            if (inLibrary) formatContainer.classList.remove('hidden');
+            else formatContainer.classList.add('hidden');
         }
 
         async function autoSearchCover() {
@@ -282,7 +347,6 @@
             let foundResults = [];
 
             try {
-                // Películas y Series (TMDB)
                 if (cat === 'movie' || cat === 'tv') {
                     const res = await fetch(`https://api.themoviedb.org/3/search/${cat}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`);
                     const data = await res.json();
@@ -294,56 +358,34 @@
                             desc: item.overview || ''
                         }));
                     }
-                }
-                // Libros y Cómics (Google Books -> OpenLibrary Fallback)
-                else if (cat === 'book' || cat === 'comic') {
-                    try {
-                        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
-                        const data = await res.json();
-                        if (data.items) {
-                            foundResults = data.items.map(book => {
-                                const info = book.volumeInfo || {};
-                                let coverUrl = info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '') : '';
-                                return {
-                                    name: info.title || title,
-                                    sub: info.authors ? info.authors.join(', ') : 'Autor no indicado',
-                                    cover: coverUrl.replace('http:', 'https:'),
-                                    desc: info.description || ''
-                                };
-                            });
-                        }
-                    } catch (e) { console.log('Google Books falló, buscando en OpenLibrary...'); }
-
-                    if (foundResults.length === 0) {
-                        const olRes = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(title)}&limit=5`);
-                        const olData = await olRes.json();
-                        if (olData.docs) {
-                            foundResults = olData.docs.map(doc => ({
-                                name: doc.title,
-                                sub: doc.author_name ? doc.author_name.join(', ') : 'Autor no indicado',
-                                cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
-                                desc: ''
-                            }));
-                        }
+                } else if (cat === 'book' || cat === 'comic') {
+                    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
+                    const data = await res.json();
+                    if (data.items) {
+                        foundResults = data.items.map(book => {
+                            const info = book.volumeInfo || {};
+                            let coverUrl = info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '') : '';
+                            return {
+                                name: info.title || title,
+                                sub: info.authors ? `Autor: ${info.authors.join(', ')}` : 'Autor no indicado',
+                                cover: coverUrl.replace('http:', 'https:'),
+                                desc: info.description || ''
+                            };
+                        });
+                    }
+                } else if (cat === 'game') {
+                    const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
+                    const data = await res.json();
+                    if (data.results) {
+                        foundResults = data.results.map(g => ({
+                            name: g.name,
+                            sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Juego',
+                            cover: g.background_image || '',
+                            desc: ''
+                        }));
                     }
                 }
-                // Videojuegos (RAWG API -> Wikipedia Fallback)
-                else if (cat === 'game') {
-                    try {
-                        const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
-                        const data = await res.json();
-                        if (data.results) {
-                            foundResults = data.results.map(g => ({
-                                name: g.name,
-                                sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Juego',
-                                cover: g.background_image || '',
-                                desc: ''
-                            }));
-                        }
-                    } catch (e) { console.log('RAWG falló.'); }
-                }
 
-                // Renderizar Resultados
                 if (foundResults.length > 0) {
                     resultsDiv.classList.remove('hidden');
                     foundResults.forEach(item => {
@@ -363,10 +405,10 @@
                         resultsDiv.appendChild(row);
                     });
                 } else {
-                    alert(`No se encontraron resultados en línea para "${title}". Introduce la URL manualmente.`);
+                    alert(`No se encontraron resultados para "${title}". Introduce la carátula manualmente.`);
                 }
             } catch (err) {
-                alert('Error al conectar con el servidor de búsqueda.');
+                alert('Error al conectar con la API de búsqueda.');
             } finally {
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
@@ -380,26 +422,227 @@
             document.getElementById('searchResults').classList.add('hidden');
         }
 
+        function renderItems() {
+            const container = document.getElementById('bookshelfContainer');
+            container.innerHTML = '';
+            const statusFilter = document.getElementById('statusSelect').value;
+
+            const filtered = items.filter(item => {
+                let catMatch = false;
+                if (currentCategoryFilter === 'all') catMatch = true;
+                else if (currentCategoryFilter === 'library') catMatch = item.in_library === true;
+                else if (currentCategoryFilter === 'pending_watch') catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
+                else if (currentCategoryFilter === 'shopping_list') catMatch = item.to_buy === true;
+                else catMatch = item.category === currentCategoryFilter;
+
+                const statusMatch = statusFilter === 'all' || item.status === statusFilter;
+                const searchMatch = !searchQuery || item.title.toLowerCase().includes(searchQuery) || (item.subtitle && item.subtitle.toLowerCase().includes(searchQuery));
+
+                return catMatch && statusMatch && searchMatch;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('paginationControls').innerHTML = '';
+                return;
+            }
+            document.getElementById('emptyState').classList.add('hidden');
+
+            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const pageItems = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            const SHELF_CAPACITY = 6;
+            for (let i = 0; i < pageItems.length; i += SHELF_CAPACITY) {
+                const shelfItems = pageItems.slice(i, i + SHELF_CAPACITY);
+                const shelfDiv = document.createElement('div');
+                shelfDiv.className = 'relative flex flex-col';
+
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 px-4 items-end pb-1';
+
+                shelfItems.forEach(item => {
+                    gridDiv.appendChild(createShelfCase(item));
+                });
+
+                const woodShelfBar = document.createElement('div');
+                woodShelfBar.className = 'delicious-shelf h-6 w-full rounded-sm shadow-2xl mt-1';
+
+                shelfDiv.appendChild(gridDiv);
+                shelfDiv.appendChild(woodShelfBar);
+                container.appendChild(shelfDiv);
+            }
+
+            renderPagination(totalPages, filtered.length);
+        }
+
+        function createShelfCase(item) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
+            wrapper.onclick = () => openDetailModal(item.id);
+
+            let caseStyle = 'case-standard-shadow border border-white/20';
+            if (currentCategoryFilter === 'library' && item.format) {
+                const fmt = item.format.toLowerCase();
+                if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
+                else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
+            }
+
+            wrapper.innerHTML = `
+                <div class="relative rounded-sm overflow-hidden ${caseStyle} bg-black aspect-[2/3] w-full">
+                    <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
+                    ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
+                </div>
+                <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
+                    ${item.title}
+                </div>
+            `;
+            return wrapper;
+        }
+
+        function openDetailModal(id) {
+            const item = items.find(i => String(i.id) === String(id));
+            if (!item) return;
+
+            const modalContent = document.getElementById('detailModalContent');
+            modalContent.innerHTML = `
+                <div class="w-full md:w-1/3 flex-shrink-0">
+                    <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover aspect-[2/3]">
+                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-compact-disc mr-1"></i> ${item.format}</div>` : ''}
+                </div>
+                <div class="w-full md:w-2/3 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-start justify-between gap-3 pr-10">
+                            <h2 class="text-2xl font-bold text-amber-100">${item.title}</h2>
+                            <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
+                                <button onclick="editItem('${item.id}')" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <span class="border-r border-amber-900/60 h-4"></span>
+                                <button onclick="deleteItem('${item.id}')" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-amber-300/90 font-medium mt-2">${item.subtitle || ''}</p>
+                        ${item.platform ? `<p class="text-xs text-amber-300 font-semibold mt-2"><i class="fa-solid fa-tv mr-1"></i> ${item.platform}</p>` : ''}
+                        <div class="mt-4 pt-4 border-t border-amber-900/30">
+                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> Sinopsis / Trama</h4>
+                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto">${item.review || 'Sin sinopsis disponible.'}</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-amber-900/30">
+                        <span>Estado: <strong class="text-amber-200 capitalize">${item.status}</strong></span>
+                        ${item.in_library ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i> En Biblioteca Física</span>` : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); }
+
+        function renderPagination(totalPages, totalItems) {
+            const container = document.getElementById('paginationControls');
+            if (totalPages <= 1) {
+                container.innerHTML = `<span class="text-xs text-amber-300 font-medium">Mostrando ${totalItems} elementos</span>`;
+                return;
+            }
+            container.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 rounded-lg"'}>Anterior</button>
+                <span class="text-xs text-amber-300 font-semibold px-2">Página ${currentPage} de ${totalPages}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 rounded-lg"'}>Siguiente</button>
+            `;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderItems();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setCategoryFilter(cat) {
+            currentCategoryFilter = cat;
+            currentPage = 1;
+            renderItems();
+        }
+
+        function resetToHome() {
+            currentCategoryFilter = 'all';
+            searchQuery = '';
+            currentPage = 1;
+            document.getElementById('liveSearchInput').value = '';
+            document.getElementById('statusSelect').value = 'all';
+            renderItems();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
+            currentPage = 1;
+            renderItems();
+        }
+
         function openModal() {
             document.getElementById('editingItemId').value = '';
+            document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
+            document.querySelectorAll('input[name="formatCheck"]').forEach(cb => cb.checked = false);
             document.getElementById('searchResults').classList.add('hidden');
+            toggleFormatSelector();
             handleCategoryChange();
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
         function closeModal() { document.getElementById('itemModal').classList.add('hidden'); }
 
+        function editItem(id) {
+            closeDetailModal();
+            const item = items.find(i => String(i.id) === String(id));
+            if (!item) return;
+
+            document.getElementById('editingItemId').value = item.id;
+            document.getElementById('modalTitle').textContent = 'Editar Elemento';
+            document.getElementById('formCategory').value = item.category || 'movie';
+            handleCategoryChange();
+
+            document.getElementById('formTitle').value = item.title || '';
+            document.getElementById('formSubtitle').value = item.subtitle || '';
+            document.getElementById('formPlatform').value = item.platform || '';
+            document.getElementById('formPlatformLogo').value = item.platform_logo || '';
+            document.getElementById('formCover').value = item.cover_url || '';
+            document.getElementById('formStatus').value = item.status || 'planned';
+            document.getElementById('formRating').value = item.rating || 0;
+            document.getElementById('formInLibrary').checked = item.in_library || false;
+            document.getElementById('formToBuy').checked = item.to_buy || false;
+            document.getElementById('formReview').value = item.review || '';
+
+            const savedFormats = item.format ? item.format.split(',').map(f => f.trim()) : [];
+            document.querySelectorAll('input[name="formatCheck"]').forEach(cb => {
+                cb.checked = savedFormats.includes(cb.value);
+            });
+
+            toggleFormatSelector();
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
+
         async function saveItem(e) {
             e.preventDefault();
             const id = document.getElementById('editingItemId').value;
+            const selectedFormats = [];
+            document.querySelectorAll('input[name="formatCheck"]:checked').forEach(cb => selectedFormats.push(cb.value));
+            const inLibrary = document.getElementById('formInLibrary').checked;
+
             const itemData = {
                 category: document.getElementById('formCategory').value,
                 title: document.getElementById('formTitle').value,
                 subtitle: document.getElementById('formSubtitle').value,
+                platform: document.getElementById('formPlatform').value,
+                platform_logo: document.getElementById('formPlatformLogo').value,
                 cover_url: document.getElementById('formCover').value,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
+                in_library: inLibrary,
+                format: inLibrary && selectedFormats.length > 0 ? selectedFormats.join(', ') : null,
+                to_buy: document.getElementById('formToBuy').checked,
                 review: document.getElementById('formReview').value
             };
 
@@ -416,55 +659,16 @@
             else { closeModal(); fetchItems(); }
         }
 
-        function renderItems() {
-            const container = document.getElementById('bookshelfContainer');
-            container.innerHTML = '';
-
-            const filtered = items.filter(item => {
-                if (currentCategoryFilter !== 'all' && item.category !== currentCategoryFilter) return false;
-                if (searchQuery && !item.title.toLowerCase().includes(searchQuery)) return false;
-                return true;
-            });
-
-            if (filtered.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
+        async function deleteItem(id) {
+            if (!confirm('¿Seguro que quieres eliminar este elemento?')) return;
+            try {
+                closeDetailModal();
+                const { error } = await supabaseClient.from('media_items').delete().eq('id', String(id));
+                if (error) throw error;
+                fetchItems();
+            } catch (err) {
+                alert('Error al eliminar: ' + err.message);
             }
-            document.getElementById('emptyState').classList.add('hidden');
-
-            const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 px-4';
-
-            filtered.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'flex flex-col items-center cursor-pointer group';
-                div.innerHTML = `
-                    <div class="relative rounded overflow-hidden case-standard-shadow bg-black aspect-[2/3] w-full">
-                        <img src="${item.cover_url}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/ffffff?text=${encodeURIComponent(item.title)}'">
-                    </div>
-                    <span class="mt-2 text-xs font-bold text-amber-100 truncate w-full text-center">${item.title}</span>
-                `;
-                grid.appendChild(div);
-            });
-
-            container.appendChild(grid);
-        }
-
-        function setCategoryFilter(cat) {
-            currentCategoryFilter = cat;
-            renderItems();
-        }
-
-        function resetToHome() {
-            currentCategoryFilter = 'all';
-            searchQuery = '';
-            document.getElementById('liveSearchInput').value = '';
-            renderItems();
-        }
-
-        function handleSearch() {
-            searchQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
-            renderItems();
         }
     </script>
 </body>
