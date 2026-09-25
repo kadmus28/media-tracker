@@ -3,54 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Tracker</title>
+    <title>Media Tracker - Estantería</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#0f172a',
-                        cardBg: '#1e293b',
-                        borderBg: '#334155'
-                    }
-                }
-            }
-        }
-    </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Textura y efecto de madera para los estantes */
+        .wood-bg {
+            background-color: #2b1810;
+            background-image: radial-gradient(#4a2b1b 15%, transparent 16%), radial-gradient(#3a2013 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+        .wood-shelf {
+            background: linear-gradient(to bottom, #d2a679 0%, #996633 40%, #664422 100%);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.7), inset 0 2px 3px rgba(255, 255, 255, 0.3);
+            border-bottom: 4px solid #3d2314;
+        }
+        .case-shadow {
+            box-shadow: 6px 10px 15px rgba(0, 0, 0, 0.65), -1px 0 3px rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="wood-bg text-slate-100 min-h-screen font-sans flex flex-col">
 
     <!-- Header / Navbar -->
-    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-40">
+    <header class="border-b border-amber-950/80 bg-stone-950/90 backdrop-blur sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-indigo-600 rounded-lg">
-                    <i class="fa-solid fa-layer-group text-xl text-white"></i>
+                <div class="p-2 bg-amber-700 rounded-lg text-white shadow-md">
+                    <i class="fa-solid fa-book-bookmark text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-xl leading-tight">Media Tracker</h1>
-                    <p class="text-xs text-slate-400">Pelis, Series, Libros, Cómics, Juegos y Viajes</p>
+                    <h1 class="font-bold text-xl leading-tight text-amber-100">Media Tracker</h1>
+                    <p class="text-xs text-amber-400/80">Colección en Estantería Virtual</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Botón Importar CSV -->
-                <button onclick="document.getElementById('csvFileInput').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3.5 py-2 rounded-lg flex items-center space-x-2 transition border border-slate-700 text-sm">
+                <button onclick="document.getElementById('csvFileInput').click()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 font-medium px-3.5 py-2 rounded-lg flex items-center space-x-2 transition border border-amber-900/50 text-sm shadow">
                     <i class="fa-solid fa-file-csv text-emerald-400"></i>
-                    <span>Importar Letterboxd (CSV)</span>
+                    <span>Importar Letterboxd</span>
                 </button>
                 <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importLetterboxdCSV(event)">
 
-                <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg shadow-indigo-600/20 text-sm">
+                <button onclick="openModal()" class="bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg text-sm">
                     <i class="fa-solid fa-plus"></i>
-                    <span>Añadir Nuevo</span>
+                    <span>Añadir Elemento</span>
                 </button>
             </div>
         </div>
@@ -58,36 +60,33 @@
 
     <!-- Modal de Progreso de Importación -->
     <div id="importProgressModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-700 shadow-2xl text-center">
-            <i class="fa-solid fa-wand-magic-sparkles text-4xl text-indigo-400 animate-bounce mb-3"></i>
+        <div class="bg-stone-900 rounded-2xl max-w-md w-full p-6 border border-amber-900/40 shadow-2xl text-center">
+            <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400 animate-bounce mb-3"></i>
             <h3 class="text-lg font-bold text-white mb-1">Importando de Letterboxd</h3>
-            <p class="text-xs text-slate-400 mb-4">Buscando carátulas y plataformas en TMDB...</p>
-            
-            <div class="w-full bg-slate-900 rounded-full h-3 mb-2 overflow-hidden border border-slate-700">
-                <div id="importProgressBar" class="bg-indigo-600 h-full w-0 transition-all duration-200"></div>
+            <p class="text-xs text-slate-400 mb-4">Buscando carátulas, tramas y datos en TMDB...</p>
+            <div class="w-full bg-stone-950 rounded-full h-3 mb-2 overflow-hidden border border-stone-800">
+                <div id="importProgressBar" class="bg-amber-600 h-full w-0 transition-all duration-200"></div>
             </div>
-            <p id="importProgressStatus" class="text-xs text-slate-300 font-medium">Procesando 0 / 0</p>
+            <p id="importProgressStatus" class="text-xs text-amber-300 font-medium">Procesando 0 / 0</p>
         </div>
     </div>
 
-    <!-- Main Content Area -->
+    <!-- Main Content Area: Estantería de Madera -->
     <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
         
-        <!-- Filters Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-slate-800/50 p-3 rounded-xl border border-slate-800">
-            <!-- Category Tabs -->
+        <!-- Bar de Filtros -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-stone-900/80 p-3 rounded-xl border border-amber-900/40 backdrop-blur shadow-lg">
             <div class="flex flex-wrap gap-1" id="categoryTabs">
-                <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
-                <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
-                <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
-                <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
-                <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
-                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
-                <button onclick="setCategoryFilter('travel')" data-cat="travel" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Viajes</button>
+                <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
+                <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
+                <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
+                <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
+                <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
+                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
+                <button onclick="setCategoryFilter('travel')" data-cat="travel" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Viajes</button>
                 
-                <span class="border-r border-slate-700 my-1 mx-1"></span>
+                <span class="border-r border-amber-900/60 my-1 mx-1"></span>
 
-                <!-- Pestañas especiales al final -->
                 <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-house"></i> Mi Biblioteca
                 </button>
@@ -99,10 +98,9 @@
                 </button>
             </div>
 
-            <!-- Status Filter -->
             <div class="flex items-center space-x-2">
-                <label for="statusSelect" class="text-xs text-slate-400 font-medium uppercase tracking-wider">Estado:</label>
-                <select id="statusSelect" onchange="renderItems()" class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                <label for="statusSelect" class="text-xs text-amber-300/80 font-medium uppercase tracking-wider">Estado:</label>
+                <select id="statusSelect" onchange="renderItems()" class="bg-stone-950 border border-amber-900/50 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-600">
                     <option value="all">Todos los estados</option>
                     <option value="completed">Completados</option>
                     <option value="in_progress">En curso</option>
@@ -111,37 +109,48 @@
             </div>
         </div>
 
-        <!-- Media Grid -->
-        <div id="mediaGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            <!-- Dynamic Content Loaded Here -->
+        <!-- Contenedor de Estantes -->
+        <div id="bookshelfContainer" class="flex flex-col gap-12">
+            <!-- Renderizado dinámico de baldas de madera -->
         </div>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden text-center py-16">
-            <i class="fa-solid fa-compact-disc text-5xl text-slate-600 mb-4"></i>
-            <h3 class="text-lg font-medium text-slate-300">No hay elementos registrados</h3>
-            <p class="text-sm text-slate-500 mt-1">Haz clic en "Añadir Nuevo" o en "Importar Letterboxd" para comenzar.</p>
+        <!-- Estado Vacío -->
+        <div id="emptyState" class="hidden text-center py-20 bg-stone-900/60 rounded-2xl border border-amber-900/30">
+            <i class="fa-solid fa-boxes-packing text-5xl text-amber-800/60 mb-4"></i>
+            <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
+            <p class="text-sm text-amber-400/60 mt-1">Añade nuevos contenidos o ajusta los filtros superiores.</p>
         </div>
     </main>
 
-    <!-- Modal for Adding / Editing Items -->
+    <!-- Modal de Detalle/Ficha de Película/Medio -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 rounded-2xl max-w-2xl w-full p-6 border border-amber-900/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+
+            <div class="flex flex-col md:flex-row gap-6" id="detailModalContent">
+                <!-- Inyectado dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Formulario Añadir / Editar -->
     <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-800 rounded-2xl max-w-lg w-full p-6 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <div class="bg-stone-900 rounded-2xl max-w-lg w-full p-6 border border-amber-900/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
 
-            <h2 class="text-xl font-bold mb-4" id="modalTitle">Añadir Nuevo Elemento</h2>
+            <h2 class="text-xl font-bold mb-4 text-amber-100" id="modalTitle">Añadir Nuevo Elemento</h2>
 
             <form id="mediaForm" onsubmit="saveItem(event)">
                 <input type="hidden" id="editingItemId" value="">
                 <input type="hidden" id="formPlatformLogo" value="">
 
-                <!-- Category Picker -->
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Categoría</label>
-                    <select id="formCategory" onchange="handleCategoryChange()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Categoría</label>
+                    <select id="formCategory" onchange="handleCategoryChange()" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                         <option value="movie">Película</option>
                         <option value="tv">Serie</option>
                         <option value="book">Libro</option>
@@ -151,109 +160,84 @@
                     </select>
                 </div>
 
-                <!-- Title & Search Button -->
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Título</label>
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Título</label>
                     <div class="flex gap-2">
-                        <input type="text" id="formTitle" required placeholder="Ej: Batman, Dune, Inception..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
-                        <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
+                        <input type="text" id="formTitle" required placeholder="Ej: Batman, Dune, Inception..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                        <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-amber-700 hover:bg-amber-600 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <span>Buscar</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Results List for Selection -->
-                <div id="searchResults" class="hidden mb-4 bg-slate-900 rounded-lg p-2 border border-slate-700 max-h-48 overflow-y-auto space-y-2">
-                    <!-- Dynamic list of search matches -->
-                </div>
+                <div id="searchResults" class="hidden mb-4 bg-stone-950 rounded-lg p-2 border border-amber-900/40 max-h-48 overflow-y-auto space-y-2"></div>
 
-                <!-- Subtitle / Author / Director -->
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Creador</label>
-                    <input type="text" id="formSubtitle" placeholder="Ej: Christopher Nolan, Frank Herbert..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Creador</label>
+                    <input type="text" id="formSubtitle" placeholder="Ej: Christopher Nolan, Frank Herbert..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
-                <!-- Platform Field (For Movies & Series) -->
                 <div class="mb-4" id="platformContainer">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Plataforma / Dónde ver</label>
-                    <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video, HBO Max, Disney+, Movistar+..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Plataforma / Dónde ver</label>
+                    <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video, HBO Max, Disney+, Movistar+..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
-                <!-- Cover URL -->
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">URL de la Portada / Imagen</label>
-                    <input type="url" id="formCover" required placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">URL de la Portada / Imagen</label>
+                    <input type="url" id="formCover" required placeholder="https://..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
-                <!-- Status & Rating Grid -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Estado</label>
-                        <select id="formStatus" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Estado</label>
+                        <select id="formStatus" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                             <option value="planned">Pendiente</option>
                             <option value="in_progress">En curso</option>
                             <option value="completed">Completado</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Puntuación (0 - 10)</label>
-                        <input type="number" id="formRating" min="0" max="10" step="0.5" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Puntuación (0 - 10)</label>
+                        <input type="number" id="formRating" min="0" max="10" step="0.5" value="0" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                     </div>
                 </div>
 
-                <!-- Collection / Ownership Checkboxes -->
                 <div class="space-y-2 mb-4">
-                    <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-700/80 flex items-center gap-3">
-                        <input type="checkbox" id="formInLibrary" class="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600 rounded focus:ring-indigo-500 focus:ring-offset-slate-900">
-                        <label for="formInLibrary" class="text-xs font-medium text-slate-200 cursor-pointer flex items-center gap-1.5">
-                            <i class="fa-solid fa-house text-indigo-400"></i>
-                            Añadir a Mi Biblioteca (Tengo este elemento en propiedad física)
+                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30 flex items-center gap-3">
+                        <input type="checkbox" id="formInLibrary" class="w-4 h-4 text-amber-600 bg-stone-900 border-amber-800 rounded focus:ring-amber-500">
+                        <label for="formInLibrary" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-house text-amber-400"></i>
+                            Añadir a Mi Biblioteca (Propiedad física)
                         </label>
                     </div>
 
-                    <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-700/80 flex items-center gap-3">
-                        <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-slate-800 border-slate-600 rounded focus:ring-emerald-500 focus:ring-offset-slate-900">
-                        <label for="formToBuy" class="text-xs font-medium text-slate-200 cursor-pointer flex items-center gap-1.5">
+                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30 flex items-center gap-3">
+                        <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-stone-900 border-amber-800 rounded focus:ring-emerald-500">
+                        <label for="formToBuy" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
                             <i class="fa-solid fa-cart-shopping text-emerald-400"></i>
-                            Añadir a Lista de la Compra (Deseo comprarlo en físico)
+                            Añadir a Lista de la Compra (Deseo comprarlo)
                         </label>
                     </div>
                 </div>
 
-                <!-- Progress Trackers -->
-                <div class="grid grid-cols-2 gap-4 mb-4" id="progressContainer">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" id="currentProgLabel">Progreso Actual</label>
-                        <input type="number" id="formCurrentProg" value="0" min="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2" id="totalProgLabel">Total</label>
-                        <input type="number" id="formTotalProg" value="0" min="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-
-                <!-- Review / Notes -->
                 <div class="mb-6">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Notas / Reseña</label>
-                    <textarea id="formReview" rows="3" placeholder="Tus impresiones o notas..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"></textarea>
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama / Reseña</label>
+                    <textarea id="formReview" rows="3" placeholder="Sinopsis o impresiones personales..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-300">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium text-white">Guardar</button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm text-stone-300">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-700 hover:bg-amber-600 rounded-lg text-sm font-medium text-white">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Application JavaScript Logic -->
+    <!-- JavaScript Logic -->
     <script>
-        // Configuración de Supabase
         const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
-
-        // TMDB API Key v3
         const TMDB_API_KEY = '592f0a9b86580dc2aae33e086a9116cb';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -261,25 +245,10 @@
         let items = [];
         let currentCategoryFilter = 'all';
 
-        // Base de datos de logos estáticos de respaldo
-        const PROVIDER_LOGOS = {
-            'netflix': 'https://image.tmdb.org/t/p/w92/pbpMk121StLrhA3vR12yR33923r.jpg',
-            'movistar': 'https://image.tmdb.org/t/p/w92/1s1G2x32.jpg',
-            'hbo': 'https://image.tmdb.org/t/p/w92/2332.jpg',
-            'max': 'https://image.tmdb.org/t/p/w92/2332.jpg',
-            'prime': 'https://image.tmdb.org/t/p/w92/dQeA35311.jpg',
-            'amazon': 'https://image.tmdb.org/t/p/w92/dQeA35311.jpg',
-            'disney': 'https://image.tmdb.org/t/p/w92/7qe33.jpg',
-            'apple': 'https://image.tmdb.org/t/p/w92/2332.jpg',
-            'filmin': 'https://image.tmdb.org/t/p/w92/filmin.jpg'
-        };
-
-        // Carga inicial
         document.addEventListener('DOMContentLoaded', () => {
             fetchItems();
         });
 
-        // Obtener elementos desde Supabase
         async function fetchItems() {
             try {
                 const { data, error } = await supabaseClient
@@ -295,28 +264,20 @@
             }
         }
 
-        // Renderizar la cuadrícula de elementos
         function renderItems() {
-            const grid = document.getElementById('mediaGrid');
+            const bookshelf = document.getElementById('bookshelfContainer');
             const emptyState = document.getElementById('emptyState');
             const statusFilter = document.getElementById('statusSelect').value;
 
-            grid.innerHTML = '';
+            bookshelf.innerHTML = '';
 
             const filtered = items.filter(item => {
                 let catMatch = false;
-
-                if (currentCategoryFilter === 'all') {
-                    catMatch = true;
-                } else if (currentCategoryFilter === 'library') {
-                    catMatch = item.in_library === true;
-                } else if (currentCategoryFilter === 'pending_watch') {
-                    catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
-                } else if (currentCategoryFilter === 'shopping_list') {
-                    catMatch = item.to_buy === true;
-                } else {
-                    catMatch = item.category === currentCategoryFilter;
-                }
+                if (currentCategoryFilter === 'all') catMatch = true;
+                else if (currentCategoryFilter === 'library') catMatch = item.in_library === true;
+                else if (currentCategoryFilter === 'pending_watch') catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
+                else if (currentCategoryFilter === 'shopping_list') catMatch = item.to_buy === true;
+                else catMatch = item.category === currentCategoryFilter;
 
                 const statusMatch = statusFilter === 'all' || item.status === statusFilter;
                 return catMatch && statusMatch;
@@ -324,113 +285,119 @@
 
             if (filtered.length === 0) {
                 emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                filtered.forEach(item => {
-                    grid.appendChild(createMediaCard(item));
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Dividir los elementos en grupos de 6 por estante
+            const ITEMS_PER_SHELF = 6;
+            for (let i = 0; i < filtered.length; i += ITEMS_PER_SHELF) {
+                const shelfItems = filtered.slice(i, i + ITEMS_PER_SHELF);
+                const shelfDiv = document.createElement('div');
+                shelfDiv.className = 'relative flex flex-col';
+
+                // Grid de carátulas sobre el estante
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 px-4 items-end pb-1';
+
+                shelfItems.forEach(item => {
+                    gridDiv.appendChild(createShelfCase(item));
                 });
+
+                // La balda de madera en la base
+                const woodShelfBar = document.createElement('div');
+                woodShelfBar.className = 'wood-shelf h-5 w-full rounded-sm shadow-2xl mt-1';
+
+                shelfDiv.appendChild(gridDiv);
+                shelfDiv.appendChild(woodShelfBar);
+                bookshelf.appendChild(shelfDiv);
             }
         }
 
-        // Helper universal para mostrar imágenes de logos
-        function renderPlatformLogos(item) {
-            if (!item.platform) return '';
+        // Crear la caja física del medio sobre la balda
+        function createShelfCase(item) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex flex-col items-center group cursor-pointer transition-transform duration-200 hover:-translate-y-2';
+            wrapper.onclick = () => openDetailModal(item.id);
 
-            let logosToRender = [];
-
-            if (item.platform_logo) {
-                logosToRender = item.platform_logo.split(',').filter(Boolean);
-            }
-
-            if (logosToRender.length === 0) {
-                const platformText = item.platform.toLowerCase();
-                for (const [key, logoUrl] of Object.entries(PROVIDER_LOGOS)) {
-                    if (platformText.includes(key)) {
-                        logosToRender.push(logoUrl);
-                    }
-                }
-            }
-
-            if (logosToRender.length > 0) {
-                return `<div class="flex items-center gap-1.5 mt-2">
-                    ${logosToRender.map(url => `<img src="${url}" class="w-6 h-6 rounded-md object-cover shadow border border-slate-700/80" title="${item.platform}">`).join('')}
-                </div>`;
-            }
-
-            const platforms = item.platform.split(',').map(p => p.trim());
-            return `<div class="flex flex-wrap items-center gap-1 mt-2">
-                ${platforms.map(p => `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700/60 flex items-center gap-1"><i class="fa-solid fa-play text-[8px]"></i> ${p}</span>`).join('')}
-            </div>`;
-        }
-
-        // Crear tarjeta de película/medio
-        function createMediaCard(item) {
-            const card = document.createElement('div');
-            card.className = 'group bg-slate-800 rounded-xl overflow-hidden border border-slate-700/60 hover:border-indigo-500/50 transition-all duration-300 flex flex-col shadow-lg hover:-translate-y-1 relative';
-
-            const badgeColor = {
-                completed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-                in_progress: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-                planned: 'bg-slate-500/20 text-slate-400 border-slate-500/30'
-            }[item.status] || 'bg-slate-500/20 text-slate-400';
-
-            const statusText = {
-                completed: 'Completado',
-                in_progress: 'En curso',
-                planned: 'Pendiente'
-            }[item.status] || item.status;
-
-            card.innerHTML = `
-                <div class="relative aspect-[2/3] overflow-hidden bg-slate-900">
-                    <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
+            wrapper.innerHTML = `
+                <div class="relative rounded-sm overflow-hidden case-shadow border border-white/20 bg-black aspect-[2/3] w-full">
+                    <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
                     
-                    <div class="absolute top-2 right-2 flex flex-col items-end gap-1">
-                        <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border backdrop-blur-md ${badgeColor}">
-                            ${statusText}
-                        </span>
-                        ${item.in_library ? `
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
-                                <i class="fa-solid fa-house text-[9px]"></i> Biblioteca
-                            </span>
-                        ` : ''}
-                        ${item.to_buy ? `
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
-                                <i class="fa-solid fa-cart-shopping text-[9px]"></i> Compra
-                            </span>
-                        ` : ''}
-                    </div>
-
                     ${item.rating > 0 ? `
-                        <div class="absolute bottom-2 left-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-md text-amber-400 text-xs font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-star"></i>
-                            <span>${item.rating} / 10</span>
+                        <div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <i class="fa-solid fa-star text-[9px]"></i> ${item.rating}
                         </div>
                     ` : ''}
                 </div>
-                
-                <div class="p-3 flex-1 flex flex-col justify-between">
+
+                <!-- Placa de título bajo el estante -->
+                <div class="mt-1 bg-stone-950/90 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/50 truncate max-w-full text-center shadow-md">
+                    ${item.title}
+                </div>
+            `;
+            return wrapper;
+        }
+
+        // Abrir Ficha Detallada
+        function openDetailModal(id) {
+            const item = items.find(i => i.id == id);
+            if (!item) return;
+
+            const modalContent = document.getElementById('detailModalContent');
+            
+            let logosHTML = '';
+            if (item.platform_logo) {
+                const logos = item.platform_logo.split(',').filter(Boolean);
+                logosHTML = `<div class="flex items-center gap-2 mt-2">
+                    ${logos.map(url => `<img src="${url}" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
+                </div>`;
+            } else if (item.platform) {
+                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-tv mr-1"></i> ${item.platform}</p>`;
+            }
+
+            modalContent.innerHTML = `
+                <div class="w-full md:w-1/3 flex-shrink-0">
+                    <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover aspect-[2/3]">
+                </div>
+                <div class="w-full md:w-2/3 flex flex-col justify-between">
                     <div>
-                        <h4 class="font-bold text-sm text-slate-100 line-clamp-1">${item.title}</h4>
-                        ${item.subtitle ? `<p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.subtitle}</p>` : ''}
-                        
-                        <!-- Logotipos de las plataformas debajo del título -->
-                        ${renderPlatformLogos(item)}
-                    </div>
-                    
-                    <div class="mt-3 pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
-                        <span class="capitalize">${getCategoryName(item.category)}</span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="editItem('${item.id}')" class="hover:text-indigo-400 transition" title="Editar">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="deleteItem('${item.id}')" class="hover:text-red-400 transition" title="Eliminar">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                        <div class="flex items-start justify-between gap-2">
+                            <h2 class="text-2xl font-bold text-amber-100">${item.title}</h2>
+                            <div class="flex items-center gap-2">
+                                <button onclick="editItem('${item.id}')" class="text-amber-400 hover:text-amber-300 p-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteItem('${item.id}')" class="text-rose-400 hover:text-rose-300 p-1" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
+
+                        ${item.subtitle ? `<p class="text-sm text-amber-400/80 mt-1">${item.subtitle}</p>` : ''}
+
+                        <div class="flex items-center gap-3 mt-3">
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/50 uppercase font-bold tracking-wider">${getCategoryName(item.category)}</span>
+                            ${item.rating > 0 ? `<span class="text-xs font-bold text-amber-400 flex items-center gap-1"><i class="fa-solid fa-star"></i> ${item.rating} / 10</span>` : ''}
+                        </div>
+
+                        ${logosHTML ? `<div class="mt-4"><p class="text-xs font-semibold text-stone-400 uppercase">Disponible en:</p>${logosHTML}</div>` : ''}
+
+                        <div class="mt-4 pt-4 border-t border-amber-900/30">
+                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1">Sinopsis / Trama</h4>
+                            <p class="text-sm text-stone-300 leading-relaxed">${item.review || 'Sin descripción o sinopsis disponible.'}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-amber-900/30">
+                        <span>Estado: <strong class="text-amber-200 capitalize">${item.status}</strong></span>
+                        ${item.in_library ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i> En Biblioteca Física</span>` : ''}
                     </div>
                 </div>
             `;
-            return card;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
         }
 
         function getCategoryName(cat) {
@@ -442,21 +409,15 @@
             currentCategoryFilter = cat;
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if (btn.dataset.cat === cat) {
-                    btn.className = 'cat-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
-                } else if (btn.dataset.cat === 'library') {
-                    btn.className = 'cat-btn text-indigo-400 hover:text-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
-                } else if (btn.dataset.cat === 'pending_watch') {
-                    btn.className = 'cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
-                } else if (btn.dataset.cat === 'shopping_list') {
-                    btn.className = 'cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
+                    btn.className = 'cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
                 } else {
-                    btn.className = 'cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                    btn.className = 'cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
                 }
             });
             renderItems();
         }
 
-        // IMPORTAR DESDE LETTERBOXD CON BÚSQUEDA AUTOMÁTICA EN TMDB
+        // CSV Letterboxd Import
         async function importLetterboxdCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -471,24 +432,16 @@
                 const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
                 if (lines.length <= 1) return alert('El archivo CSV está vacío');
 
-                // Detectar separador (coma o punto y coma)
-                const firstLine = lines[0];
-                const delimiter = firstLine.includes(';') ? ';' : ',';
-                const headers = firstLine.toLowerCase().split(delimiter).map(h => h.trim().replace(/^"(.*)"$/, '$1'));
+                const delimiter = lines[0].includes(';') ? ';' : ',';
+                const headers = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/^"(.*)"$/, '$1'));
 
-                // Detectar columnas clave de Letterboxd / IMDb
                 const nameIdx = headers.findIndex(h => h === 'name' || h === 'title' || h.includes('titulo') || h.includes('título'));
                 const yearIdx = headers.findIndex(h => h === 'year' || h.includes('año'));
-                const ratingIdx = headers.findIndex(h => h === 'rating' || h.includes('puntuacion') || h.includes('puntuación'));
+                const ratingIdx = headers.findIndex(h => h === 'rating' || h.includes('puntuacion'));
 
-                if (nameIdx === -1) {
-                    return alert('No se pudo encontrar la columna de Títulos ("Name" o "Title") en el CSV.');
-                }
+                if (nameIdx === -1) return alert('No se encontró la columna de Títulos en el CSV.');
 
-                // Mostrar modal de progreso
                 progressModal.classList.remove('hidden');
-                progressBar.style.width = '0%';
-
                 const totalMovies = lines.length - 1;
                 const itemsToInsert = [];
 
@@ -499,18 +452,14 @@
 
                     const year = yearIdx !== -1 ? cols[yearIdx] : '';
                     let rawRating = ratingIdx !== -1 ? parseFloat(cols[ratingIdx]) : 0;
-                    
-                    // Ajustar escala si Letterboxd usa estrellas 1-5
                     let rating = isNaN(rawRating) ? 0 : rawRating;
-                    if (rating > 0 && rating <= 5) rating = rating * 2; // Convertir a escala 10
+                    if (rating > 0 && rating <= 5) rating = rating * 2;
 
-                    // Actualizar barra de progreso
-                    const percent = Math.round((i / totalMovies) * 100);
-                    progressBar.style.width = percent + '%';
+                    progressBar.style.width = Math.round((i / totalMovies) * 100) + '%';
                     progressStatus.textContent = `Procesando ${i} de ${totalMovies}: "${title}"`;
 
-                    // Búsqueda en TMDB en tiempo real
                     let coverUrl = '';
+                    let overview = '';
                     let platformNames = '';
                     let platformLogos = '';
 
@@ -523,11 +472,9 @@
 
                         if (tmdbData.results && tmdbData.results.length > 0) {
                             const match = tmdbData.results[0];
-                            if (match.poster_path) {
-                                coverUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
-                            }
+                            if (match.poster_path) coverUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
+                            overview = match.overview || '';
 
-                            // Obtener plataformas
                             const providerInfo = await fetchWatchProviders('movie', match.id);
                             platformNames = providerInfo.names;
                             platformLogos = providerInfo.logos;
@@ -536,10 +483,7 @@
                         console.error('Error buscando película:', title, err);
                     }
 
-                    // Fallback imagen si no se encuentra en TMDB
-                    if (!coverUrl) {
-                        coverUrl = 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=' + encodeURIComponent(title);
-                    }
+                    if (!coverUrl) coverUrl = 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=' + encodeURIComponent(title);
 
                     itemsToInsert.push({
                         title: title,
@@ -550,42 +494,36 @@
                         cover_url: coverUrl,
                         platform: platformNames,
                         platform_logo: platformLogos,
+                        review: overview,
                         in_library: false,
                         to_buy: false
                     });
                 }
 
-                // Guardar todo en Supabase
                 if (itemsToInsert.length > 0) {
-                    progressStatus.textContent = 'Guardando en la base de datos...';
                     try {
                         const { error } = await supabaseClient.from('media_items').insert(itemsToInsert);
                         if (error) throw error;
-                        
                         setTimeout(() => {
                             progressModal.classList.add('hidden');
-                            alert(`¡Éxito! Se han importado ${itemsToInsert.length} películas con sus carátulas de TMDB.`);
+                            alert(`¡Éxito! Importadas ${itemsToInsert.length} películas con sus tramas y carátulas.`);
                             fetchItems();
                         }, 500);
                     } catch (err) {
                         progressModal.classList.add('hidden');
-                        alert('Error al guardar en la base de datos: ' + err.message);
+                        alert('Error guardando en Supabase: ' + err.message);
                     }
-                } else {
-                    progressModal.classList.add('hidden');
                 }
             };
             reader.readAsText(file);
         }
 
-        // Gestión del Modal
+        // Funciones Formulario Modal
         function openModal() {
             document.getElementById('editingItemId').value = '';
-            document.getElementById('formPlatformLogo').value = '';
             document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
             document.getElementById('searchResults').classList.add('hidden');
-            document.getElementById('searchResults').innerHTML = '';
             handleCategoryChange();
             document.getElementById('itemModal').classList.remove('hidden');
         }
@@ -598,24 +536,17 @@
             const cat = document.getElementById('formCategory').value;
             const subLabel = document.getElementById('subtitleLabel');
             const platformContainer = document.getElementById('platformContainer');
-
             if (cat === 'movie' || cat === 'tv') {
                 subLabel.textContent = 'Año / Director';
                 platformContainer.classList.remove('hidden');
-            } else if (cat === 'book' || cat === 'comic') {
-                subLabel.textContent = 'Autor / Ilustrador';
-                platformContainer.classList.add('hidden');
-            } else if (cat === 'game') {
-                subLabel.textContent = 'Desarrollador / Plataforma';
-                platformContainer.classList.add('hidden');
-            } else if (cat === 'travel') {
-                subLabel.textContent = 'País / Ciudad';
+            } else {
+                subLabel.textContent = 'Autor / Creador';
                 platformContainer.classList.add('hidden');
             }
         }
 
-        // Cargar datos en el formulario para Editar
         function editItem(id) {
+            closeDetailModal();
             const item = items.find(i => i.id == id);
             if (!item) return;
 
@@ -633,15 +564,11 @@
             document.getElementById('formRating').value = item.rating || 0;
             document.getElementById('formInLibrary').checked = item.in_library || false;
             document.getElementById('formToBuy').checked = item.to_buy || false;
-            document.getElementById('formCurrentProg').value = item.current_progress || 0;
-            document.getElementById('formTotalProg').value = item.total_progress || 0;
             document.getElementById('formReview').value = item.review || '';
 
-            document.getElementById('searchResults').classList.add('hidden');
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
-        // Guardar o Actualizar elemento en Supabase
         async function saveItem(e) {
             e.preventDefault();
             const id = document.getElementById('editingItemId').value;
@@ -657,8 +584,6 @@
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
                 in_library: document.getElementById('formInLibrary').checked,
                 to_buy: document.getElementById('formToBuy').checked,
-                current_progress: parseInt(document.getElementById('formCurrentProg').value) || 0,
-                total_progress: parseInt(document.getElementById('formTotalProg').value) || 0,
                 review: document.getElementById('formReview').value
             };
 
@@ -680,15 +605,11 @@
             }
         }
 
-        // Eliminar elemento de Supabase
         async function deleteItem(id) {
             if (!confirm('¿Seguro que quieres eliminar este elemento?')) return;
             try {
-                const { error } = await supabaseClient
-                    .from('media_items')
-                    .delete()
-                    .eq('id', id);
-
+                closeDetailModal();
+                const { error } = await supabaseClient.from('media_items').delete().eq('id', id);
                 if (error) throw error;
                 fetchItems();
             } catch (err) {
@@ -696,64 +617,59 @@
             }
         }
 
-        // Consultar plataformas y logotipos oficiales en España
         async function fetchWatchProviders(type, tmdbId) {
             try {
                 const res = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
                 const data = await res.json();
-                
                 if (data.results && data.results.ES && data.results.ES.flatrate) {
                     const providers = data.results.ES.flatrate;
                     const names = providers.slice(0, 3).map(p => p.provider_name).join(', ');
                     const logos = providers.slice(0, 3).map(p => `https://image.tmdb.org/t/p/w92${p.logo_path}`).join(',');
-                    return { names, logos, raw: providers };
+                    return { names, logos };
                 }
             } catch (e) {
-                console.error('Error obteniendo plataformas:', e);
+                console.error('Error plataformas:', e);
             }
-            return { names: '', logos: '', raw: [] };
+            return { names: '', logos: '' };
         }
 
-        // Búsqueda automática de portadas (TMDB / Google Books)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
             const searchBtn = document.getElementById('searchBtn');
             const resultsDiv = document.getElementById('searchResults');
 
-            if (!title) return alert('Escribe primero el título a buscar');
+            if (!title) return alert('Escribe primero el título');
 
-            searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+            searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             resultsDiv.innerHTML = '';
             resultsDiv.classList.add('hidden');
 
             try {
                 if (cat === 'movie' || cat === 'tv') {
                     const type = cat === 'movie' ? 'movie' : 'tv';
-                    const url = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`;
-                    
-                    const res = await fetch(url);
+                    const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`);
                     const data = await res.json();
                     
                     if (data.results && data.results.length > 0) {
                         resultsDiv.classList.remove('hidden');
-
                         for (const item of data.results.slice(0, 5)) {
                             const name = item.title || item.name;
                             const releaseDate = item.release_date || item.first_air_date || '';
                             const year = releaseDate ? releaseDate.split('-')[0] : 'N/A';
                             const poster = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : 'https://via.placeholder.com/92x138?text=No+Img';
                             const fullPoster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-                            
-                            // Obtener plataformas y logotipos
+                            const overview = item.overview || '';
+
                             const providerInfo = await fetchWatchProviders(type, item.id);
 
                             const row = document.createElement('div');
-                            row.className = 'flex items-center justify-between p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition gap-2';
-                            row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster, providerInfo.names, providerInfo.logos);
+                            row.className = 'flex items-center justify-between p-2 hover:bg-stone-800 rounded-lg cursor-pointer transition gap-2';
+                            row.onclick = () => {
+                                selectResult(name, `Año: ${year}`, fullPoster, providerInfo.names, providerInfo.logos);
+                                document.getElementById('formReview').value = overview;
+                            };
                             
-                            const logoImgs = providerInfo.raw.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" class="w-4 h-4 rounded object-cover" title="${p.provider_name}">`).join('');
-
                             row.innerHTML = `
                                 <div class="flex items-center gap-3 overflow-hidden">
                                     <img src="${poster}" class="w-10 h-14 object-cover rounded flex-shrink-0">
@@ -762,46 +678,13 @@
                                         <p class="text-xs text-slate-400">${year}</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-1 flex-shrink-0">
-                                    ${logoImgs}
-                                </div>
                             `;
                             resultsDiv.appendChild(row);
                         }
-                    } else {
-                        alert('No se encontraron coincidencias.');
-                    }
-                } else if (cat === 'book' || cat === 'comic') {
-                    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}`);
-                    const data = await res.json();
-                    if (data.items && data.items.length > 0) {
-                        resultsDiv.classList.remove('hidden');
-                        data.items.slice(0, 5).forEach(item => {
-                            const book = item.volumeInfo;
-                            const bTitle = book.title;
-                            const authors = book.authors ? book.authors.join(', ') : '';
-                            const thumb = book.imageLinks?.thumbnail ? book.imageLinks.thumbnail.replace('http:', 'https:') : '';
-
-                            const row = document.createElement('div');
-                            row.className = 'flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition';
-                            row.onclick = () => selectResult(bTitle, authors, thumb, '', '');
-                            
-                            row.innerHTML = `
-                                <img src="${thumb || 'https://via.placeholder.com/92x138?text=No+Img'}" class="w-10 h-14 object-cover rounded flex-shrink-0">
-                                <div class="overflow-hidden">
-                                    <p class="text-sm font-semibold text-slate-200 truncate">${bTitle}</p>
-                                    <p class="text-xs text-slate-400 truncate">${authors}</p>
-                                </div>
-                            `;
-                            resultsDiv.appendChild(row);
-                        });
-                    } else {
-                        alert('No se encontraron coincidencias.');
                     }
                 }
             } catch (e) {
-                console.error('Error buscando información:', e);
-                alert('Ocurrió un error en la búsqueda.');
+                console.error(e);
             } finally {
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
