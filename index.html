@@ -11,7 +11,7 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Estilo clásico de madera hiperrealista tipo Delicious Library */
+        /* Pared de madera hiperrealista tipo Delicious Library */
         .delicious-wall {
             background-color: #3b2314;
             background-image: 
@@ -43,15 +43,21 @@
 
     <!-- Header / Navbar -->
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-40 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-amber-700 rounded-lg text-white shadow-md border border-amber-500/30">
                     <i class="fa-solid fa-book-bookmark text-xl"></i>
                 </div>
                 <div>
                     <h1 class="font-bold text-xl leading-tight text-amber-100">Media Tracker</h1>
-                    <p class="text-xs text-amber-300/80">Estantería Virtual Delicious Library</p>
+                    <p class="text-xs text-amber-300/80">Estantería Virtual</p>
                 </div>
+            </div>
+
+            <!-- Buscador en tiempo real -->
+            <div class="relative flex-1 max-w-md mx-md-4">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70 text-sm"></i>
+                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, director, actor..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
             </div>
             
             <div class="flex items-center gap-3">
@@ -125,11 +131,16 @@
             <!-- Baldas e ítems cargados aquí -->
         </div>
 
+        <!-- Control de Paginación -->
+        <div id="paginationControls" class="mt-10 flex items-center justify-center gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl">
+            <!-- Inyectado dinámicamente -->
+        </div>
+
         <!-- Estado Vacío -->
         <div id="emptyState" class="hidden text-center py-20 bg-amber-950/80 text-amber-100 rounded-2xl border border-amber-800/50">
             <i class="fa-solid fa-boxes-packing text-5xl text-amber-600/60 mb-4"></i>
             <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
-            <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta los filtros superiores.</p>
+            <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta la búsqueda y filtros.</p>
         </div>
     </main>
 
@@ -271,6 +282,9 @@
 
         let items = [];
         let currentCategoryFilter = 'all';
+        let searchQuery = '';
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 18; // 18 carátulas por página (3 estantes de 6)
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchItems();
@@ -291,6 +305,12 @@
             }
         }
 
+        function handleSearch() {
+            searchQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
+            currentPage = 1;
+            renderItems();
+        }
+
         function renderItems() {
             const bookshelf = document.getElementById('bookshelfContainer');
             const emptyState = document.getElementById('emptyState');
@@ -298,6 +318,7 @@
 
             bookshelf.innerHTML = '';
 
+            // Filtrado general (Categoría + Estado + Búsqueda)
             const filtered = items.filter(item => {
                 let catMatch = false;
                 if (currentCategoryFilter === 'all') catMatch = true;
@@ -307,19 +328,35 @@
                 else catMatch = item.category === currentCategoryFilter;
 
                 const statusMatch = statusFilter === 'all' || item.status === statusFilter;
-                return catMatch && statusMatch;
+                
+                const searchMatch = !searchQuery || 
+                    (item.title && item.title.toLowerCase().includes(searchQuery)) ||
+                    (item.subtitle && item.subtitle.toLowerCase().includes(searchQuery)) ||
+                    (item.review && item.review.toLowerCase().includes(searchQuery));
+
+                return catMatch && statusMatch && searchMatch;
             });
 
             if (filtered.length === 0) {
                 emptyState.classList.remove('hidden');
+                document.getElementById('paginationControls').innerHTML = '';
                 return;
             }
 
             emptyState.classList.add('hidden');
 
-            const ITEMS_PER_SHELF = 6;
-            for (let i = 0; i < filtered.length; i += ITEMS_PER_SHELF) {
-                const shelfItems = filtered.slice(i, i + ITEMS_PER_SHELF);
+            // Paginación: Seleccionar los 18 correspondientes
+            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const pageItems = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+            // Renderizar de 6 en 6 por estante (3 estantes máximo por página)
+            const SHELF_CAPACITY = 6;
+            for (let i = 0; i < pageItems.length; i += SHELF_CAPACITY) {
+                const shelfItems = pageItems.slice(i, i + SHELF_CAPACITY);
                 const shelfDiv = document.createElement('div');
                 shelfDiv.className = 'relative flex flex-col';
 
@@ -337,6 +374,32 @@
                 shelfDiv.appendChild(woodShelfBar);
                 bookshelf.appendChild(shelfDiv);
             }
+
+            renderPagination(totalPages, filtered.length);
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            const container = document.getElementById('paginationControls');
+            if (totalPages <= 1) {
+                container.innerHTML = `<span class="text-xs text-amber-300 font-medium">Mostrando ${totalItems} elementos</span>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 hover:bg-stone-700 rounded-lg font-medium transition"'}>
+                    <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                </button>
+                <span class="text-xs text-amber-300 font-semibold px-2">Página ${currentPage} de ${totalPages}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 hover:bg-stone-700 rounded-lg font-medium transition"'}>
+                    Siguiente <i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
+            `;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderItems();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function createShelfCase(item) {
@@ -363,7 +426,7 @@
         }
 
         function openDetailModal(id) {
-            const item = items.find(i => i.id == id);
+            const item = items.find(i => String(i.id) === String(id));
             if (!item) return;
 
             const modalContent = document.getElementById('detailModalContent');
@@ -425,7 +488,7 @@
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
-        // Botón especial para recargar datos y sinopsis individualmente desde TMDB
+        // Recarga de datos TMDB corregida para evitar borrar registros
         async function reloadTMDBData(id, title) {
             const btn = document.getElementById(`reloadBtn-${id}`);
             if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Buscando...';
@@ -439,7 +502,6 @@
                     let overview = match.overview || '';
                     let coverUrl = match.poster_path ? `https://image.tmdb.org/t/p/w500${match.poster_path}` : '';
 
-                    // Fallback en inglés si no hay sinopsis traducida
                     if (!overview) {
                         const enRes = await fetch(`https://api.themoviedb.org/3/movie/${match.id}?api_key=${TMDB_API_KEY}&language=en-US`);
                         const enData = await enRes.json();
@@ -499,6 +561,7 @@
 
         function setCategoryFilter(cat) {
             currentCategoryFilter = cat;
+            currentPage = 1;
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if (btn.dataset.cat === cat) {
                     btn.className = 'cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
@@ -509,7 +572,7 @@
             renderItems();
         }
 
-        // Importación CSV con captura garantizada de Sinopsis (ES + EN)
+        // Importación CSV con captura de sinopsis y reparto
         async function importLetterboxdCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -661,7 +724,7 @@
 
         function editItem(id) {
             closeDetailModal();
-            const item = items.find(i => i.id == id);
+            const item = items.find(i => String(i.id) === String(id));
             if (!item) return;
 
             document.getElementById('editingItemId').value = item.id;
