@@ -185,9 +185,9 @@
 
     <!-- Application JavaScript Logic -->
     <script>
-        // Supabase Configuration
-        const SUPABASE_URL = 'https://akyewbyhbgcvlclbkerb.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_dU4LsS18yL-zdM_3FBe7ew_ONjxhPvr';
+        // Configuración de Supabase (URL base limpia sin /rest/v1/)
+        const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
 
         // TMDB API Key v3
         const TMDB_API_KEY = '592f0a9b86580dc2aae33e086a9116cb';
@@ -197,12 +197,12 @@
         let items = [];
         let currentCategoryFilter = 'all';
 
-        // Initial Load
+        // Carga inicial
         document.addEventListener('DOMContentLoaded', () => {
             fetchItems();
         });
 
-        // Fetch Items from Supabase
+        // Obtener elementos desde Supabase
         async function fetchItems() {
             try {
                 const { data, error } = await supabaseClient
@@ -218,7 +218,7 @@
             }
         }
 
-        // Render Grid
+        // Renderizar la cuadrícula de elementos
         function renderItems() {
             const grid = document.getElementById('mediaGrid');
             const emptyState = document.getElementById('emptyState');
@@ -242,7 +242,7 @@
             }
         }
 
-        // Create HTML Card
+        // Crear la tarjeta visual del elemento
         function createMediaCard(item) {
             const card = document.createElement('div');
             card.className = 'group bg-slate-800 rounded-xl overflow-hidden border border-slate-700/60 hover:border-indigo-500/50 transition-all duration-300 flex flex-col shadow-lg hover:-translate-y-1';
@@ -307,7 +307,7 @@
             renderItems();
         }
 
-        // Modal Handlers
+        // Gestión del Modal
         function openModal() {
             document.getElementById('mediaForm').reset();
             document.getElementById('searchResults').classList.add('hidden');
@@ -329,7 +329,7 @@
             else if (cat === 'travel') subLabel.textContent = 'País / Ciudad';
         }
 
-        // Save Item to Supabase
+        // Guardar elemento en Supabase
         async function saveItem(e) {
             e.preventDefault();
             const newItem = {
@@ -358,7 +358,7 @@
             }
         }
 
-        // Delete Item
+        // Eliminar elemento de Supabase
         async function deleteItem(id) {
             if (!confirm('¿Seguro que quieres eliminar este elemento?')) return;
             try {
@@ -374,7 +374,7 @@
             }
         }
 
-        // Auto Cover Search (List matches)
+        // Búsqueda automática de portadas (TMDB / Google Books)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
