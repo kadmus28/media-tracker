@@ -1032,24 +1032,28 @@
                         }
                     }
                 } else if (cat === 'book' || cat === 'comic') {
-                    // Búsqueda en Google Books API (Totalmente Pública y sin restricciones)
+                    // Búsqueda Robusta en Google Books API
                     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
                     const data = await res.json();
 
                     if (data.items && data.items.length > 0) {
                         resultsDiv.classList.remove('hidden');
                         for (const book of data.items) {
-                            const info = book.volumeInfo;
+                            const info = book.volumeInfo || {};
                             const name = info.title || title;
-                            const authors = info.authors ? info.authors.join(', ') : 'Autor desconocido';
+                            const authors = info.authors ? info.authors.join(', ') : 'Autor no indicado';
                             const publishedDate = info.publishedDate || '';
                             const year = publishedDate ? publishedDate.split('-')[0] : 'N/A';
                             
-                            let thumbnail = 'https://via.placeholder.com/92x138?text=Sin+Portada';
+                            let thumbnail = '';
                             if (info.imageLinks) {
-                                thumbnail = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || thumbnail;
+                                thumbnail = info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '';
                                 thumbnail = thumbnail.replace('http:', 'https:');
                             }
+                            if (!thumbnail) {
+                                thumbnail = `https://via.placeholder.com/300x450/334155/ffffff?text=${encodeURIComponent(name)}`;
+                            }
+
                             const description = info.description || 'Sin sinopsis disponible.';
 
                             const row = document.createElement('div');
@@ -1061,7 +1065,7 @@
 
                             row.innerHTML = `
                                 <div class="flex items-center gap-3 overflow-hidden">
-                                    <img src="${thumbnail}" class="w-10 h-14 object-cover rounded flex-shrink-0">
+                                    <img src="${thumbnail}" class="w-10 h-14 object-cover rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/92x138/1e293b/94a3b8?text=Libro'">
                                     <div class="overflow-hidden">
                                         <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
                                         <p class="text-xs text-slate-400">${authors} (${year})</p>
@@ -1070,9 +1074,11 @@
                             `;
                             resultsDiv.appendChild(row);
                         }
+                    } else {
+                        alert('No se encontraron libros para ese título.');
                     }
                 } else if (cat === 'game') {
-                    // Búsqueda en RAWG Video Games Database API
+                    // Búsqueda Directa en RAWG Video Games Database
                     const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
                     const data = await res.json();
 
@@ -1082,7 +1088,7 @@
                             const name = game.name || title;
                             const released = game.released || '';
                             const year = released ? released.split('-')[0] : 'N/A';
-                            const cover = game.background_image || 'https://via.placeholder.com/92x138?text=Sin+Imagen';
+                            const cover = game.background_image || 'https://via.placeholder.com/300x450/0f172a/ffffff?text=Videojuego';
                             const genres = game.genres ? game.genres.map(g => g.name).join(', ') : '';
 
                             const row = document.createElement('div');
@@ -1095,7 +1101,7 @@
 
                             row.innerHTML = `
                                 <div class="flex items-center gap-3 overflow-hidden">
-                                    <img src="${cover}" class="w-10 h-14 object-cover rounded flex-shrink-0">
+                                    <img src="${cover}" class="w-10 h-14 object-cover rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/92x138/1e293b/94a3b8?text=Juego'">
                                     <div class="overflow-hidden">
                                         <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
                                         <p class="text-xs text-slate-400">${year} ${genres ? `• ${genres}` : ''}</p>
@@ -1104,10 +1110,13 @@
                             `;
                             resultsDiv.appendChild(row);
                         }
+                    } else {
+                        alert('No se encontraron videojuegos para ese título.');
                     }
                 }
             } catch (e) {
-                console.error(e);
+                console.error('Error en búsqueda:', e);
+                alert('Ocurrió un error al consultar el servicio de búsqueda.');
             } finally {
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
