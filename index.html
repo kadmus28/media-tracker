@@ -11,31 +11,33 @@
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Textura y efecto de madera para los estantes */
-        .wood-bg {
-            background-color: #2b1810;
-            background-image: radial-gradient(#4a2b1b 15%, transparent 16%), radial-gradient(#3a2013 15%, transparent 16%);
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
+        /* Fondo de paneles de madera realista */
+        .wood-wall-bg {
+            background-color: #1e100a;
+            background-image: 
+                linear-gradient(90deg, rgba(0,0,0,0.4) 0%, transparent 2%, transparent 98%, rgba(0,0,0,0.4) 100%),
+                repeating-linear-gradient(0deg, #2c1810, #2c1810 120px, #24130c 120px, #24130c 240px);
+            background-size: 100% 100%, 100% 240px;
         }
+        /* Balda de madera con volumen y bisel */
         .wood-shelf {
-            background: linear-gradient(to bottom, #d2a679 0%, #996633 40%, #664422 100%);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.7), inset 0 2px 3px rgba(255, 255, 255, 0.3);
-            border-bottom: 4px solid #3d2314;
+            background: linear-gradient(to bottom, #d2a679 0%, #a3703f 30%, #6d4520 70%, #422810 100%);
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.8), inset 0 2px 3px rgba(255, 255, 255, 0.35);
+            border-bottom: 5px solid #231308;
         }
         .case-shadow {
-            box-shadow: 6px 10px 15px rgba(0, 0, 0, 0.65), -1px 0 3px rgba(255, 255, 255, 0.2);
+            box-shadow: 8px 12px 18px rgba(0, 0, 0, 0.75), -1px 0 3px rgba(255, 255, 255, 0.25);
         }
     </style>
 </head>
-<body class="wood-bg text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="wood-wall-bg text-slate-100 min-h-screen font-sans flex flex-col">
 
     <!-- Header / Navbar -->
     <header class="border-b border-amber-950/80 bg-stone-950/90 backdrop-blur sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-amber-700 rounded-lg text-white shadow-md">
-                    <i class="fa-solid fa-book-bookmark text-xl"></i>
+                    <i class="fa-solid fa-film text-xl"></i>
                 </div>
                 <div>
                     <h1 class="font-bold text-xl leading-tight text-amber-100">Media Tracker</h1>
@@ -63,7 +65,7 @@
         <div class="bg-stone-900 rounded-2xl max-w-md w-full p-6 border border-amber-900/40 shadow-2xl text-center">
             <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400 animate-bounce mb-3"></i>
             <h3 class="text-lg font-bold text-white mb-1">Importando de Letterboxd</h3>
-            <p class="text-xs text-slate-400 mb-4">Buscando carátulas, tramas y datos en TMDB...</p>
+            <p class="text-xs text-slate-400 mb-4">Buscando carátulas, sinopsis y reparto en TMDB...</p>
             <div class="w-full bg-stone-950 rounded-full h-3 mb-2 overflow-hidden border border-stone-800">
                 <div id="importProgressBar" class="bg-amber-600 h-full w-0 transition-all duration-200"></div>
             </div>
@@ -74,8 +76,8 @@
     <!-- Main Content Area: Estantería de Madera -->
     <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
         
-        <!-- Bar de Filtros -->
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-stone-900/80 p-3 rounded-xl border border-amber-900/40 backdrop-blur shadow-lg">
+        <!-- Barra de Filtros -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-stone-900/90 p-3 rounded-xl border border-amber-900/50 backdrop-blur shadow-2xl">
             <div class="flex flex-wrap gap-1" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
                 <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-amber-200/70 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
@@ -115,14 +117,14 @@
         </div>
 
         <!-- Estado Vacío -->
-        <div id="emptyState" class="hidden text-center py-20 bg-stone-900/60 rounded-2xl border border-amber-900/30">
+        <div id="emptyState" class="hidden text-center py-20 bg-stone-900/80 rounded-2xl border border-amber-900/40">
             <i class="fa-solid fa-boxes-packing text-5xl text-amber-800/60 mb-4"></i>
             <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
             <p class="text-sm text-amber-400/60 mt-1">Añade nuevos contenidos o ajusta los filtros superiores.</p>
         </div>
     </main>
 
-    <!-- Modal de Detalle/Ficha de Película/Medio -->
+    <!-- Modal de Detalle / Ficha Completa de Película -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 rounded-2xl max-w-2xl w-full p-6 border border-amber-900/50 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
@@ -203,13 +205,30 @@
                     </div>
                 </div>
 
-                <div class="space-y-2 mb-4">
-                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30 flex items-center gap-3">
-                        <input type="checkbox" id="formInLibrary" class="w-4 h-4 text-amber-600 bg-stone-900 border-amber-800 rounded focus:ring-amber-500">
-                        <label for="formInLibrary" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
-                            <i class="fa-solid fa-house text-amber-400"></i>
-                            Añadir a Mi Biblioteca (Propiedad física)
-                        </label>
+                <!-- Propiedad y Formato Físico -->
+                <div class="space-y-3 mb-4">
+                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="formInLibrary" onchange="toggleFormatSelector()" class="w-4 h-4 text-amber-600 bg-stone-900 border-amber-800 rounded focus:ring-amber-500">
+                            <label for="formInLibrary" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
+                                <i class="fa-solid fa-house text-amber-400"></i>
+                                Añadir a Mi Biblioteca (Propiedad física)
+                            </label>
+                        </div>
+
+                        <!-- Desplegable de formato físico -->
+                        <div id="formatContainer" class="hidden mt-3 pt-2 border-t border-amber-900/30">
+                            <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-1">Formato Físico:</label>
+                            <select id="formFormat" class="w-full bg-stone-900 border border-amber-900/50 rounded-lg px-3 py-1.5 text-xs text-amber-100 focus:outline-none focus:border-amber-600">
+                                <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
+                                <option value="Blu-ray">Blu-ray</option>
+                                <option value="DVD">DVD</option>
+                                <option value="Steelbook">Steelbook / Ed. Especial</option>
+                                <option value="VHS">VHS</option>
+                                <option value="Laserdisc">Laserdisc</option>
+                                <option value="Digital">Digital / Copia de seguridad</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30 flex items-center gap-3">
@@ -223,7 +242,7 @@
 
                 <div class="mb-6">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama / Reseña</label>
-                    <textarea id="formReview" rows="3" placeholder="Sinopsis o impresiones personales..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
+                    <textarea id="formReview" rows="3" placeholder="Sinopsis, trama o notas..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3">
@@ -290,14 +309,12 @@
 
             emptyState.classList.add('hidden');
 
-            // Dividir los elementos en grupos de 6 por estante
             const ITEMS_PER_SHELF = 6;
             for (let i = 0; i < filtered.length; i += ITEMS_PER_SHELF) {
                 const shelfItems = filtered.slice(i, i + ITEMS_PER_SHELF);
                 const shelfDiv = document.createElement('div');
                 shelfDiv.className = 'relative flex flex-col';
 
-                // Grid de carátulas sobre el estante
                 const gridDiv = document.createElement('div');
                 gridDiv.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 px-4 items-end pb-1';
 
@@ -305,7 +322,6 @@
                     gridDiv.appendChild(createShelfCase(item));
                 });
 
-                // La balda de madera en la base
                 const woodShelfBar = document.createElement('div');
                 woodShelfBar.className = 'wood-shelf h-5 w-full rounded-sm shadow-2xl mt-1';
 
@@ -315,7 +331,6 @@
             }
         }
 
-        // Crear la caja física del medio sobre la balda
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer transition-transform duration-200 hover:-translate-y-2';
@@ -332,7 +347,6 @@
                     ` : ''}
                 </div>
 
-                <!-- Placa de título bajo el estante -->
                 <div class="mt-1 bg-stone-950/90 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/50 truncate max-w-full text-center shadow-md">
                     ${item.title}
                 </div>
@@ -340,7 +354,7 @@
             return wrapper;
         }
 
-        // Abrir Ficha Detallada
+        // Ficha Completa con Reparto de Actores y Trama
         function openDetailModal(id) {
             const item = items.find(i => i.id == id);
             if (!item) return;
@@ -360,7 +374,9 @@
             modalContent.innerHTML = `
                 <div class="w-full md:w-1/3 flex-shrink-0">
                     <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover aspect-[2/3]">
+                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg shadow"><i class="fa-solid fa-compact-disc mr-1"></i> Formato: ${item.format}</div>` : ''}
                 </div>
+
                 <div class="w-full md:w-2/3 flex flex-col justify-between">
                     <div>
                         <div class="flex items-start justify-between gap-2">
@@ -371,7 +387,7 @@
                             </div>
                         </div>
 
-                        ${item.subtitle ? `<p class="text-sm text-amber-400/80 mt-1">${item.subtitle}</p>` : ''}
+                        ${item.subtitle ? `<p class="text-sm text-amber-400/80 mt-1 font-medium">${item.subtitle}</p>` : ''}
 
                         <div class="flex items-center gap-3 mt-3">
                             <span class="text-xs px-2.5 py-1 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/50 uppercase font-bold tracking-wider">${getCategoryName(item.category)}</span>
@@ -380,9 +396,11 @@
 
                         ${logosHTML ? `<div class="mt-4"><p class="text-xs font-semibold text-stone-400 uppercase">Disponible en:</p>${logosHTML}</div>` : ''}
 
-                        <div class="mt-4 pt-4 border-t border-amber-900/30">
-                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1">Sinopsis / Trama</h4>
-                            <p class="text-sm text-stone-300 leading-relaxed">${item.review || 'Sin descripción o sinopsis disponible.'}</p>
+                        <div class="mt-4 pt-4 border-t border-amber-900/30 space-y-3">
+                            <div>
+                                <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> Sinopsis / Trama</h4>
+                                <p class="text-sm text-stone-300 leading-relaxed">${item.review || 'Sin descripción disponible.'}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -398,6 +416,13 @@
 
         function closeDetailModal() {
             document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function toggleFormatSelector() {
+            const inLibrary = document.getElementById('formInLibrary').checked;
+            const formatContainer = document.getElementById('formatContainer');
+            if (inLibrary) formatContainer.classList.remove('hidden');
+            else formatContainer.classList.add('hidden');
         }
 
         function getCategoryName(cat) {
@@ -439,7 +464,7 @@
                 const yearIdx = headers.findIndex(h => h === 'year' || h.includes('año'));
                 const ratingIdx = headers.findIndex(h => h === 'rating' || h.includes('puntuacion'));
 
-                if (nameIdx === -1) return alert('No se encontró la columna de Títulos en el CSV.');
+                if (nameIdx === -1) return alert('No se encontró la columna de Títulos.');
 
                 progressModal.classList.remove('hidden');
                 const totalMovies = lines.length - 1;
@@ -460,6 +485,7 @@
 
                     let coverUrl = '';
                     let overview = '';
+                    let castText = '';
                     let platformNames = '';
                     let platformLogos = '';
 
@@ -475,6 +501,15 @@
                             if (match.poster_path) coverUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
                             overview = match.overview || '';
 
+                            // Obtener créditos / reparto
+                            try {
+                                const credRes = await fetch(`https://api.themoviedb.org/3/movie/${match.id}/credits?api_key=${TMDB_API_KEY}&language=es-ES`);
+                                const credData = await credRes.json();
+                                if (credData.cast) {
+                                    castText = credData.cast.slice(0, 5).map(c => c.name).join(', ');
+                                }
+                            } catch (e) {}
+
                             const providerInfo = await fetchWatchProviders('movie', match.id);
                             platformNames = providerInfo.names;
                             platformLogos = providerInfo.logos;
@@ -485,9 +520,11 @@
 
                     if (!coverUrl) coverUrl = 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=' + encodeURIComponent(title);
 
+                    const subtitleFull = [year ? `Año: ${year}` : '', castText ? `Reparto: ${castText}` : ''].filter(Boolean).join(' | ');
+
                     itemsToInsert.push({
                         title: title,
-                        subtitle: year ? `Año: ${year}` : '',
+                        subtitle: subtitleFull,
                         category: 'movie',
                         status: 'completed',
                         rating: rating,
@@ -506,7 +543,7 @@
                         if (error) throw error;
                         setTimeout(() => {
                             progressModal.classList.add('hidden');
-                            alert(`¡Éxito! Importadas ${itemsToInsert.length} películas con sus tramas y carátulas.`);
+                            alert(`¡Éxito! Importadas ${itemsToInsert.length} películas con tramas y reparto.`);
                             fetchItems();
                         }, 500);
                     } catch (err) {
@@ -518,12 +555,13 @@
             reader.readAsText(file);
         }
 
-        // Funciones Formulario Modal
+        // Modal Formulario
         function openModal() {
             document.getElementById('editingItemId').value = '';
             document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
             document.getElementById('searchResults').classList.add('hidden');
+            toggleFormatSelector();
             handleCategoryChange();
             document.getElementById('itemModal').classList.remove('hidden');
         }
@@ -537,7 +575,7 @@
             const subLabel = document.getElementById('subtitleLabel');
             const platformContainer = document.getElementById('platformContainer');
             if (cat === 'movie' || cat === 'tv') {
-                subLabel.textContent = 'Año / Director';
+                subLabel.textContent = 'Año / Director / Reparto';
                 platformContainer.classList.remove('hidden');
             } else {
                 subLabel.textContent = 'Autor / Creador';
@@ -563,9 +601,11 @@
             document.getElementById('formStatus').value = item.status || 'planned';
             document.getElementById('formRating').value = item.rating || 0;
             document.getElementById('formInLibrary').checked = item.in_library || false;
+            document.getElementById('formFormat').value = item.format || 'Blu-ray';
             document.getElementById('formToBuy').checked = item.to_buy || false;
             document.getElementById('formReview').value = item.review || '';
 
+            toggleFormatSelector();
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
@@ -583,6 +623,7 @@
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
                 in_library: document.getElementById('formInLibrary').checked,
+                format: document.getElementById('formInLibrary').checked ? document.getElementById('formFormat').value : null,
                 to_buy: document.getElementById('formToBuy').checked,
                 review: document.getElementById('formReview').value
             };
@@ -661,12 +702,20 @@
                             const fullPoster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
                             const overview = item.overview || '';
 
+                            let castText = '';
+                            try {
+                                const credRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/credits?api_key=${TMDB_API_KEY}&language=es-ES`);
+                                const credData = await credRes.json();
+                                if (credData.cast) castText = credData.cast.slice(0, 4).map(c => c.name).join(', ');
+                            } catch (e) {}
+
                             const providerInfo = await fetchWatchProviders(type, item.id);
 
                             const row = document.createElement('div');
                             row.className = 'flex items-center justify-between p-2 hover:bg-stone-800 rounded-lg cursor-pointer transition gap-2';
                             row.onclick = () => {
-                                selectResult(name, `Año: ${year}`, fullPoster, providerInfo.names, providerInfo.logos);
+                                const sub = [year ? `Año: ${year}` : '', castText ? `Reparto: ${castText}` : ''].filter(Boolean).join(' | ');
+                                selectResult(name, sub, fullPoster, providerInfo.names, providerInfo.logos);
                                 document.getElementById('formReview').value = overview;
                             };
                             
@@ -675,7 +724,7 @@
                                     <img src="${poster}" class="w-10 h-14 object-cover rounded flex-shrink-0">
                                     <div class="overflow-hidden">
                                         <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
-                                        <p class="text-xs text-slate-400">${year}</p>
+                                        <p class="text-xs text-slate-400">${year} ${castText ? `• ${castText}` : ''}</p>
                                     </div>
                                 </div>
                             `;
