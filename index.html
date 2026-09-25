@@ -44,12 +44,14 @@
     <!-- Header / Navbar -->
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-40 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-amber-700 rounded-lg text-white shadow-md border border-amber-500/30">
+            
+            <!-- Logo interactivo que resetea a "Todos" -->
+            <div onclick="resetToHome()" class="flex items-center space-x-3 cursor-pointer group">
+                <div class="p-2 bg-amber-700 group-hover:bg-amber-600 rounded-lg text-white shadow-md border border-amber-500/30 transition">
                     <i class="fa-solid fa-book-bookmark text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-xl leading-tight text-amber-100">Media Tracker</h1>
+                    <h1 class="font-bold text-xl leading-tight text-amber-100 group-hover:text-white transition">Media Tracker</h1>
                     <p class="text-xs text-amber-300/80">Estantería Virtual</p>
                 </div>
             </div>
@@ -305,6 +307,25 @@
             }
         }
 
+        // Volver al inicio al clicar en el logo
+        function resetToHome() {
+            currentCategoryFilter = 'all';
+            searchQuery = '';
+            currentPage = 1;
+            document.getElementById('liveSearchInput').value = '';
+            document.getElementById('statusSelect').value = 'all';
+            
+            // Actualizar botones visuales de categorías
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === 'all') {
+                    btn.className = 'cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                } else {
+                    btn.className = 'cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                }
+            });
+            renderItems();
+        }
+
         function handleSearch() {
             searchQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
             currentPage = 1;
@@ -318,7 +339,6 @@
 
             bookshelf.innerHTML = '';
 
-            // Filtrado general (Categoría + Estado + Búsqueda)
             const filtered = items.filter(item => {
                 let catMatch = false;
                 if (currentCategoryFilter === 'all') catMatch = true;
@@ -345,7 +365,6 @@
 
             emptyState.classList.add('hidden');
 
-            // Paginación: Seleccionar los 18 correspondientes
             const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
@@ -353,7 +372,6 @@
             const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
             const pageItems = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-            // Renderizar de 6 en 6 por estante (3 estantes máximo por página)
             const SHELF_CAPACITY = 6;
             for (let i = 0; i < pageItems.length; i += SHELF_CAPACITY) {
                 const shelfItems = pageItems.slice(i, i + SHELF_CAPACITY);
@@ -488,9 +506,10 @@
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
-        // Recarga de datos TMDB corregida para evitar borrar registros
+        // Recarga segura con conversión explícita de ID a cadena de texto
         async function reloadTMDBData(id, title) {
-            const btn = document.getElementById(`reloadBtn-${id}`);
+            const strId = String(id);
+            const btn = document.getElementById(`reloadBtn-${strId}`);
             if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Buscando...';
 
             try {
@@ -527,11 +546,11 @@
                     };
                     if (coverUrl) updatedFields.cover_url = coverUrl;
 
-                    const { error } = await supabaseClient.from('media_items').update(updatedFields).eq('id', id);
+                    const { error } = await supabaseClient.from('media_items').update(updatedFields).eq('id', strId);
                     if (error) throw error;
 
                     await fetchItems();
-                    openDetailModal(id);
+                    openDetailModal(strId);
                     alert('¡Ficha y sinopsis actualizadas con éxito!');
                 } else {
                     alert('No se encontraron datos en TMDB para este título.');
@@ -572,7 +591,6 @@
             renderItems();
         }
 
-        // Importación CSV con captura de sinopsis y reparto
         async function importLetterboxdCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -694,7 +712,6 @@
             reader.readAsText(file);
         }
 
-        // Modal Formulario
         function openModal() {
             document.getElementById('editingItemId').value = '';
             document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
@@ -770,7 +787,7 @@
             try {
                 let error;
                 if (id) {
-                    const response = await supabaseClient.from('media_items').update(itemData).eq('id', id);
+                    const response = await supabaseClient.from('media_items').update(itemData).eq('id', String(id));
                     error = response.error;
                 } else {
                     const response = await supabaseClient.from('media_items').insert([itemData]);
@@ -789,7 +806,7 @@
             if (!confirm('¿Seguro que quieres eliminar este elemento?')) return;
             try {
                 closeDetailModal();
-                const { error } = await supabaseClient.from('media_items').delete().eq('id', id);
+                const { error } = await supabaseClient.from('media_items').delete().eq('id', String(id));
                 if (error) throw error;
                 fetchItems();
             } catch (err) {
