@@ -167,7 +167,7 @@
         </div>
     </main>
 
-    <!-- Modal Detalle (Menú al hacer clic en una carátula) -->
+    <!-- Modal Detalle -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
@@ -429,11 +429,20 @@
 
             const filtered = items.filter(item => {
                 let catMatch = false;
-                if (currentCategoryFilter === 'all') catMatch = true;
-                else if (currentCategoryFilter === 'library') catMatch = item.in_library === true;
-                else if (currentCategoryFilter === 'pending_watch') catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
-                else if (currentCategoryFilter === 'shopping_list') catMatch = item.to_buy === true;
-                else catMatch = item.category === currentCategoryFilter;
+
+                // Regla estricta: Si está pendiente y NO estamos explícitamente en la sección pendiente, se oculta de las demás vistas
+                const isPending = (item.status === 'planned');
+
+                if (currentCategoryFilter === 'pending_watch') {
+                    catMatch = isPending;
+                } else {
+                    if (isPending) return false; // Oculto de Todos, Películas, Series, Biblioteca, etc.
+
+                    if (currentCategoryFilter === 'all') catMatch = true;
+                    else if (currentCategoryFilter === 'library') catMatch = item.in_library === true;
+                    else if (currentCategoryFilter === 'shopping_list') catMatch = item.to_buy === true;
+                    else catMatch = item.category === currentCategoryFilter;
+                }
 
                 const statusMatch = statusFilter === 'all' || item.status === statusFilter;
                 const searchMatch = !searchQuery || item.title.toLowerCase().includes(searchQuery) || (item.subtitle && item.subtitle.toLowerCase().includes(searchQuery));
