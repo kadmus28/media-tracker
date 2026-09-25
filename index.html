@@ -274,7 +274,7 @@
     <script>
         const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
-        const TMDB_API_KEY = '592f0a9b86580dc2aae33e086a9116cb';
+        const TMDB_API_KEY = 'bfeebc72cb63d4a06f85a63290e5206f'; // Inserta aquí tu nueva clave segura de TMDB
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -464,12 +464,10 @@
                 logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-tv mr-1"></i> ${item.platform}</p>`;
             }
 
-            // Generar botones interactivos (Badges) para el subtítulo (Directores, Actores, Años)
             let formattedSubtitleHTML = '';
             if (item.subtitle) {
                 const parts = item.subtitle.split('|').map(p => p.trim());
                 formattedSubtitleHTML = parts.map(part => {
-                    // Si contiene "Reparto:" o "Año:", separamos los nombres/valores
                     if (part.includes(':')) {
                         const [label, values] = part.split(':').map(s => s.trim());
                         const valList = values.split(',').map(v => v.trim());
