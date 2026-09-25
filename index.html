@@ -40,10 +40,19 @@
                 </div>
             </div>
             
-            <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg shadow-indigo-600/20">
-                <i class="fa-solid fa-plus"></i>
-                <span>Añadir Nuevo</span>
-            </button>
+            <div class="flex items-center gap-3">
+                <!-- Botón Importar CSV -->
+                <button onclick="document.getElementById('csvFileInput').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3.5 py-2 rounded-lg flex items-center space-x-2 transition border border-slate-700 text-sm">
+                    <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                    <span>Importar CSV</span>
+                </button>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importCSV(event)">
+
+                <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg shadow-indigo-600/20 text-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Añadir Nuevo</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -97,7 +106,7 @@
         <div id="emptyState" class="hidden text-center py-16">
             <i class="fa-solid fa-compact-disc text-5xl text-slate-600 mb-4"></i>
             <h3 class="text-lg font-medium text-slate-300">No hay elementos registrados</h3>
-            <p class="text-sm text-slate-500 mt-1">Haz clic en "Añadir Nuevo" para comenzar a organizar tus contenidos.</p>
+            <p class="text-sm text-slate-500 mt-1">Haz clic en "Añadir Nuevo" o en "Importar CSV" para comenzar a organizar tus contenidos.</p>
         </div>
     </main>
 
@@ -238,16 +247,17 @@
         let items = [];
         let currentCategoryFilter = 'all';
 
-        // Mapa de logos estáticos para reconocimientos automáticos
-        const KNOWN_LOGOS = {
-            'netflix': 'https://image.tmdb.org/t/p/original/pbpMk121StLrhA3vR12yR33923r.jpg',
-            'hbo': 'https://image.tmdb.org/t/p/original/3233L5325i311135.jpg',
-            'max': 'https://image.tmdb.org/t/p/original/3233L5325i311135.jpg',
-            'prime': 'https://image.tmdb.org/t/p/original/dQeA35311.jpg',
-            'amazon': 'https://image.tmdb.org/t/p/original/dQeA35311.jpg',
-            'disney': 'https://image.tmdb.org/t/p/original/7qe33.jpg',
-            'movistar': 'https://image.tmdb.org/t/p/original/5233.jpg',
-            'apple': 'https://image.tmdb.org/t/p/original/2332.jpg'
+        // Base de datos de logos por nombre de servicio
+        const PROVIDER_LOGOS = {
+            'netflix': 'https://image.tmdb.org/t/p/w92/pbpMk121StLrhA3vR12yR33923r.jpg',
+            'movistar': 'https://image.tmdb.org/t/p/w92/1s1G2x32.jpg',
+            'hbo': 'https://image.tmdb.org/t/p/w92/2332.jpg',
+            'max': 'https://image.tmdb.org/t/p/w92/2332.jpg',
+            'prime': 'https://image.tmdb.org/t/p/w92/dQeA35311.jpg',
+            'amazon': 'https://image.tmdb.org/t/p/w92/dQeA35311.jpg',
+            'disney': 'https://image.tmdb.org/t/p/w92/7qe33.jpg',
+            'apple': 'https://image.tmdb.org/t/p/w92/2332.jpg',
+            'filmin': 'https://image.tmdb.org/t/p/w92/filmin.jpg'
         };
 
         // Carga inicial
@@ -308,30 +318,39 @@
             }
         }
 
-        // Helper universal para mostrar imágenes de logos
+        // Generador dinámico de logotipos
         function renderPlatformLogos(item) {
             if (!item.platform) return '';
 
-            let logoUrls = [];
+            let logosToRender = [];
 
             if (item.platform_logo) {
-                logoUrls = item.platform_logo.split(',').filter(Boolean);
+                logosToRender = item.platform_logo.split(',').filter(Boolean);
             }
 
-            if (logoUrls.length > 0) {
+            if (logosToRender.length === 0) {
+                const platformText = item.platform.toLowerCase();
+                for (const [key, logoUrl] of Object.entries(PROVIDER_LOGOS)) {
+                    if (platformText.includes(key)) {
+                        logosToRender.push(logoUrl);
+                    }
+                }
+            }
+
+            if (logosToRender.length > 0) {
                 return `<div class="flex items-center gap-1.5 mt-2">
-                    ${logoUrls.map(url => `<img src="${url}" class="w-6 h-6 rounded-md object-cover shadow border border-slate-700/80" title="${item.platform}">`).join('')}
+                    ${logosToRender.map(url => `<img src="${url}" class="w-6 h-6 rounded-md object-cover shadow border border-slate-700/80" title="${item.platform}">`).join('')}
                 </div>`;
             }
 
-            // Fallback con insignias de colores
+            // Fallback con badges de texto
             const platforms = item.platform.split(',').map(p => p.trim());
             return `<div class="flex flex-wrap items-center gap-1 mt-2">
                 ${platforms.map(p => `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700/60 flex items-center gap-1"><i class="fa-solid fa-play text-[8px]"></i> ${p}</span>`).join('')}
             </div>`;
         }
 
-        // Crear la tarjeta visual del elemento
+        // Crear tarjeta de película/medio
         function createMediaCard(item) {
             const card = document.createElement('div');
             card.className = 'group bg-slate-800 rounded-xl overflow-hidden border border-slate-700/60 hover:border-indigo-500/50 transition-all duration-300 flex flex-col shadow-lg hover:-translate-y-1 relative';
@@ -381,7 +400,7 @@
                         <h4 class="font-bold text-sm text-slate-100 line-clamp-1">${item.title}</h4>
                         ${item.subtitle ? `<p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.subtitle}</p>` : ''}
                         
-                        <!-- Logotipos de las plataformas fuera de la portada -->
+                        <!-- Logotipos de las plataformas debajo del título -->
                         ${renderPlatformLogos(item)}
                     </div>
                     
@@ -422,6 +441,61 @@
                 }
             });
             renderItems();
+        }
+
+        // IMPORTAR DESDE CSV
+        async function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length <= 1) return alert('El archivo CSV está vacío');
+
+                const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+                
+                const titleIdx = headers.findIndex(h => h.includes('title') || h.includes('titulo') || h.includes('título') || h.includes('name'));
+                const ratingIdx = headers.findIndex(h => h.includes('rating') || h.includes('puntuacion') || h.includes('puntuación') || h.includes('score'));
+                const statusIdx = headers.findIndex(h => h.includes('status') || h.includes('estado'));
+                const platformIdx = headers.findIndex(h => h.includes('platform') || h.includes('plataforma'));
+
+                const itemsToInsert = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+                    const title = titleIdx !== -1 ? cols[titleIdx] : cols[0];
+                    if (!title) continue;
+
+                    const rawRating = ratingIdx !== -1 ? parseFloat(cols[ratingIdx]) : 0;
+                    const rating = isNaN(rawRating) ? 0 : rawRating;
+                    const platform = platformIdx !== -1 ? cols[platformIdx] : '';
+
+                    itemsToInsert.push({
+                        title: title,
+                        category: 'movie',
+                        status: 'completed',
+                        rating: rating,
+                        platform: platform,
+                        cover_url: 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=' + encodeURIComponent(title),
+                        in_library: false,
+                        to_buy: false
+                    });
+                }
+
+                if (itemsToInsert.length > 0) {
+                    try {
+                        const { error } = await supabaseClient.from('media_items').insert(itemsToInsert);
+                        if (error) throw error;
+                        alert(`¡Éxito! Se han importado ${itemsToInsert.length} elementos correctamente.`);
+                        fetchItems();
+                    } catch (err) {
+                        alert('Error importando CSV: ' + err.message);
+                    }
+                }
+            };
+            reader.readAsText(file);
         }
 
         // Gestión del Modal
@@ -497,7 +571,6 @@
                 title: document.getElementById('formTitle').value,
                 subtitle: document.getElementById('formSubtitle').value,
                 platform: document.getElementById('formPlatform').value,
-                platform_logo: document.getElementById('formPlatformLogo').value,
                 cover_url: document.getElementById('formCover').value,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
@@ -511,15 +584,10 @@
             try {
                 let error;
                 if (id) {
-                    const response = await supabaseClient
-                        .from('media_items')
-                        .update(itemData)
-                        .eq('id', id);
+                    const response = await supabaseClient.from('media_items').update(itemData).eq('id', id);
                     error = response.error;
                 } else {
-                    const response = await supabaseClient
-                        .from('media_items')
-                        .insert([itemData]);
+                    const response = await supabaseClient.from('media_items').insert([itemData]);
                     error = response.error;
                 }
 
@@ -527,16 +595,7 @@
                 closeModal();
                 fetchItems();
             } catch (err) {
-                // Si la columna no existe aún en Supabase, guarda omitiendo ese campo
-                if (err.message.includes('platform_logo')) {
-                    delete itemData.platform_logo;
-                    if (id) await supabaseClient.from('media_items').update(itemData).eq('id', id);
-                    else await supabaseClient.from('media_items').insert([itemData]);
-                    closeModal();
-                    fetchItems();
-                } else {
-                    alert('Error al guardar: ' + err.message);
-                }
+                alert('Error al guardar: ' + err.message);
             }
         }
 
