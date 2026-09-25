@@ -55,6 +55,12 @@
             <!-- Category Tabs -->
             <div class="flex flex-wrap gap-1" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
+                <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock"></i> Pendiente de ver
+                </button>
+                <button onclick="setCategoryFilter('shopping_list')" data-cat="shopping_list" class="cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-cart-shopping"></i> Comprar (Físico)
+                </button>
                 <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
                 <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
                 <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
@@ -165,6 +171,15 @@
                     </div>
                 </div>
 
+                <!-- Buy Physical Copy Checkbox -->
+                <div class="mb-4 p-3 bg-slate-900/60 rounded-lg border border-slate-700/80 flex items-center gap-3">
+                    <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-slate-800 border-slate-600 rounded focus:ring-emerald-500 focus:ring-offset-slate-900">
+                    <label for="formToBuy" class="text-xs font-medium text-slate-200 cursor-pointer flex items-center gap-1.5">
+                        <i class="fa-solid fa-cart-shopping text-emerald-400"></i>
+                        Añadir a lista de la compra (Deseo comprarlo en físico)
+                    </label>
+                </div>
+
                 <!-- Progress Trackers -->
                 <div class="grid grid-cols-2 gap-4 mb-4" id="progressContainer">
                     <div>
@@ -235,7 +250,18 @@
             grid.innerHTML = '';
 
             const filtered = items.filter(item => {
-                const catMatch = currentCategoryFilter === 'all' || item.category === currentCategoryFilter;
+                let catMatch = false;
+
+                if (currentCategoryFilter === 'all') {
+                    catMatch = true;
+                } else if (currentCategoryFilter === 'pending_watch') {
+                    catMatch = (item.category === 'movie' || item.category === 'tv') && item.status === 'planned';
+                } else if (currentCategoryFilter === 'shopping_list') {
+                    catMatch = item.to_buy === true;
+                } else {
+                    catMatch = item.category === currentCategoryFilter;
+                }
+
                 const statusMatch = statusFilter === 'all' || item.status === statusFilter;
                 return catMatch && statusMatch;
             });
@@ -280,6 +306,11 @@
                                 <i class="fa-solid fa-tv text-[9px]"></i> ${item.platform}
                             </span>
                         ` : ''}
+                        ${item.to_buy ? `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
+                                <i class="fa-solid fa-cart-shopping text-[9px]"></i> Compra física
+                            </span>
+                        ` : ''}
                     </div>
 
                     ${item.rating > 0 ? `
@@ -320,6 +351,10 @@
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if (btn.dataset.cat === cat) {
                     btn.className = 'cat-btn bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
+                } else if (btn.dataset.cat === 'pending_watch') {
+                    btn.className = 'cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
+                } else if (btn.dataset.cat === 'shopping_list') {
+                    btn.className = 'cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5';
                 } else {
                     btn.className = 'cat-btn text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition';
                 }
@@ -378,6 +413,7 @@
             document.getElementById('formCover').value = item.cover_url || '';
             document.getElementById('formStatus').value = item.status || 'planned';
             document.getElementById('formRating').value = item.rating || 0;
+            document.getElementById('formToBuy').checked = item.to_buy || false;
             document.getElementById('formCurrentProg').value = item.current_progress || 0;
             document.getElementById('formTotalProg').value = item.total_progress || 0;
             document.getElementById('formReview').value = item.review || '';
@@ -399,6 +435,7 @@
                 cover_url: document.getElementById('formCover').value,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
+                to_buy: document.getElementById('formToBuy').checked,
                 current_progress: parseInt(document.getElementById('formCurrentProg').value) || 0,
                 total_progress: parseInt(document.getElementById('formTotalProg').value) || 0,
                 review: document.getElementById('formReview').value
@@ -407,14 +444,12 @@
             try {
                 let error;
                 if (id) {
-                    // Actualizar registro existente
                     const response = await supabaseClient
                         .from('media_items')
                         .update(itemData)
                         .eq('id', id);
                     error = response.error;
                 } else {
-                    // Insertar nuevo registro
                     const response = await supabaseClient
                         .from('media_items')
                         .insert([itemData]);
