@@ -99,6 +99,8 @@
             <h2 class="text-xl font-bold mb-4" id="modalTitle">Añadir Nuevo Elemento</h2>
 
             <form id="mediaForm" onsubmit="saveItem(event)">
+                <input type="hidden" id="editingItemId" value="">
+
                 <!-- Category Picker -->
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Categoría</label>
@@ -135,13 +137,19 @@
                     <input type="text" id="formSubtitle" placeholder="Ej: Christopher Nolan, Frank Herbert..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
                 </div>
 
+                <!-- Platform Field (For Movies & Series) -->
+                <div class="mb-4" id="platformContainer">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Plataforma / Dónde ver</label>
+                    <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video, HBO Max, Disney+, Movistar+..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+
                 <!-- Cover URL -->
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">URL de la Portada / Imagen</label>
                     <input type="url" id="formCover" required placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
                 </div>
 
-                <!-- Status & Rating Grid -->
+                <!-- Status & Rating Grid (0 to 10 rating) -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Estado</label>
@@ -152,8 +160,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Puntuación (0 - 5)</label>
-                        <input type="number" id="formRating" min="0" max="5" step="0.5" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Puntuación (0 - 10)</label>
+                        <input type="number" id="formRating" min="0" max="10" step="0.5" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
@@ -185,7 +193,7 @@
 
     <!-- Application JavaScript Logic -->
     <script>
-        // Configuración de Supabase (URL base limpia sin /rest/v1/)
+        // Configuración de Supabase
         const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
 
@@ -245,7 +253,7 @@
         // Crear la tarjeta visual del elemento
         function createMediaCard(item) {
             const card = document.createElement('div');
-            card.className = 'group bg-slate-800 rounded-xl overflow-hidden border border-slate-700/60 hover:border-indigo-500/50 transition-all duration-300 flex flex-col shadow-lg hover:-translate-y-1';
+            card.className = 'group bg-slate-800 rounded-xl overflow-hidden border border-slate-700/60 hover:border-indigo-500/50 transition-all duration-300 flex flex-col shadow-lg hover:-translate-y-1 relative';
 
             const badgeColor = {
                 completed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -262,15 +270,22 @@
             card.innerHTML = `
                 <div class="relative aspect-[2/3] overflow-hidden bg-slate-900">
                     <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
-                    <div class="absolute top-2 right-2">
+                    
+                    <div class="absolute top-2 right-2 flex flex-col items-end gap-1">
                         <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border backdrop-blur-md ${badgeColor}">
                             ${statusText}
                         </span>
+                        ${item.platform ? `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
+                                <i class="fa-solid fa-tv text-[9px]"></i> ${item.platform}
+                            </span>
+                        ` : ''}
                     </div>
+
                     ${item.rating > 0 ? `
-                        <div class="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-amber-400 text-xs font-bold flex items-center gap-1">
+                        <div class="absolute bottom-2 left-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-md text-amber-400 text-xs font-bold flex items-center gap-1">
                             <i class="fa-solid fa-star"></i>
-                            <span>${item.rating}</span>
+                            <span>${item.rating} / 10</span>
                         </div>
                     ` : ''}
                 </div>
@@ -281,9 +296,14 @@
                     </div>
                     <div class="mt-3 pt-2 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
                         <span class="capitalize">${getCategoryName(item.category)}</span>
-                        <button onclick="deleteItem('${item.id}')" class="hover:text-red-400 transition">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editItem('${item.id}')" class="hover:text-indigo-400 transition" title="Editar">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteItem('${item.id}')" class="hover:text-red-400 transition" title="Eliminar">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -309,6 +329,8 @@
 
         // Gestión del Modal
         function openModal() {
+            document.getElementById('editingItemId').value = '';
+            document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
             document.getElementById('searchResults').classList.add('hidden');
             document.getElementById('searchResults').innerHTML = '';
@@ -323,19 +345,57 @@
         function handleCategoryChange() {
             const cat = document.getElementById('formCategory').value;
             const subLabel = document.getElementById('subtitleLabel');
-            if (cat === 'movie' || cat === 'tv') subLabel.textContent = 'Año / Director';
-            else if (cat === 'book' || cat === 'comic') subLabel.textContent = 'Autor / Ilustrador';
-            else if (cat === 'game') subLabel.textContent = 'Desarrollador / Plataforma';
-            else if (cat === 'travel') subLabel.textContent = 'País / Ciudad';
+            const platformContainer = document.getElementById('platformContainer');
+
+            if (cat === 'movie' || cat === 'tv') {
+                subLabel.textContent = 'Año / Director';
+                platformContainer.classList.remove('hidden');
+            } else if (cat === 'book' || cat === 'comic') {
+                subLabel.textContent = 'Autor / Ilustrador';
+                platformContainer.classList.add('hidden');
+            } else if (cat === 'game') {
+                subLabel.textContent = 'Desarrollador / Plataforma';
+                platformContainer.classList.add('hidden');
+            } else if (cat === 'travel') {
+                subLabel.textContent = 'País / Ciudad';
+                platformContainer.classList.add('hidden');
+            }
         }
 
-        // Guardar elemento en Supabase
+        // Cargar datos en el formulario para Editar
+        function editItem(id) {
+            const item = items.find(i => i.id == id);
+            if (!item) return;
+
+            document.getElementById('editingItemId').value = item.id;
+            document.getElementById('modalTitle').textContent = 'Editar Elemento';
+            document.getElementById('formCategory').value = item.category || 'movie';
+            handleCategoryChange();
+
+            document.getElementById('formTitle').value = item.title || '';
+            document.getElementById('formSubtitle').value = item.subtitle || '';
+            document.getElementById('formPlatform').value = item.platform || '';
+            document.getElementById('formCover').value = item.cover_url || '';
+            document.getElementById('formStatus').value = item.status || 'planned';
+            document.getElementById('formRating').value = item.rating || 0;
+            document.getElementById('formCurrentProg').value = item.current_progress || 0;
+            document.getElementById('formTotalProg').value = item.total_progress || 0;
+            document.getElementById('formReview').value = item.review || '';
+
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
+
+        // Guardar o Actualizar elemento en Supabase
         async function saveItem(e) {
             e.preventDefault();
-            const newItem = {
+            const id = document.getElementById('editingItemId').value;
+
+            const itemData = {
                 category: document.getElementById('formCategory').value,
                 title: document.getElementById('formTitle').value,
                 subtitle: document.getElementById('formSubtitle').value,
+                platform: document.getElementById('formPlatform').value,
                 cover_url: document.getElementById('formCover').value,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
@@ -345,10 +405,21 @@
             };
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('media_items')
-                    .insert([newItem])
-                    .select();
+                let error;
+                if (id) {
+                    // Actualizar registro existente
+                    const response = await supabaseClient
+                        .from('media_items')
+                        .update(itemData)
+                        .eq('id', id);
+                    error = response.error;
+                } else {
+                    // Insertar nuevo registro
+                    const response = await supabaseClient
+                        .from('media_items')
+                        .insert([itemData]);
+                    error = response.error;
+                }
 
                 if (error) throw error;
                 closeModal();
@@ -374,6 +445,22 @@
             }
         }
 
+        // Consultar plataformas donde ver la película/serie en España
+        async function fetchWatchProviders(type, tmdbId) {
+            try {
+                const res = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
+                const data = await res.json();
+                
+                if (data.results && data.results.ES && data.results.ES.flatrate) {
+                    const providers = data.results.ES.flatrate.map(p => p.provider_name);
+                    return providers.slice(0, 2).join(', ');
+                }
+            } catch (e) {
+                console.error('Error obteniendo plataformas:', e);
+            }
+            return '';
+        }
+
         // Búsqueda automática de portadas (TMDB / Google Books)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
@@ -397,26 +484,33 @@
                     
                     if (data.results && data.results.length > 0) {
                         resultsDiv.classList.remove('hidden');
-                        data.results.slice(0, 5).forEach(item => {
+
+                        for (const item of data.results.slice(0, 5)) {
                             const name = item.title || item.name;
                             const releaseDate = item.release_date || item.first_air_date || '';
                             const year = releaseDate ? releaseDate.split('-')[0] : 'N/A';
                             const poster = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : 'https://via.placeholder.com/92x138?text=No+Img';
                             const fullPoster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+                            
+                            // Obtener plataforma
+                            const providerName = await fetchWatchProviders(type, item.id);
 
                             const row = document.createElement('div');
-                            row.className = 'flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition';
-                            row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster);
+                            row.className = 'flex items-center justify-between p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition gap-2';
+                            row.onclick = () => selectResult(name, `Año: ${year}`, fullPoster, providerName);
                             
                             row.innerHTML = `
-                                <img src="${poster}" class="w-10 h-14 object-cover rounded">
-                                <div class="overflow-hidden">
-                                    <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
-                                    <p class="text-xs text-slate-400">${year}</p>
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <img src="${poster}" class="w-10 h-14 object-cover rounded flex-shrink-0">
+                                    <div class="overflow-hidden">
+                                        <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
+                                        <p class="text-xs text-slate-400">${year}</p>
+                                    </div>
                                 </div>
+                                ${providerName ? `<span class="text-[10px] bg-indigo-600/80 text-white px-2 py-1 rounded font-medium text-right flex-shrink-0">${providerName}</span>` : ''}
                             `;
                             resultsDiv.appendChild(row);
-                        });
+                        }
                     } else {
                         alert('No se encontraron coincidencias.');
                     }
@@ -433,10 +527,10 @@
 
                             const row = document.createElement('div');
                             row.className = 'flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg cursor-pointer transition';
-                            row.onclick = () => selectResult(bTitle, authors, thumb);
+                            row.onclick = () => selectResult(bTitle, authors, thumb, '');
                             
                             row.innerHTML = `
-                                <img src="${thumb || 'https://via.placeholder.com/92x138?text=No+Img'}" class="w-10 h-14 object-cover rounded">
+                                <img src="${thumb || 'https://via.placeholder.com/92x138?text=No+Img'}" class="w-10 h-14 object-cover rounded flex-shrink-0">
                                 <div class="overflow-hidden">
                                     <p class="text-sm font-semibold text-slate-200 truncate">${bTitle}</p>
                                     <p class="text-xs text-slate-400 truncate">${authors}</p>
@@ -456,10 +550,11 @@
             }
         }
 
-        function selectResult(title, subtitle, coverUrl) {
+        function selectResult(title, subtitle, coverUrl, platform) {
             document.getElementById('formTitle').value = title;
             document.getElementById('formSubtitle').value = subtitle;
             if (coverUrl) document.getElementById('formCover').value = coverUrl;
+            if (platform) document.getElementById('formPlatform').value = platform;
             document.getElementById('searchResults').classList.add('hidden');
         }
     </script>
