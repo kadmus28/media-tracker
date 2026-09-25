@@ -49,7 +49,7 @@
             transform: rotateY(-12deg) rotateX(4deg);
             transform-style: preserve-3d;
             border-radius: 4px 8px 8px 4px;
-            border-top: 14px solid rgba(29, 78, 216, 0.85); /* Lomo transparente azul */
+            border-top: 14px solid rgba(29, 78, 216, 0.85);
             border-left: 7px solid #1d4ed8;
             border-right: 2px solid #1e40af;
             border-bottom: 3px solid #1e3a8a;
@@ -113,7 +113,7 @@
             box-shadow: 0 18px 32px rgba(0, 0, 0, 0.98);
         }
 
-        /* Estilo integrado para el logo corporativo de la estantería */
+        /* Logo corporativo */
         .brand-logo-badge {
             background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
             border: 2px solid #facc15;
@@ -124,7 +124,7 @@
 </head>
 <body class="delicious-wall text-amber-50 min-h-screen font-sans flex flex-col">
 
-    <!-- Header / Navbar con Logo Integrado -->
+    <!-- Header / Navbar -->
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-40 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
             
@@ -158,7 +158,7 @@
         </div>
     </header>
 
-    <!-- Modal de Progreso de Importación -->
+    <!-- Modal de Progreso -->
     <div id="importProgressModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-md w-full p-6 border border-amber-800/50 shadow-2xl text-center">
             <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400 animate-bounce mb-3"></i>
@@ -171,10 +171,9 @@
         </div>
     </div>
 
-    <!-- Main Content Area: Estantería Delicious Library -->
+    <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
         
-        <!-- Barra de Filtros -->
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-amber-950/90 p-3 rounded-xl border border-amber-800/60 text-amber-100 backdrop-blur shadow-2xl">
             <div class="flex flex-wrap gap-1" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
@@ -209,17 +208,10 @@
             </div>
         </div>
 
-        <!-- Contenedor de Estantes -->
-        <div id="bookshelfContainer" class="flex flex-col gap-14">
-            <!-- Baldas e ítems cargados aquí -->
-        </div>
+        <div id="bookshelfContainer" class="flex flex-col gap-14"></div>
 
-        <!-- Control de Paginación -->
-        <div id="paginationControls" class="mt-10 flex items-center justify-center gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl">
-            <!-- Inyectado dinámicamente -->
-        </div>
+        <div id="paginationControls" class="mt-10 flex items-center justify-center gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl"></div>
 
-        <!-- Estado Vacío -->
         <div id="emptyState" class="hidden text-center py-20 bg-amber-950/80 text-amber-100 rounded-2xl border border-amber-800/50">
             <i class="fa-solid fa-boxes-packing text-5xl text-amber-600/60 mb-4"></i>
             <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
@@ -227,20 +219,17 @@
         </div>
     </main>
 
-    <!-- Modal de Detalle / Ficha Completa -->
+    <!-- Modal Detalle -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
                 <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
-
-            <div class="flex flex-col md:flex-row gap-6 pt-2" id="detailModalContent">
-                <!-- Inyectado dinámicamente -->
-            </div>
+            <div class="flex flex-col md:flex-row gap-6 pt-2" id="detailModalContent"></div>
         </div>
     </div>
 
-    <!-- Modal Formulario Añadir / Editar -->
+    <!-- Modal Formulario -->
     <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-lg w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2">
@@ -308,7 +297,6 @@
                     </div>
                 </div>
 
-                <!-- Propiedad Física y Selección Múltiple de Formatos -->
                 <div class="space-y-3 mb-4">
                     <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30">
                         <div class="flex items-center gap-3">
@@ -319,7 +307,6 @@
                             </label>
                         </div>
 
-                        <!-- Selector Múltiple de Formatos Físicos -->
                         <div id="formatContainer" class="hidden mt-3 pt-3 border-t border-amber-900/30">
                             <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos (Puedes marcar varios):</label>
                             <div class="grid grid-cols-2 gap-2 text-xs text-amber-100">
@@ -513,10 +500,8 @@
             wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
             wrapper.onclick = () => openDetailModal(item.id);
 
-            // Estilo por defecto (plano sin caja)
             let caseStyle = 'case-standard-shadow border border-white/20';
 
-            // ÚNICA Y EXCLUSIVAMENTE SI ESTAMOS EN LA PESTAÑA "MI BIBLIOTECA"
             if (currentCategoryFilter === 'library') {
                 if (item.format) {
                     const fmt = item.format.toLowerCase();
@@ -847,16 +832,17 @@
         }
 
         function handleCategoryChange() {
-            const cat = document.getElementById('formCategory').value;
+            const rawCat = document.getElementById('formCategory').value.toLowerCase();
             const subLabel = document.getElementById('subtitleLabel');
             const platformContainer = document.getElementById('platformContainer');
-            if (cat === 'movie' || cat === 'tv') {
+
+            if (rawCat.includes('movie') || rawCat.includes('tv') || rawCat.includes('película') || rawCat.includes('serie')) {
                 subLabel.textContent = 'Director / Reparto / Año';
                 platformContainer.classList.remove('hidden');
-            } else if (cat === 'book' || cat === 'comic') {
+            } else if (rawCat.includes('book') || rawCat.includes('comic') || rawCat.includes('libro') || rawCat.includes('cómic')) {
                 subLabel.textContent = 'Autor / Año';
                 platformContainer.classList.add('hidden');
-            } else if (cat === 'game') {
+            } else if (rawCat.includes('game') || rawCat.includes('juego') || rawCat.includes('videojuego')) {
                 subLabel.textContent = 'Desarrollador / Año';
                 platformContainer.classList.add('hidden');
             } else {
@@ -969,7 +955,7 @@
 
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
-            const cat = document.getElementById('formCategory').value;
+            const rawCat = document.getElementById('formCategory').value.toLowerCase();
             const searchBtn = document.getElementById('searchBtn');
             const resultsDiv = document.getElementById('searchResults');
 
@@ -980,8 +966,9 @@
             resultsDiv.classList.add('hidden');
 
             try {
-                if (cat === 'movie' || cat === 'tv') {
-                    const type = cat === 'movie' ? 'movie' : 'tv';
+                // Películas y Series (TMDB)
+                if (rawCat.includes('movie') || rawCat.includes('tv') || rawCat.includes('película') || rawCat.includes('serie')) {
+                    const type = (rawCat.includes('tv') || rawCat.includes('serie')) ? 'tv' : 'movie';
                     const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`);
                     const data = await res.json();
                     
@@ -1030,9 +1017,12 @@
                             `;
                             resultsDiv.appendChild(row);
                         }
+                    } else {
+                        alert('No se encontraron películas o series para ese título.');
                     }
-                } else if (cat === 'book' || cat === 'comic') {
-                    // Búsqueda Robusta en Google Books API
+                } 
+                // Libros y Cómics (Google Books API)
+                else if (rawCat.includes('book') || rawCat.includes('comic') || rawCat.includes('libro') || rawCat.includes('cómic')) {
                     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
                     const data = await res.json();
 
@@ -1075,10 +1065,11 @@
                             resultsDiv.appendChild(row);
                         }
                     } else {
-                        alert('No se encontraron libros para ese título.');
+                        alert('No se encontraron libros ni cómics para ese título.');
                     }
-                } else if (cat === 'game') {
-                    // Búsqueda Directa en RAWG Video Games Database
+                } 
+                // Videojuegos (RAWG Games API)
+                else if (rawCat.includes('game') || rawCat.includes('juego') || rawCat.includes('videojuego')) {
                     const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
                     const data = await res.json();
 
@@ -1116,7 +1107,7 @@
                 }
             } catch (e) {
                 console.error('Error en búsqueda:', e);
-                alert('Ocurrió un error al consultar el servicio de búsqueda.');
+                alert('Ocurrió un error al consultar la API de búsqueda.');
             } finally {
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
