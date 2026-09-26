@@ -124,7 +124,7 @@
     <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
         
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-amber-950/90 p-3 rounded-xl border border-amber-800/60 text-amber-100 backdrop-blur shadow-2xl">
-            <div class="flex flex-wrap gap-1" id="categoryTabs">
+            <div class="flex flex-wrap gap-1 items-center" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
                 <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
                 <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
@@ -132,11 +132,41 @@
                 <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
                 <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
                 
-                <span class="border-r border-amber-800/60 my-1 mx-1"></span>
+                <span class="border-r border-amber-800/60 my-1 mx-1 h-5"></span>
 
-                <button onclick="setCategoryFilter('library')" data-cat="library" class="cat-btn text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-house"></i> Mi Biblioteca
-                </button>
+                <!-- Desplegable Mi Biblioteca -->
+                <div class="relative group inline-block">
+                    <button onclick="setCategoryFilter('library')" data-cat="library" id="libraryDropdownBtn" class="cat-btn text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-indigo-950/40 border border-indigo-800/40">
+                        <i class="fa-solid fa-house text-indigo-400"></i>
+                        <span id="libraryBtnLabel">Mi Biblioteca</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
+                    </button>
+                    
+                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
+                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
+                            <button onclick="setCategoryFilter('library')" class="w-full text-left px-3.5 py-2 text-xs text-indigo-200 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-layer-group w-4 text-indigo-400"></i> Todo en Biblioteca
+                            </button>
+                            <span class="border-b border-amber-900/40 block my-0.5"></span>
+                            <button onclick="setCategoryFilter('library_movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
+                            </button>
+                            <button onclick="setCategoryFilter('library_tv')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-tv w-4 text-amber-400"></i> Series
+                            </button>
+                            <button onclick="setCategoryFilter('library_book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
+                            </button>
+                            <button onclick="setCategoryFilter('library_comic')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-mask w-4 text-amber-400"></i> Cómics
+                            </button>
+                            <button onclick="setCategoryFilter('library_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-clock"></i> Pendiente de ver
                 </button>
@@ -459,10 +489,18 @@
                 } else {
                     if (isPending) return false;
 
-                    if (currentCategoryFilter === 'all') catMatch = true;
-                    else if (currentCategoryFilter === 'library') catMatch = item.in_library === true;
-                    else if (currentCategoryFilter === 'shopping_list') catMatch = item.to_buy === true;
-                    else catMatch = item.category === currentCategoryFilter;
+                    if (currentCategoryFilter === 'all') {
+                        catMatch = true;
+                    } else if (currentCategoryFilter === 'library') {
+                        catMatch = item.in_library === true;
+                    } else if (currentCategoryFilter.startsWith('library_')) {
+                        const subCat = currentCategoryFilter.replace('library_', '');
+                        catMatch = item.in_library === true && item.category === subCat;
+                    } else if (currentCategoryFilter === 'shopping_list') {
+                        catMatch = item.to_buy === true;
+                    } else {
+                        catMatch = item.category === currentCategoryFilter;
+                    }
                 }
 
                 const statusMatch = statusFilter === 'all' || item.status === statusFilter;
@@ -515,7 +553,9 @@
             wrapper.onclick = () => openDetailModal(item.id);
 
             let caseStyle = 'case-standard-shadow border border-white/20';
-            if (currentCategoryFilter === 'library' && item.format) {
+            
+            // Si estamos en cualquier vista de Mi Biblioteca, mantenemos las cajas 3D
+            if ((currentCategoryFilter === 'library' || currentCategoryFilter.startsWith('library_')) && item.format) {
                 const fmt = item.format.toLowerCase();
                 if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
                 else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
@@ -644,6 +684,17 @@
         function setCategoryFilter(cat) {
             currentCategoryFilter = cat;
             currentPage = 1;
+
+            // Actualización del texto dinámico en el botón de Mi Biblioteca
+            const libLabel = document.getElementById('libraryBtnLabel');
+            if (cat === 'library') libLabel.textContent = 'Mi Biblioteca';
+            else if (cat === 'library_movie') libLabel.textContent = 'Biblio: Películas';
+            else if (cat === 'library_tv') libLabel.textContent = 'Biblio: Series';
+            else if (cat === 'library_book') libLabel.textContent = 'Biblio: Libros';
+            else if (cat === 'library_comic') libLabel.textContent = 'Biblio: Cómics';
+            else if (cat === 'library_game') libLabel.textContent = 'Biblio: Juegos';
+            else libLabel.textContent = 'Mi Biblioteca';
+
             renderItems();
         }
 
@@ -653,6 +704,7 @@
             currentPage = 1;
             document.getElementById('liveSearchInput').value = '';
             document.getElementById('statusSelect').value = 'all';
+            document.getElementById('libraryBtnLabel').textContent = 'Mi Biblioteca';
             renderItems();
         }
 
