@@ -51,7 +51,7 @@
                 inset 0 2px 8px rgba(255, 255, 255, 0.6);
         }
 
-        /* CARÁTULAS ESTÁNDAR (Películas, TV, Juegos - Sin hendidura) */
+        /* CARÁTULAS ESTÁNDAR (Películas, TV, Juegos, Cómics - Totalmente lisas) */
         .case-standard-shadow {
             position: relative;
             border-radius: 2px 4px 4px 2px;
@@ -63,7 +63,7 @@
             box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
         }
 
-        /* CARÁTULAS PARA LIBROS Y CÓMICS (Con hendidura de pliegue) */
+        /* CARÁTULAS EXCLUSIVAS PARA LIBROS (Con hendidura de pliegue) */
         .case-book-shadow {
             position: relative;
             border-radius: 2px 4px 4px 2px;
@@ -1011,8 +1011,8 @@
                     </div>
                 `;
             } else {
-                // Solo libros y cómics llevan la hendidura vertical de pliegue
-                const caseStyleClass = (item.category === 'book' || item.category === 'comic') ? 'case-book-shadow' : 'case-standard-shadow';
+                // EXCLUSIVO: La hendidura vertical de pliegue sólo se aplica si la categoría es 'book'
+                const caseStyleClass = (item.category === 'book') ? 'case-book-shadow' : 'case-standard-shadow';
 
                 wrapper.innerHTML = `
                     <div class="relative rounded-sm overflow-hidden ${caseStyleClass} bg-black aspect-[2/3] w-full border border-white/10">
@@ -1113,7 +1113,6 @@
                 }
             } catch (err) {
                 alert('Error al recargar: ' + err.message);
-            } font-medium
             } finally {
                 if (btn) btn.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i> Recargar Ficha (TMDB)';
             }
