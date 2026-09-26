@@ -78,30 +78,24 @@
             transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
         }
 
-        /* 3. LIBROS Y CÓMICS 3D (TEXTURA TAPA DURA + HOJAS) */
+        /* 3. LIBROS Y CÓMICS (SÓLO CON LA HENDIDURA DE LA PORTADA) */
         .case-book-3d {
             position: relative;
-            transform: rotateY(-10deg) rotateX(3deg);
-            transform-style: preserve-3d;
-            border-radius: 2px 6px 6px 2px;
-            border-left: 6px solid #2b1810; /* Lomo de encuadernación */
-            border-right: 5px solid #e5dfd3; /* Borde con color de páginas impresas */
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            border-bottom: 2px solid #1a0f0a;
-            box-shadow: -8px 10px 18px rgba(0, 0, 0, 0.85), inset 2px 0 5px rgba(0,0,0,0.4);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 2px 4px 4px 2px;
+            box-shadow: 4px 8px 14px rgba(0, 0, 0, 0.7);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .case-book-3d::after {
             content: '';
             position: absolute;
             inset: 0;
-            /* Hendidura del lomo y relieve de la tapa dura */
-            background: linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(255,255,255,0.2) 2.5%, rgba(0,0,0,0.3) 5%, transparent 8%);
+            /* Hendidura suave vertical típica de las tapas duras cerca del lomo */
+            background: linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(255,255,255,0.15) 3%, rgba(0,0,0,0.25) 6%, transparent 9%);
             pointer-events: none;
         }
         .case-book-3d:hover {
-            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
         }
 
         .brand-logo-badge {
@@ -504,7 +498,6 @@
             return { names: '', logos: '' };
         }
 
-        // BÚSQUEDA MULTICANAL (PELÍCULAS, SERIES, LIBROS, CÓMICS Y VIDEOJUEGOS)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
@@ -884,7 +877,7 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        // RENDERIZADO DINÁMICO DE ESTILOS 3D POR CATEGORÍA
+        // CREACIÓN DE ELEMENTO EN ESTANTERÍA
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
@@ -892,7 +885,6 @@
 
             let caseStyle = 'case-standard-shadow border border-white/20';
             
-            // Asignación de caja / textura 3D según categoría
             if (item.category === 'book' || item.category === 'comic') {
                 caseStyle = 'case-book-3d';
             } else if (item.category === 'movie' || item.category === 'tv') {
