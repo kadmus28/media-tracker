@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Tracker - Delicious Library Style</title>
+    <title>Media Tracker - Digital Library</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -28,23 +28,21 @@
             border-top: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* CARÁTULAS ESTÁNDAR CON HENDIDURA DE PORTADA (PELÍCULAS, LIBROS, JUEGOS) */
+        /* CARÁTULAS ESTÁNDAR: SOLO HENDIDURA DE PORTADA */
         .case-standard-shadow {
             position: relative;
-            border-radius: 2px 4px 4px 2px;
-            box-shadow: 4px 8px 14px rgba(0, 0, 0, 0.7);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
         }
+        /* Hendidura del lomo lateral izquierdo */
         .case-standard-shadow::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(255,255,255,0.15) 3%, rgba(0,0,0,0.25) 6%, transparent 9%);
+            background: linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(255,255,255,0.2) 3%, rgba(0,0,0,0.3) 6%, transparent 10%);
             pointer-events: none;
         }
         .case-standard-shadow:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
+            transform: translateY(-4px) scale(1.02);
         }
 
         /* --- EFECTO VINILO (MÚSICA) --- */
@@ -60,11 +58,8 @@
             z-index: 10;
             width: 100%;
             height: 100%;
-            border-radius: 3px;
             overflow: hidden;
-            box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease;
             background: #000;
         }
 
@@ -73,7 +68,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0.15) 2%, rgba(0,0,0,0.2) 4%, transparent 8%);
+            background: linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(255,255,255,0.2) 2%, rgba(0,0,0,0.25) 5%, transparent 9%);
             pointer-events: none;
         }
 
@@ -87,7 +82,7 @@
             border-radius: 50%;
             background: radial-gradient(circle at center, 
                 #181818 0%, #181818 14%, 
-                #d97706 15%, #b45309 28%, /* Galleta central del vinilo */
+                #d97706 15%, #b45309 28%, 
                 #111 29%, #111 31%, 
                 #222 32%, #111 35%, 
                 #2d2d2d 38%, #111 41%, 
@@ -103,31 +98,21 @@
             justify-content: center;
         }
 
-        /* Agujero central del disco */
         .vinyl-record::after {
             content: '';
             width: 10%;
             height: 10%;
-            background: #3b2314; /* Muestra el color de la estantería */
+            background: #3b2314;
             border-radius: 50%;
             box-shadow: inset 0 0 3px rgba(0,0,0,0.9);
         }
 
-        /* Animación al pasar el ratón (*Hover*) */
         .vinyl-sleeve-container:hover .vinyl-sleeve {
             transform: translateY(-4px);
-            box-shadow: 8px 14px 22px rgba(0, 0, 0, 0.9);
         }
 
         .vinyl-sleeve-container:hover .vinyl-record {
-            transform: translateX(38%) rotate(180deg); /* El vinilo sale a la derecha y gira */
-        }
-
-        .brand-logo-badge {
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-            border: 2px solid #facc15;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-            transform: skewX(-4deg);
+            transform: translateX(38%) rotate(180deg);
         }
     </style>
 </head>
@@ -135,15 +120,12 @@
 
     <!-- Header / Navbar -->
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-40 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             
-            <div onclick="resetToHome()" class="flex items-center space-x-3 cursor-pointer group py-1">
-                <div class="brand-logo-badge px-3.5 py-1.5 rounded-lg flex items-center space-x-2 transition-transform duration-200 group-hover:scale-105">
-                    <i class="fa-solid fa-ticket text-yellow-400 text-base"></i>
-                    <div class="flex flex-col">
-                        <span class="font-black text-sm tracking-widest text-yellow-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">MEDIA TRACKER</span>
-                        <span class="text-[9px] font-bold text-blue-200 uppercase tracking-wider -mt-1">Digital Library</span>
-                    </div>
+            <!-- Logo Redondo Recortado (Sin Fondo Cuadriculado) -->
+            <div onclick="resetToHome()" class="flex items-center cursor-pointer group py-0.5">
+                <div class="w-14 h-14 rounded-full overflow-hidden shadow-lg border-2 border-amber-500/40 transition-transform duration-200 group-hover:scale-105 flex-shrink-0 bg-stone-950">
+                    <img src="Gemini_Generated_Image_wcvjmawcvjmawcvj.jpg" alt="Media Tracker Logo" class="w-full h-full object-cover rounded-full scale-[1.03]">
                 </div>
             </div>
 
@@ -417,9 +399,7 @@
 
                         <div id="formatContainer" class="hidden mt-3 pt-3 border-t border-amber-900/30">
                             <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos Disponibles:</label>
-                            <div id="formatCheckboxes" class="grid grid-cols-2 gap-2 text-xs text-amber-100">
-                                <!-- Generado dinámicamente -->
-                            </div>
+                            <div id="formatCheckboxes" class="grid grid-cols-2 gap-2 text-xs text-amber-100"></div>
                         </div>
                     </div>
 
@@ -568,7 +548,6 @@
             return { names: '', logos: '' };
         }
 
-        // BÚSQUEDA AUTOMÁTICA MULTICANAL (INCLUYE MÚSICA VÍA ITUNES MUSIC API)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
@@ -604,7 +583,6 @@
                     }
                 } 
                 else if (cat === 'music') {
-                    // Búsqueda de álbumes mediante iTunes Music API
                     try {
                         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=album&limit=5`);
                         if (res.ok) {
@@ -974,14 +952,13 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        // RENDERIZADO DE CARÁTULA EN ESTANTERÍA (CARÁTULAS ESTÁNDAR VS EFECTO VINILO)
+        // RENDERIZADO DE CARÁTULA SOLO CON HENDIDURA LATERAL
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer';
             wrapper.onclick = () => openDetailModal(item.id);
 
             if (item.category === 'music') {
-                // Estructura visual para Música con Efecto Vinilo 3D al hacer Hover
                 wrapper.innerHTML = `
                     <div class="vinyl-sleeve-container">
                         <div class="vinyl-record"></div>
@@ -995,9 +972,8 @@
                     </div>
                 `;
             } else {
-                // Estructura Estándar para Películas, Series, Libros, Cómics y Videojuegos
                 wrapper.innerHTML = `
-                    <div class="relative rounded-sm overflow-hidden case-standard-shadow bg-black aspect-[2/3] w-full border border-white/10">
+                    <div class="relative case-standard-shadow bg-black aspect-[2/3] w-full">
                         <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
                         ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                     </div>
