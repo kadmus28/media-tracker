@@ -208,9 +208,39 @@
                     </div>
                 </div>
 
-                <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-clock"></i> Pendiente de ver
-                </button>
+                <!-- Desplegable Pendientes -->
+                <div class="relative group inline-block">
+                    <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" id="pendingDropdownBtn" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock"></i>
+                        <span id="pendingBtnLabel">Pendientes</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
+                    </button>
+                    
+                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
+                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
+                            <button onclick="setCategoryFilter('pending_watch')" class="w-full text-left px-3.5 py-2 text-xs text-amber-300 hover:bg-amber-900/50 flex items-center gap-2 transition font-semibold">
+                                <i class="fa-solid fa-layer-group w-4 text-amber-400"></i> Todos los Pendientes
+                            </button>
+                            <span class="border-b border-amber-900/40 block my-0.5"></span>
+                            <button onclick="setCategoryFilter('pending_movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
+                            </button>
+                            <button onclick="setCategoryFilter('pending_tv')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-tv w-4 text-amber-400"></i> Series
+                            </button>
+                            <button onclick="setCategoryFilter('pending_book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
+                            </button>
+                            <button onclick="setCategoryFilter('pending_comic')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-mask w-4 text-amber-400"></i> Cómics
+                            </button>
+                            <button onclick="setCategoryFilter('pending_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button onclick="setCategoryFilter('shopping_list')" data-cat="shopping_list" class="cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-cart-shopping"></i> Comprar (Físico)
                 </button>
@@ -782,7 +812,7 @@
                         cover_url: tmdbData.cover_url,
                         platform: tmdbData.platform,
                         platform_logo: tmdbData.platform_logo,
-                        status: 'completed',
+                        status: 'planned', // Los elementos de Letterboxd entran como Pendientes por defecto
                         rating: rating,
                         in_library: false
                     };
@@ -810,6 +840,9 @@
 
                 if (currentCategoryFilter === 'pending_watch') {
                     catMatch = isPending;
+                } else if (currentCategoryFilter.startsWith('pending_')) {
+                    const subCat = currentCategoryFilter.replace('pending_', '');
+                    catMatch = isPending && item.category === subCat;
                 } else if (currentCategoryFilter === 'library') {
                     catMatch = item.in_library === true;
                 } else if (currentCategoryFilter.startsWith('library_')) {
@@ -1028,6 +1061,15 @@
             else if (cat === 'library_game') libLabel.textContent = 'Biblio: Juegos';
             else libLabel.textContent = 'Mi Biblioteca';
 
+            const pendingLabel = document.getElementById('pendingBtnLabel');
+            if (cat === 'pending_watch') pendingLabel.textContent = 'Pendientes';
+            else if (cat === 'pending_movie') pendingLabel.textContent = 'Pend: Películas';
+            else if (cat === 'pending_tv') pendingLabel.textContent = 'Pend: Series';
+            else if (cat === 'pending_book') pendingLabel.textContent = 'Pend: Libros';
+            else if (cat === 'pending_comic') pendingLabel.textContent = 'Pend: Cómics';
+            else if (cat === 'pending_game') pendingLabel.textContent = 'Pend: Juegos';
+            else pendingLabel.textContent = 'Pendientes';
+
             renderItems();
         }
 
@@ -1038,6 +1080,7 @@
             document.getElementById('liveSearchInput').value = '';
             document.getElementById('statusSelect').value = 'all';
             document.getElementById('libraryBtnLabel').textContent = 'Mi Biblioteca';
+            document.getElementById('pendingBtnLabel').textContent = 'Pendientes';
             renderItems();
         }
 
