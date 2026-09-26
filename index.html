@@ -28,7 +28,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* CARÁTULAS ESTÁNDAR CON HENDIDURA DE PORTADA */
+        /* CARÁTULAS ESTÁNDAR CON HENDIDURA DE PORTADA (PELÍCULAS, LIBROS, JUEGOS) */
         .case-standard-shadow {
             position: relative;
             border-radius: 2px 4px 4px 2px;
@@ -39,13 +39,88 @@
             content: '';
             position: absolute;
             inset: 0;
-            /* Hendidura suave vertical */
             background: linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(255,255,255,0.15) 3%, rgba(0,0,0,0.25) 6%, transparent 9%);
             pointer-events: none;
         }
         .case-standard-shadow:hover {
             transform: translateY(-5px) scale(1.02);
             box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
+        }
+
+        /* --- EFECTO VINILO (MÚSICA) --- */
+        .vinyl-sleeve-container {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+        }
+
+        /* Funda de cartón del disco */
+        .vinyl-sleeve {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            border-radius: 3px;
+            overflow: hidden;
+            box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: #000;
+        }
+
+        /* Hendidura del lomo izquierdo del vinilo */
+        .vinyl-sleeve::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0.15) 2%, rgba(0,0,0,0.2) 4%, transparent 8%);
+            pointer-events: none;
+        }
+
+        /* Disco de Vinilo Físico tras la funda */
+        .vinyl-record {
+            position: absolute;
+            top: 4%;
+            right: 0%;
+            width: 92%;
+            height: 92%;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, 
+                #181818 0%, #181818 14%, 
+                #d97706 15%, #b45309 28%, /* Galleta central del vinilo */
+                #111 29%, #111 31%, 
+                #222 32%, #111 35%, 
+                #2d2d2d 38%, #111 41%, 
+                #222 45%, #111 50%, 
+                #2d2d2d 55%, #000 100%
+            );
+            box-shadow: inset 0 0 8px rgba(255,255,255,0.2), 3px 5px 12px rgba(0,0,0,0.8);
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Agujero central del disco */
+        .vinyl-record::after {
+            content: '';
+            width: 10%;
+            height: 10%;
+            background: #3b2314; /* Muestra el color de la estantería */
+            border-radius: 50%;
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.9);
+        }
+
+        /* Animación al pasar el ratón (*Hover*) */
+        .vinyl-sleeve-container:hover .vinyl-sleeve {
+            transform: translateY(-4px);
+            box-shadow: 8px 14px 22px rgba(0, 0, 0, 0.9);
+        }
+
+        .vinyl-sleeve-container:hover .vinyl-record {
+            transform: translateX(38%) rotate(180deg); /* El vinilo sale a la derecha y gira */
         }
 
         .brand-logo-badge {
@@ -74,7 +149,7 @@
 
             <div class="relative flex-1 max-w-md mx-md-4">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70 text-sm"></i>
-                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, autor, director, reparto, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
+                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, autor, artista, reparto, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
             </div>
             
             <div class="flex items-center gap-3">
@@ -122,6 +197,9 @@
                 <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
                 <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
                 <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
+                <button onclick="setCategoryFilter('music')" data-cat="music" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-record-vinyl text-xs text-amber-400"></i> Música
+                </button>
                 
                 <span class="border-r border-amber-800/60 my-1 mx-1 h-5"></span>
 
@@ -153,6 +231,9 @@
                             </button>
                             <button onclick="setCategoryFilter('library_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                            <button onclick="setCategoryFilter('library_music')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-record-vinyl w-4 text-amber-400"></i> Música
                             </button>
                         </div>
                     </div>
@@ -186,6 +267,9 @@
                             </button>
                             <button onclick="setCategoryFilter('pending_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                            <button onclick="setCategoryFilter('pending_music')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-record-vinyl w-4 text-amber-400"></i> Música
                             </button>
                         </div>
                     </div>
@@ -274,6 +358,7 @@
                         <option value="book">Libro</option>
                         <option value="comic">Cómic</option>
                         <option value="game">Videojuego</option>
+                        <option value="music">Música</option>
                     </select>
                 </div>
 
@@ -296,8 +381,8 @@
                 </div>
 
                 <div class="mb-4" id="platformContainer">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Plataforma / Dónde ver</label>
-                    <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video, Steam..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Plataforma / Dónde escuchar o ver</label>
+                    <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video, Steam, Spotify..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
                 <div class="mb-4">
@@ -348,8 +433,8 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama</label>
-                    <textarea id="formReview" rows="3" placeholder="Sinopsis..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama / Tracklist</label>
+                    <textarea id="formReview" rows="3" placeholder="Sinopsis o canciones..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3">
@@ -419,6 +504,8 @@
                 options = ['PC', 'PS5', 'PS4', 'PS3', 'PS2', 'PS1', 'Nintendo Switch', 'Xbox'];
             } else if (category === 'book' || category === 'comic') {
                 options = ['Tapa Dura', 'Tapa Blanda', 'Edición Especial', 'Grapa / Cuadernillo'];
+            } else if (category === 'music') {
+                options = ['Vinilo LP', 'Vinilo 7" Single', 'CD', 'Casete', 'Box Set / Edición Especial'];
             }
 
             options.forEach(opt => {
@@ -440,6 +527,9 @@
                 platformContainer.classList.remove('hidden');
             } else if (cat === 'game') {
                 subLabel.textContent = 'Desarrollador / Año / Plataforma';
+                platformContainer.classList.remove('hidden');
+            } else if (cat === 'music') {
+                subLabel.textContent = 'Artista / Grupo / Año';
                 platformContainer.classList.remove('hidden');
             } else {
                 subLabel.textContent = 'Autor / Editorial / Año';
@@ -478,6 +568,7 @@
             return { names: '', logos: '' };
         }
 
+        // BÚSQUEDA AUTOMÁTICA MULTICANAL (INCLUYE MÚSICA VÍA ITUNES MUSIC API)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
@@ -512,6 +603,29 @@
                         }
                     }
                 } 
+                else if (cat === 'music') {
+                    // Búsqueda de álbumes mediante iTunes Music API
+                    try {
+                        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=album&limit=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.results && data.results.length > 0) {
+                                foundResults = data.results.map(alb => {
+                                    const coverHiRes = alb.artworkUrl100 ? alb.artworkUrl100.replace('100x100bb', '1000x1000bb') : '';
+                                    const year = alb.releaseDate ? ` (${alb.releaseDate.split('-')[0]})` : '';
+                                    return {
+                                        name: alb.collectionName || title,
+                                        sub: `Artista: ${alb.artistName}${year}`,
+                                        cover: coverHiRes,
+                                        desc: alb.primaryGenreName ? `Género: ${alb.primaryGenreName}` : '',
+                                        platform: 'Spotify, Apple Music, Bandcamp',
+                                        platformLogo: ''
+                                    };
+                                });
+                            }
+                        }
+                    } catch (e) { console.error('iTunes Music error:', e); }
+                }
                 else if (cat === 'book' || cat === 'comic') {
                     try {
                         const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
@@ -611,7 +725,7 @@
                         const coverImg = item.cover || `https://via.placeholder.com/92x138/1e293b/ffffff?text=${encodeURIComponent(item.name)}`;
                         
                         row.innerHTML = `
-                            <img src="${coverImg}" class="w-10 h-14 object-cover rounded shadow">
+                            <img src="${coverImg}" class="w-10 h-10 object-cover rounded shadow">
                             <div class="overflow-hidden">
                                 <p class="text-sm font-semibold text-amber-100 truncate">${item.name}</p>
                                 <p class="text-xs text-amber-400/80 truncate">${item.sub}</p>
@@ -860,21 +974,39 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        // CREACIÓN DE ELEMENTO EN ESTANTERÍA (CARÁTULAS ESTÁNDAR)
+        // RENDERIZADO DE CARÁTULA EN ESTANTERÍA (CARÁTULAS ESTÁNDAR VS EFECTO VINILO)
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer';
             wrapper.onclick = () => openDetailModal(item.id);
 
-            wrapper.innerHTML = `
-                <div class="relative rounded-sm overflow-hidden case-standard-shadow bg-black aspect-[2/3] w-full border border-white/10">
-                    <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
-                    ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
-                </div>
-                <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
-                    ${item.title}
-                </div>
-            `;
+            if (item.category === 'music') {
+                // Estructura visual para Música con Efecto Vinilo 3D al hacer Hover
+                wrapper.innerHTML = `
+                    <div class="vinyl-sleeve-container">
+                        <div class="vinyl-record"></div>
+                        <div class="vinyl-sleeve">
+                            <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/94a3b8?text=Sin+Imagen'">
+                            ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
+                        ${item.title}
+                    </div>
+                `;
+            } else {
+                // Estructura Estándar para Películas, Series, Libros, Cómics y Videojuegos
+                wrapper.innerHTML = `
+                    <div class="relative rounded-sm overflow-hidden case-standard-shadow bg-black aspect-[2/3] w-full border border-white/10">
+                        <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
+                        ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
+                    </div>
+                    <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
+                        ${item.title}
+                    </div>
+                `;
+            }
+
             return wrapper;
         }
 
@@ -889,17 +1021,20 @@
                     ${logos.map(url => `<img src="${url}" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
                 </div>`;
             } else if (item.platform) {
-                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-tv mr-1"></i> ${item.platform}</p>`;
+                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-compact-disc mr-1"></i> ${item.platform}</p>`;
             }
+
+            const isMusic = item.category === 'music';
+            const imgAspectClass = isMusic ? 'aspect-square' : 'aspect-[2/3]';
 
             const modalContent = document.getElementById('detailModalContent');
             modalContent.innerHTML = `
                 <div class="w-full md:w-1/3 flex-shrink-0">
-                    <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover aspect-[2/3]">
+                    <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover ${imgAspectClass}">
                     ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-compact-disc mr-1"></i> ${item.format}</div>` : ''}
-                    <button onclick="reloadTMDBData('${item.id}', '${item.title.replace(/'/g, "\\'")}')" id="reloadBtn-${item.id}" class="w-full mt-3 bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs font-semibold py-2 px-3 rounded-lg border border-amber-600/40 transition flex items-center justify-center gap-2 shadow">
+                    ${!isMusic ? `<button onclick="reloadTMDBData('${item.id}', '${item.title.replace(/'/g, "\\'")}')" id="reloadBtn-${item.id}" class="w-full mt-3 bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs font-semibold py-2 px-3 rounded-lg border border-amber-600/40 transition flex items-center justify-center gap-2 shadow">
                         <i class="fa-solid fa-rotate mr-1"></i> Recargar Ficha (TMDB)
-                    </button>
+                    </button>` : ''}
                 </div>
                 <div class="w-full md:w-2/3 flex flex-col justify-between">
                     <div>
@@ -914,8 +1049,8 @@
                         <p class="text-xs text-amber-300/90 font-medium mt-2">${item.subtitle || ''}</p>
                         ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Disponible en / Plataforma:</p>${logosHTML}</div>` : ''}
                         <div class="mt-4 pt-4 border-t border-amber-900/30">
-                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> Sinopsis / Trama</h4>
-                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto">${item.review || 'Sin sinopsis disponible.'}</p>
+                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> ${isMusic ? 'Sinopsis / Tracklist' : 'Sinopsis / Trama'}</h4>
+                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">${item.review || 'Sin detalles disponibles.'}</p>
                         </div>
                     </div>
                     <div class="mt-6 flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-amber-900/30">
@@ -997,6 +1132,7 @@
             else if (cat === 'library_book') libLabel.textContent = 'Biblio: Libros';
             else if (cat === 'library_comic') libLabel.textContent = 'Biblio: Cómics';
             else if (cat === 'library_game') libLabel.textContent = 'Biblio: Juegos';
+            else if (cat === 'library_music') libLabel.textContent = 'Biblio: Música';
             else libLabel.textContent = 'Mi Biblioteca';
 
             const pendingLabel = document.getElementById('pendingBtnLabel');
@@ -1006,6 +1142,7 @@
             else if (cat === 'pending_book') pendingLabel.textContent = 'Pend: Libros';
             else if (cat === 'pending_comic') pendingLabel.textContent = 'Pend: Cómics';
             else if (cat === 'pending_game') pendingLabel.textContent = 'Pend: Juegos';
+            else if (cat === 'pending_music') pendingLabel.textContent = 'Pend: Música';
             else pendingLabel.textContent = 'Pendientes';
 
             renderItems();
