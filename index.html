@@ -43,6 +43,7 @@
             perspective: 1000px;
         }
 
+        /* 1. PELÍCULAS EN BLU-RAY 3D */
         .case-bluray-3d {
             position: relative;
             transform: rotateY(-12deg) rotateX(4deg);
@@ -60,6 +61,7 @@
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
         }
 
+        /* 2. PELÍCULAS EN DVD 3D */
         .case-dvd-3d {
             position: relative;
             transform: rotateY(-12deg) rotateX(4deg);
@@ -74,6 +76,32 @@
         }
         .case-dvd-3d:hover {
             transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+        }
+
+        /* 3. LIBROS Y CÓMICS 3D (TEXTURA TAPA DURA + HOJAS) */
+        .case-book-3d {
+            position: relative;
+            transform: rotateY(-10deg) rotateX(3deg);
+            transform-style: preserve-3d;
+            border-radius: 2px 6px 6px 2px;
+            border-left: 6px solid #2b1810; /* Lomo de encuadernación */
+            border-right: 5px solid #e5dfd3; /* Borde con color de páginas impresas */
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid #1a0f0a;
+            box-shadow: -8px 10px 18px rgba(0, 0, 0, 0.85), inset 2px 0 5px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .case-book-3d::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            /* Hendidura del lomo y relieve de la tapa dura */
+            background: linear-gradient(90deg, rgba(0,0,0,0.45) 0%, rgba(255,255,255,0.2) 2.5%, rgba(0,0,0,0.3) 5%, transparent 8%);
+            pointer-events: none;
+        }
+        .case-book-3d:hover {
+            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
         }
 
         .brand-logo-badge {
@@ -492,7 +520,6 @@
             let foundResults = [];
 
             try {
-                // 1. PELÍCULAS Y SERIES (TMDB)
                 if (cat === 'movie' || cat === 'tv') {
                     const res = await fetch(`https://api.themoviedb.org/3/search/${cat}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`);
                     if (res.ok) {
@@ -512,9 +539,7 @@
                         }
                     }
                 } 
-                // 2. LIBROS Y CÓMICS (Google Books + Respaldo Open Library)
                 else if (cat === 'book' || cat === 'comic') {
-                    // Intento 1: Google Books
                     try {
                         const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
                         if (res.ok) {
@@ -539,7 +564,6 @@
                         }
                     } catch (e) { console.error('Google Books error:', e); }
 
-                    // Respaldo: Open Library si Google Books no devolvió nada
                     if (foundResults.length === 0) {
                         try {
                             const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(title)}&limit=5`);
@@ -563,9 +587,7 @@
                         } catch (e) { console.error('Open Library error:', e); }
                     }
                 } 
-                // 3. VIDEOJUEGOS (RAWG + Respaldo iTunes Software API)
                 else if (cat === 'game') {
-                    // Intento 1: RAWG API
                     try {
                         const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
                         if (res.ok) {
@@ -583,7 +605,6 @@
                         }
                     } catch (e) { console.error('RAWG error:', e); }
 
-                    // Respaldo: iTunes API (Fiable, sin límite de API Key)
                     if (foundResults.length === 0) {
                         try {
                             const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=software&limit=5`);
@@ -815,7 +836,6 @@
 
                 const statusMatch = statusFilter === 'all' || item.status === statusFilter;
                 
-                // Búsqueda flexible ampliada a título, subtítulo, sinopsis, plataforma y categoría
                 const searchMatch = !searchQuery || 
                     item.title.toLowerCase().includes(searchQuery) || 
                     (item.subtitle && item.subtitle.toLowerCase().includes(searchQuery)) ||
@@ -864,6 +884,7 @@
             renderPagination(totalPages, filtered.length);
         }
 
+        // RENDERIZADO DINÁMICO DE ESTILOS 3D POR CATEGORÍA
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
@@ -871,10 +892,15 @@
 
             let caseStyle = 'case-standard-shadow border border-white/20';
             
-            if ((currentCategoryFilter === 'library' || currentCategoryFilter.startsWith('library_')) && item.format) {
-                const fmt = item.format.toLowerCase();
-                if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
-                else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
+            // Asignación de caja / textura 3D según categoría
+            if (item.category === 'book' || item.category === 'comic') {
+                caseStyle = 'case-book-3d';
+            } else if (item.category === 'movie' || item.category === 'tv') {
+                if (item.format) {
+                    const fmt = item.format.toLowerCase();
+                    if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
+                    else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
+                }
             }
 
             wrapper.innerHTML = `
