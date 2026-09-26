@@ -28,72 +28,22 @@
             border-top: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* Sombras estándar */
+        /* CARÁTULAS ESTÁNDAR CON HENDIDURA DE PORTADA */
         .case-standard-shadow {
-            box-shadow: 4px 8px 12px rgba(0, 0, 0, 0.6);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .case-standard-shadow:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.8);
-        }
-
-        /* --- CAJAS FÍSICAS 3D (MI BIBLIOTECA) --- */
-        .case-perspective-container {
-            perspective: 1000px;
-        }
-
-        /* 1. PELÍCULAS EN BLU-RAY 3D */
-        .case-bluray-3d {
-            position: relative;
-            transform: rotateY(-12deg) rotateX(4deg);
-            transform-style: preserve-3d;
-            border-radius: 4px 8px 8px 4px;
-            border-top: 14px solid rgba(29, 78, 216, 0.85);
-            border-left: 7px solid #1d4ed8;
-            border-right: 2px solid #1e40af;
-            border-bottom: 3px solid #1e3a8a;
-            box-shadow: -8px 10px 20px rgba(0,0,0,0.9), inset 0 2px 5px rgba(255,255,255,0.6);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .case-bluray-3d:hover {
-            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.95);
-        }
-
-        /* 2. PELÍCULAS EN DVD 3D */
-        .case-dvd-3d {
-            position: relative;
-            transform: rotateY(-12deg) rotateX(4deg);
-            transform-style: preserve-3d;
-            border-radius: 3px 6px 6px 3px;
-            border-top: 12px solid #111827;
-            border-left: 7px solid #1f2937;
-            border-right: 2px solid #111827;
-            border-bottom: 3px solid #000000;
-            box-shadow: -8px 10px 20px rgba(0,0,0,0.9);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .case-dvd-3d:hover {
-            transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.04);
-        }
-
-        /* 3. LIBROS Y CÓMICS (SÓLO CON LA HENDIDURA DE LA PORTADA) */
-        .case-book-3d {
             position: relative;
             border-radius: 2px 4px 4px 2px;
             box-shadow: 4px 8px 14px rgba(0, 0, 0, 0.7);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .case-book-3d::after {
+        .case-standard-shadow::after {
             content: '';
             position: absolute;
             inset: 0;
-            /* Hendidura suave vertical típica de las tapas duras cerca del lomo */
+            /* Hendidura suave vertical */
             background: linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(255,255,255,0.15) 3%, rgba(0,0,0,0.25) 6%, transparent 9%);
             pointer-events: none;
         }
-        .case-book-3d:hover {
+        .case-standard-shadow:hover {
             transform: translateY(-5px) scale(1.02);
             box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
         }
@@ -812,7 +762,7 @@
                         cover_url: tmdbData.cover_url,
                         platform: tmdbData.platform,
                         platform_logo: tmdbData.platform_logo,
-                        status: 'planned', // Los elementos de Letterboxd entran como Pendientes por defecto
+                        status: 'planned',
                         rating: rating,
                         in_library: false
                     };
@@ -910,26 +860,14 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        // CREACIÓN DE ELEMENTO EN ESTANTERÍA
+        // CREACIÓN DE ELEMENTO EN ESTANTERÍA (CARÁTULAS ESTÁNDAR)
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex flex-col items-center group cursor-pointer case-perspective-container';
+            wrapper.className = 'flex flex-col items-center group cursor-pointer';
             wrapper.onclick = () => openDetailModal(item.id);
 
-            let caseStyle = 'case-standard-shadow border border-white/20';
-            
-            if (item.category === 'book' || item.category === 'comic') {
-                caseStyle = 'case-book-3d';
-            } else if (item.category === 'movie' || item.category === 'tv') {
-                if (item.format) {
-                    const fmt = item.format.toLowerCase();
-                    if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
-                    else if (fmt.includes('dvd')) caseStyle = 'case-dvd-3d';
-                }
-            }
-
             wrapper.innerHTML = `
-                <div class="relative rounded-sm overflow-hidden ${caseStyle} bg-black aspect-[2/3] w-full">
+                <div class="relative rounded-sm overflow-hidden case-standard-shadow bg-black aspect-[2/3] w-full border border-white/10">
                     <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Sin+Imagen'">
                     ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                 </div>
