@@ -345,7 +345,6 @@
 
         document.addEventListener('DOMContentLoaded', () => { fetchItems(); });
 
-        // Cierra el menú desplegable al hacer clic fuera de él
         window.addEventListener('click', (e) => {
             const dropdown = document.getElementById('topDropdownMenu');
             if (dropdown && !e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu(event)"]')) {
@@ -373,7 +372,6 @@
             } catch (err) { console.error('Error:', err.message); }
         }
 
-        // Renderizado dinámico de formatos según categoría seleccionada
         function renderFormatOptions(category, selectedFormats = []) {
             const container = document.getElementById('formatCheckboxes');
             if (!container) return;
@@ -552,16 +550,18 @@
 
                 if (currentCategoryFilter === 'pending_watch') {
                     catMatch = isPending;
+                } else if (currentCategoryFilter === 'library') {
+                    // Muestra los elementos de la biblioteca física sin importar su estado
+                    catMatch = item.in_library === true;
+                } else if (currentCategoryFilter.startsWith('library_')) {
+                    const subCat = currentCategoryFilter.replace('library_', '');
+                    catMatch = item.in_library === true && item.category === subCat;
                 } else {
+                    // Oculta de pestañas generales solo si está pendiente
                     if (isPending) return false;
 
                     if (currentCategoryFilter === 'all') {
                         catMatch = true;
-                    } else if (currentCategoryFilter === 'library') {
-                        catMatch = item.in_library === true;
-                    } else if (currentCategoryFilter.startsWith('library_')) {
-                        const subCat = currentCategoryFilter.replace('library_', '');
-                        catMatch = item.in_library === true && item.category === subCat;
                     } else if (currentCategoryFilter === 'shopping_list') {
                         catMatch = item.to_buy === true;
                     } else {
@@ -866,7 +866,6 @@
             }
         }
 
-        // Exportar Biblioteca a CSV
         function exportCSV() {
             document.getElementById('topDropdownMenu').classList.add('hidden');
             if (!items.length) return alert('No hay elementos para exportar.');
@@ -891,7 +890,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Exportar Biblioteca a Excel (.xls)
         function exportExcel() {
             document.getElementById('topDropdownMenu').classList.add('hidden');
             if (!items.length) return alert('No hay elementos para exportar.');
@@ -926,7 +924,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Importador CSV de Letterboxd / General
         function importLetterboxdCSV(e) {
             const file = e.target.files[0];
             if (!file) return;
