@@ -117,7 +117,7 @@
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
 
-                    <div id="topDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-48 bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur">
+                    <div id="topDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-52 bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur">
                         <button onclick="triggerCSVImport()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-file-csv text-emerald-400 w-4 text-sm"></i> Importar CSV
                         </button>
@@ -126,6 +126,10 @@
                         </button>
                         <button onclick="exportExcel()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-file-excel text-emerald-500 w-4 text-sm"></i> Exportar Excel
+                        </button>
+                        <span class="border-b border-amber-900/40 block my-1"></span>
+                        <button onclick="deleteAllItems()" class="w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-950/50 flex items-center gap-2.5 transition font-semibold">
+                            <i class="fa-solid fa-trash-can text-rose-500 w-4 text-sm"></i> Vaciar Biblioteca
                         </button>
                     </div>
                 </div>
@@ -302,7 +306,7 @@
                         <div id="formatContainer" class="hidden mt-3 pt-3 border-t border-amber-900/30">
                             <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos Disponibles:</label>
                             <div id="formatCheckboxes" class="grid grid-cols-2 gap-2 text-xs text-amber-100">
-                                <!-- Generado dinámicamente según la categoría elegida -->
+                                <!-- Generado dinámicamente -->
                             </div>
                         </div>
                     </div>
@@ -551,13 +555,11 @@
                 if (currentCategoryFilter === 'pending_watch') {
                     catMatch = isPending;
                 } else if (currentCategoryFilter === 'library') {
-                    // Muestra los elementos de la biblioteca física sin importar su estado
                     catMatch = item.in_library === true;
                 } else if (currentCategoryFilter.startsWith('library_')) {
                     const subCat = currentCategoryFilter.replace('library_', '');
                     catMatch = item.in_library === true && item.category === subCat;
                 } else {
-                    // Oculta de pestañas generales solo si está pendiente
                     if (isPending) return false;
 
                     if (currentCategoryFilter === 'all') {
@@ -863,6 +865,28 @@
                 fetchItems();
             } catch (err) {
                 alert('Error al eliminar: ' + err.message);
+            }
+        }
+
+        // Vaciar toda la biblioteca de Supabase con doble confirmación
+        async function deleteAllItems() {
+            document.getElementById('topDropdownMenu').classList.add('hidden');
+            
+            // Primera confirmación
+            const confirm1 = confirm('⚠️ ¿Estás seguro de que quieres vaciar toda la biblioteca?');
+            if (!confirm1) return;
+
+            // Segunda confirmación de seguridad
+            const confirm2 = confirm('🚨 ADVERTENCIA FINAL: Se borrarán TODOS los datos de tu base de datos permanentemente y no se podrán recuperar. ¿Deseas proceder?');
+            if (!confirm2) return;
+            
+            try {
+                const { error } = await supabaseClient.from('media_items').delete().not('id', 'is', null);
+                if (error) throw error;
+                alert('¡Toda la biblioteca ha sido borrada con éxito!');
+                fetchItems();
+            } catch (err) {
+                alert('Error al vaciar la biblioteca: ' + err.message);
             }
         }
 
