@@ -106,16 +106,31 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <button onclick="document.getElementById('csvFileInput').click()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 font-medium px-3.5 py-2 rounded-lg flex items-center space-x-2 transition border border-amber-800/50 text-sm shadow">
-                    <i class="fa-solid fa-file-csv text-emerald-400"></i>
-                    <span>Importar Letterboxd</span>
-                </button>
-                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importLetterboxdCSV(event)">
-
                 <button onclick="openModal()" class="bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg text-sm border border-amber-500/40">
                     <i class="fa-solid fa-plus"></i>
                     <span>Añadir Elemento</span>
                 </button>
+
+                <!-- Menú de Hamburguesa -->
+                <div class="relative inline-block text-left">
+                    <button onclick="toggleTopMenu(event)" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-3.5 py-2 rounded-lg flex items-center justify-center transition border border-amber-800/50 shadow">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+
+                    <div id="topDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-48 bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur">
+                        <button onclick="triggerCSVImport()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-file-csv text-emerald-400 w-4 text-sm"></i> Importar CSV
+                        </button>
+                        <button onclick="exportCSV()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-file-export text-blue-400 w-4 text-sm"></i> Exportar CSV
+                        </button>
+                        <button onclick="exportExcel()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-file-excel text-emerald-500 w-4 text-sm"></i> Exportar Excel
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importLetterboxdCSV(event)">
             </div>
         </div>
     </header>
@@ -285,12 +300,9 @@
                         </div>
 
                         <div id="formatContainer" class="hidden mt-3 pt-3 border-t border-amber-900/30">
-                            <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos:</label>
-                            <div class="grid grid-cols-2 gap-2 text-xs text-amber-100">
-                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="4K UHD Blu-ray" class="accent-amber-600"> 4K UHD Blu-ray</label>
-                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Blu-ray" class="accent-amber-600"> Blu-ray</label>
-                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="DVD" class="accent-amber-600"> DVD</label>
-                                <label class="flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40"><input type="checkbox" name="formatCheck" value="Steelbook" class="accent-amber-600"> Steelbook</label>
+                            <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos Disponibles:</label>
+                            <div id="formatCheckboxes" class="grid grid-cols-2 gap-2 text-xs text-amber-100">
+                                <!-- Generado dinámicamente según la categoría elegida -->
                             </div>
                         </div>
                     </div>
@@ -333,6 +345,25 @@
 
         document.addEventListener('DOMContentLoaded', () => { fetchItems(); });
 
+        // Cierra el menú desplegable al hacer clic fuera de él
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('topDropdownMenu');
+            if (dropdown && !e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu(event)"]')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function toggleTopMenu(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('topDropdownMenu');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function triggerCSVImport() {
+            document.getElementById('topDropdownMenu').classList.add('hidden');
+            document.getElementById('csvFileInput').click();
+        }
+
         async function fetchItems() {
             try {
                 const { data, error } = await supabaseClient.from('media_items').select('*').order('created_at', { ascending: false });
@@ -342,10 +373,35 @@
             } catch (err) { console.error('Error:', err.message); }
         }
 
+        // Renderizado dinámico de formatos según categoría seleccionada
+        function renderFormatOptions(category, selectedFormats = []) {
+            const container = document.getElementById('formatCheckboxes');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let options = [];
+            if (category === 'movie' || category === 'tv') {
+                options = ['4K UHD Blu-ray', 'Blu-ray', 'DVD', 'Steelbook', 'Laserdisc', 'VHS'];
+            } else if (category === 'game') {
+                options = ['PC', 'PS5', 'PS4', 'PS3', 'PS2', 'PS1', 'Nintendo Switch', 'Xbox'];
+            } else if (category === 'book' || category === 'comic') {
+                options = ['Tapa Dura', 'Tapa Blanda', 'Edición Especial', 'Grapa / Cuadernillo'];
+            }
+
+            options.forEach(opt => {
+                const isChecked = selectedFormats.includes(opt);
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40 hover:border-amber-700 transition';
+                label.innerHTML = `<input type="checkbox" name="formatCheck" value="${opt}" ${isChecked ? 'checked' : ''} class="accent-amber-600"> <span class="truncate">${opt}</span>`;
+                container.appendChild(label);
+            });
+        }
+
         function handleCategoryChange() {
             const cat = document.getElementById('formCategory').value;
             const subLabel = document.getElementById('subtitleLabel');
             const platformContainer = document.getElementById('platformContainer');
+            
             if (cat === 'movie' || cat === 'tv') {
                 subLabel.textContent = 'Director / Reparto / Año';
                 platformContainer.classList.remove('hidden');
@@ -353,13 +409,23 @@
                 subLabel.textContent = 'Autor / Año / Desarrollador';
                 platformContainer.classList.add('hidden');
             }
+
+            const currentSelected = Array.from(document.querySelectorAll('input[name="formatCheck"]:checked')).map(cb => cb.value);
+            renderFormatOptions(cat, currentSelected);
         }
 
         function toggleFormatSelector() {
             const inLibrary = document.getElementById('formInLibrary').checked;
             const formatContainer = document.getElementById('formatContainer');
-            if (inLibrary) formatContainer.classList.remove('hidden');
-            else formatContainer.classList.add('hidden');
+            const cat = document.getElementById('formCategory').value;
+            
+            if (inLibrary) {
+                formatContainer.classList.remove('hidden');
+                const currentSelected = Array.from(document.querySelectorAll('input[name="formatCheck"]:checked')).map(cb => cb.value);
+                renderFormatOptions(cat, currentSelected);
+            } else {
+                formatContainer.classList.add('hidden');
+            }
         }
 
         async function fetchWatchProviders(type, tmdbId) {
@@ -554,7 +620,6 @@
 
             let caseStyle = 'case-standard-shadow border border-white/20';
             
-            // Si estamos en cualquier vista de Mi Biblioteca, mantenemos las cajas 3D
             if ((currentCategoryFilter === 'library' || currentCategoryFilter.startsWith('library_')) && item.format) {
                 const fmt = item.format.toLowerCase();
                 if (fmt.includes('blu-ray') || fmt.includes('4k')) caseStyle = 'case-bluray-3d';
@@ -685,7 +750,6 @@
             currentCategoryFilter = cat;
             currentPage = 1;
 
-            // Actualización del texto dinámico en el botón de Mi Biblioteca
             const libLabel = document.getElementById('libraryBtnLabel');
             if (cat === 'library') libLabel.textContent = 'Mi Biblioteca';
             else if (cat === 'library_movie') libLabel.textContent = 'Biblio: Películas';
@@ -718,10 +782,9 @@
             document.getElementById('editingItemId').value = '';
             document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
-            document.querySelectorAll('input[name="formatCheck"]').forEach(cb => cb.checked = false);
             document.getElementById('searchResults').classList.add('hidden');
-            toggleFormatSelector();
             handleCategoryChange();
+            toggleFormatSelector();
             document.getElementById('itemModal').classList.remove('hidden');
         }
 
@@ -735,8 +798,7 @@
             document.getElementById('editingItemId').value = item.id;
             document.getElementById('modalTitle').textContent = 'Editar Elemento';
             document.getElementById('formCategory').value = item.category || 'movie';
-            handleCategoryChange();
-
+            
             document.getElementById('formTitle').value = item.title || '';
             document.getElementById('formSubtitle').value = item.subtitle || '';
             document.getElementById('formPlatform').value = item.platform || '';
@@ -748,10 +810,10 @@
             document.getElementById('formToBuy').checked = item.to_buy || false;
             document.getElementById('formReview').value = item.review || '';
 
+            handleCategoryChange();
+
             const savedFormats = item.format ? item.format.split(',').map(f => f.trim()) : [];
-            document.querySelectorAll('input[name="formatCheck"]').forEach(cb => {
-                cb.checked = savedFormats.includes(cb.value);
-            });
+            renderFormatOptions(item.category || 'movie', savedFormats);
 
             toggleFormatSelector();
             document.getElementById('itemModal').classList.remove('hidden');
@@ -802,6 +864,104 @@
             } catch (err) {
                 alert('Error al eliminar: ' + err.message);
             }
+        }
+
+        // Exportar Biblioteca a CSV
+        function exportCSV() {
+            document.getElementById('topDropdownMenu').classList.add('hidden');
+            if (!items.length) return alert('No hay elementos para exportar.');
+            
+            const headers = ['id', 'title', 'subtitle', 'category', 'status', 'rating', 'in_library', 'format', 'to_buy', 'platform', 'review'];
+            const csvRows = [headers.join(',')];
+            
+            items.forEach(item => {
+                const row = headers.map(header => {
+                    const val = item[header] !== undefined && item[header] !== null ? String(item[header]) : '';
+                    return `"${val.replace(/"/g, '""')}"`;
+                });
+                csvRows.push(row.join(','));
+            });
+
+            const blob = new Blob(["\ufeff" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `media_tracker_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Exportar Biblioteca a Excel (.xls)
+        function exportExcel() {
+            document.getElementById('topDropdownMenu').classList.add('hidden');
+            if (!items.length) return alert('No hay elementos para exportar.');
+
+            let tableHTML = '<table border="1"><thead><tr style="background-color:#d4a373;color:#000;">';
+            const headers = ['Título', 'Subtítulo', 'Categoría', 'Estado', 'Puntuación', 'En Biblioteca', 'Formatos', 'Lista Compra', 'Plataforma', 'Sinopsis'];
+            headers.forEach(h => tableHTML += `<th>${h}</th>`);
+            tableHTML += '</tr></thead><tbody>';
+
+            items.forEach(item => {
+                tableHTML += `<tr>
+                    <td>${item.title || ''}</td>
+                    <td>${item.subtitle || ''}</td>
+                    <td>${item.category || ''}</td>
+                    <td>${item.status || ''}</td>
+                    <td>${item.rating || 0}</td>
+                    <td>${item.in_library ? 'Sí' : 'No'}</td>
+                    <td>${item.format || ''}</td>
+                    <td>${item.to_buy ? 'Sí' : 'No'}</td>
+                    <td>${item.platform || ''}</td>
+                    <td>${(item.review || '').replace(/\n/g, ' ')}</td>
+                </tr>`;
+            });
+            tableHTML += '</tbody></table>';
+
+            const blob = new Blob(["\ufeff" + tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `media_tracker_${new Date().toISOString().slice(0,10)}.xls`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Importador CSV de Letterboxd / General
+        function importLetterboxdCSV(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                const text = evt.target.result;
+                const lines = text.split(/\r\n|\n/);
+                if (lines.length < 2) return alert('El archivo CSV está vacío.');
+
+                let addedCount = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"\vert{}"$/g, '').trim());
+                    if (cols.length > 1 && cols[1]) {
+                        const title = cols[1];
+                        const year = cols[2] ? `Año: ${cols[2]}` : '';
+                        
+                        const itemData = {
+                            category: 'movie',
+                            title: title,
+                            subtitle: year,
+                            cover_url: `https://via.placeholder.com/300x450/1e293b/ffffff?text=${encodeURIComponent(title)}`,
+                            status: 'completed',
+                            rating: 0,
+                            in_library: false
+                        };
+                        await supabaseClient.from('media_items').insert([itemData]);
+                        addedCount++;
+                    }
+                }
+                alert(`¡Se han importado ${addedCount} películas con éxito!`);
+                fetchItems();
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
