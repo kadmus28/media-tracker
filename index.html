@@ -119,7 +119,7 @@
 
                     <div id="topDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-52 bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur">
                         <button onclick="triggerCSVImport()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
-                            <i class="fa-solid fa-file-csv text-emerald-400 w-4 text-sm"></i> Importar CSV
+                            <i class="fa-solid fa-file-csv text-emerald-400 w-4 text-sm"></i> Importar CSV Letterboxd
                         </button>
                         <button onclick="exportCSV()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-file-export text-blue-400 w-4 text-sm"></i> Exportar CSV
@@ -215,6 +215,31 @@
             <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta la búsqueda y filtros.</p>
         </div>
     </main>
+
+    <!-- Modal de Progreso de Importación CSV -->
+    <div id="importProgressModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-md w-full p-6 border border-amber-800/60 shadow-2xl relative text-center">
+            <div class="mb-4">
+                <i class="fa-solid fa-cloud-arrow-down text-4xl text-amber-500 animate-bounce"></i>
+                <h3 class="text-lg font-bold text-amber-100 mt-2">Importando desde Letterboxd</h3>
+                <p class="text-xs text-stone-400 mt-1">Obteniendo sinopsis, reparto y plataformas desde TMDB...</p>
+            </div>
+
+            <!-- Barra de Progreso -->
+            <div class="w-full bg-stone-950 rounded-full h-4 mb-3 p-0.5 border border-amber-900/50 overflow-hidden shadow-inner">
+                <div id="importProgressBar" class="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+
+            <div class="flex justify-between text-xs text-amber-300 font-semibold mb-3">
+                <span id="importProgressPercent">0%</span>
+                <span id="importProgressCount">0 / 0</span>
+            </div>
+
+            <p id="importCurrentItem" class="text-xs text-stone-300 truncate italic bg-stone-950 p-2.5 rounded-lg border border-amber-900/30">
+                Iniciando procesador...
+            </p>
+        </div>
+    </div>
 
     <!-- Modal Detalle -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
@@ -376,6 +401,10 @@
             } catch (err) { console.error('Error:', err.message); }
         }
 
+        function parseCSVLine(line) {
+            return line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+        }
+
         function renderFormatOptions(category, selectedFormats = []) {
             const container = document.getElementById('formatCheckboxes');
             if (!container) return;
@@ -442,6 +471,151 @@
                 }
             } catch (e) { console.error('Error plataformas:', e); }
             return { names: '', logos: '' };
+        }
+
+        // Búsqueda completa en TMDB para cada película importada
+        async function getTMDBFullMovieData(title, year) {
+            try {
+                let searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`;
+                if (year) searchUrl += `&year=${year}`;
+
+                let res = await fetch(searchUrl);
+                let data = await res.json();
+                let results = data.results || [];
+
+                if (results.length === 0 && year) {
+                    res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`);
+                    data = await res.json();
+                    results = data.results || [];
+                }
+
+                if (results.length > 0) {
+                    const match = results[0];
+                    const movieId = match.id;
+
+                    const detRes = await fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=es-ES&append_to_response=credits`);
+                    const detData = await detRes.json();
+
+                    const crew = detData.credits?.crew || [];
+                    const directors = crew.filter(c => c.job === 'Director').map(c => c.name).slice(0, 2).join(', ');
+                    const cast = detData.credits?.cast || [];
+                    const actors = cast.slice(0, 3).map(a => a.name).join(', ');
+                    
+                    const releaseYear = detData.release_date ? detData.release_date.split('-')[0] : (year || '');
+                    
+                    let subtitleParts = [];
+                    if (releaseYear) subtitleParts.push(`Año: ${releaseYear}`);
+                    if (directors) subtitleParts.push(`Dir: ${directors}`);
+                    if (actors) subtitleParts.push(`Reparto: ${actors}`);
+                    
+                    const subtitle = subtitleParts.join(' | ');
+                    const providerInfo = await fetchWatchProviders('movie', movieId);
+
+                    return {
+                        title: match.title || title,
+                        subtitle: subtitle,
+                        review: detData.overview || '',
+                        cover_url: match.poster_path ? `https://image.tmdb.org/t/p/w500${match.poster_path}` : `https://via.placeholder.com/300x450/1e293b/ffffff?text=${encodeURIComponent(title)}`,
+                        platform: providerInfo.names || '',
+                        platform_logo: providerInfo.logos || ''
+                    };
+                }
+            } catch (e) {
+                console.error('Error TMDB:', title, e);
+            }
+
+            return {
+                title: title,
+                subtitle: year ? `Año: ${year}` : '',
+                review: '',
+                cover_url: `https://via.placeholder.com/300x450/1e293b/ffffff?text=${encodeURIComponent(title)}`,
+                platform: '',
+                platform_logo: ''
+            };
+        }
+
+        // Importador CSV interactivo de Letterboxd con Barra de Carga
+        function importLetterboxdCSV(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                const text = evt.target.result;
+                const lines = text.split(/\r\n|\n/).filter(line => line.trim());
+                if (lines.length < 2) return alert('El archivo CSV está vacío.');
+
+                const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+                const nameIdx = headers.findIndex(h => h === 'name' || h === 'title' || h === 'nombre' || h === 'título');
+                const yearIdx = headers.findIndex(h => h === 'year' || h === 'año');
+                const ratingIdx = headers.findIndex(h => h === 'rating' || h === 'puntuación' || h === 'nota');
+
+                if (nameIdx === -1) {
+                    return alert('No se encontró la columna de título ("Name" o "Title") en el CSV.');
+                }
+
+                const moviesToImport = lines.slice(1);
+                const total = moviesToImport.length;
+
+                // Mostrar modal de progreso
+                const modal = document.getElementById('importProgressModal');
+                const bar = document.getElementById('importProgressBar');
+                const percentTxt = document.getElementById('importProgressPercent');
+                countTxt = document.getElementById('importProgressCount');
+                itemTxt = document.getElementById('importCurrentItem');
+
+                modal.classList.remove('hidden');
+
+                let importedCount = 0;
+
+                for (let i = 0; i < total; i++) {
+                    const cols = parseCSVLine(moviesToImport[i]);
+                    if (!cols || cols.length <= nameIdx) continue;
+
+                    const title = cols[nameIdx];
+                    if (!title) continue;
+
+                    const year = yearIdx !== -1 ? cols[yearIdx] : '';
+                    let rating = 0;
+                    if (ratingIdx !== -1 && cols[ratingIdx]) {
+                        const parsedRating = parseFloat(cols[ratingIdx]);
+                        if (!isNaN(parsedRating)) rating = parsedRating;
+                    }
+
+                    // Actualización dinámica de la barra de carga
+                    const currentNum = i + 1;
+                    const pct = Math.round((currentNum / total) * 100);
+                    bar.style.width = `${pct}%`;
+                    percentTxt.textContent = `${pct}%`;
+                    countTxt.textContent = `${currentNum} / ${total}`;
+                    itemTxt.textContent = `[${currentNum}/${total}] TMDB: ${title} ${year ? '(' + year + ')' : ''}`;
+
+                    // Obtener ficha completa desde TMDB
+                    const tmdbData = await getTMDBFullMovieData(title, year);
+
+                    const itemData = {
+                        category: 'movie',
+                        title: tmdbData.title,
+                        subtitle: tmdbData.subtitle,
+                        review: tmdbData.review,
+                        cover_url: tmdbData.cover_url,
+                        platform: tmdbData.platform,
+                        platform_logo: tmdbData.platform_logo,
+                        status: 'completed',
+                        rating: rating,
+                        in_library: false
+                    };
+
+                    await supabaseClient.from('media_items').insert([itemData]);
+                    importedCount++;
+                }
+
+                modal.classList.add('hidden');
+                alert(`¡Importación completada! Se han procesado y guardado ${importedCount} películas con toda su información y plataformas.`);
+                e.target.value = '';
+                fetchItems();
+            };
+            reader.readAsText(file);
         }
 
         async function autoSearchCover() {
@@ -868,15 +1042,12 @@
             }
         }
 
-        // Vaciar toda la biblioteca de Supabase con doble confirmación
         async function deleteAllItems() {
             document.getElementById('topDropdownMenu').classList.add('hidden');
             
-            // Primera confirmación
             const confirm1 = confirm('⚠️ ¿Estás seguro de que quieres vaciar toda la biblioteca?');
             if (!confirm1) return;
 
-            // Segunda confirmación de seguridad
             const confirm2 = confirm('🚨 ADVERTENCIA FINAL: Se borrarán TODOS los datos de tu base de datos permanentemente y no se podrán recuperar. ¿Deseas proceder?');
             if (!confirm2) return;
             
@@ -946,43 +1117,6 @@
             a.download = `media_tracker_${new Date().toISOString().slice(0,10)}.xls`;
             a.click();
             URL.revokeObjectURL(url);
-        }
-
-        function importLetterboxdCSV(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(evt) {
-                const text = evt.target.result;
-                const lines = text.split(/\r\n|\n/);
-                if (lines.length < 2) return alert('El archivo CSV está vacío.');
-
-                let addedCount = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-                    const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"\vert{}"$/g, '').trim());
-                    if (cols.length > 1 && cols[1]) {
-                        const title = cols[1];
-                        const year = cols[2] ? `Año: ${cols[2]}` : '';
-                        
-                        const itemData = {
-                            category: 'movie',
-                            title: title,
-                            subtitle: year,
-                            cover_url: `https://via.placeholder.com/300x450/1e293b/ffffff?text=${encodeURIComponent(title)}`,
-                            status: 'completed',
-                            rating: 0,
-                            in_library: false
-                        };
-                        await supabaseClient.from('media_items').insert([itemData]);
-                        addedCount++;
-                    }
-                }
-                alert(`¡Se han importado ${addedCount} películas con éxito!`);
-                fetchItems();
-            };
-            reader.readAsText(file);
         }
     </script>
 </body>
