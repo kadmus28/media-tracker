@@ -51,7 +51,7 @@
                 inset 0 2px 8px rgba(255, 255, 255, 0.6);
         }
 
-        /* CARÁTULAS ESTÁNDAR (Películas, TV, Juegos, Cómics - Totalmente lisas) */
+        /* CARÁTULAS ESTÁNDAR (Películas, TV) */
         .case-standard-shadow {
             position: relative;
             border-radius: 2px 4px 4px 2px;
@@ -62,6 +62,36 @@
         .case-standard-shadow:hover {
             transform: translateY(-5px) scale(1.02);
             box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
+            z-index: 10;
+        }
+
+        /* EFECTO CAJA DE CARTÓN RETRO (VIDEOJUEGOS Y JUEGOS DE MESA) */
+        .case-carton-shadow {
+            position: relative;
+            border-radius: 3px;
+            box-shadow: 
+                5px 9px 18px rgba(0, 0, 0, 0.85),
+                inset 1px 1px 2px rgba(255, 255, 255, 0.25),
+                inset -2px -2px 4px rgba(0, 0, 0, 0.6);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        /* Pliegue de cartón en los bordes */
+        .case-carton-shadow::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 12%, transparent 88%, rgba(0,0,0,0.4) 100%),
+                linear-gradient(90deg, rgba(0,0,0,0.2) 0%, transparent 4%, transparent 96%, rgba(0,0,0,0.25) 100%);
+            pointer-events: none;
+        }
+        .case-carton-shadow:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 
+                9px 16px 24px rgba(0, 0, 0, 0.95),
+                inset 1px 1px 3px rgba(255, 255, 255, 0.35);
             z-index: 10;
         }
 
@@ -258,9 +288,25 @@
                     </div>
                 </div>
 
-                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1">
-                    <i class="fa-solid fa-gamepad text-xs text-amber-400"></i> Juegos
-                </button>
+                <!-- Desplegable Juegos (Videojuegos y Juegos de Mesa) -->
+                <div class="relative group inline-block">
+                    <button data-cat="gaming" id="gamesDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-gamepad text-xs text-amber-400"></i>
+                        <span id="gamesBtnLabel">Juegos</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
+                    </button>
+                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
+                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
+                            <button onclick="setCategoryFilter('game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                            <button onclick="setCategoryFilter('boardgame')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-chess-board w-4 text-amber-400"></i> Juegos de Mesa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button onclick="setCategoryFilter('music')" data-cat="music" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1">
                     <i class="fa-solid fa-record-vinyl text-xs text-amber-400"></i> Música
                 </button>
@@ -295,6 +341,9 @@
                             </button>
                             <button onclick="setCategoryFilter('library_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                            <button onclick="setCategoryFilter('library_boardgame')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-chess-board w-4 text-amber-400"></i> Juegos de Mesa
                             </button>
                             <button onclick="setCategoryFilter('library_music')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-record-vinyl w-4 text-amber-400"></i> Música
@@ -331,6 +380,9 @@
                             </button>
                             <button onclick="setCategoryFilter('pending_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
+                            </button>
+                            <button onclick="setCategoryFilter('pending_boardgame')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-chess-board w-4 text-amber-400"></i> Juegos de Mesa
                             </button>
                             <button onclick="setCategoryFilter('pending_music')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-record-vinyl w-4 text-amber-400"></i> Música
@@ -422,6 +474,7 @@
                         <option value="book">Libro</option>
                         <option value="comic">Cómic</option>
                         <option value="game">Videojuego</option>
+                        <option value="boardgame">Juego de Mesa</option>
                         <option value="music">Música</option>
                     </select>
                 </div>
@@ -429,7 +482,7 @@
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Título</label>
                     <div class="flex gap-2">
-                        <input type="text" id="formTitle" required placeholder="Ej: Batman, Dune, El Hobbit..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                        <input type="text" id="formTitle" required placeholder="Ej: Batman, Dune, Catan..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                         <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-amber-700 hover:bg-amber-600 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <span>Buscar</span>
@@ -445,7 +498,7 @@
                 </div>
 
                 <div class="mb-4" id="platformContainer">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Plataforma / Dónde escuchar o ver</label>
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="platformLabel">Plataforma / Dónde escuchar o ver</label>
                     <input type="text" id="formPlatform" placeholder="Ej: Netflix, Prime Video, Steam, Spotify..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
                 </div>
 
@@ -497,8 +550,8 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Sinopsis / Trama / Tracklist</label>
-                    <textarea id="formReview" rows="3" placeholder="Sinopsis o canciones..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
+                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="reviewLabel">Sinopsis / Trama / Tracklist</label>
+                    <textarea id="formReview" rows="3" placeholder="Detalles o descripción..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3">
@@ -565,7 +618,9 @@
             if (category === 'movie' || category === 'tv') {
                 options = ['4K UHD Blu-ray', 'Blu-ray', 'DVD', 'Steelbook', 'Laserdisc', 'VHS'];
             } else if (category === 'game') {
-                options = ['PC', 'PS5', 'PS4', 'PS3', 'PS2', 'PS1', 'Nintendo Switch', 'Xbox'];
+                options = ['Caja Cartón Retro', 'PC Big Box', 'Cartucho SNES/N64', 'PS5', 'PS4', 'Nintendo Switch', 'Xbox'];
+            } else if (category === 'boardgame') {
+                options = ['Caja Grande (Ed. Base)', 'Expansión / Módulo', 'Edición Kickstarter / Verkami', 'Edición Deluxe', 'Juego de Cartas / Pocket'];
             } else if (category === 'book' || category === 'comic') {
                 options = ['Tapa Dura', 'Tapa Blanda', 'Edición Especial', 'Grapa / Cuadernillo'];
             } else if (category === 'music') {
@@ -585,18 +640,32 @@
             const cat = document.getElementById('formCategory').value;
             const subLabel = document.getElementById('subtitleLabel');
             const platformContainer = document.getElementById('platformContainer');
+            const platformLabel = document.getElementById('platformLabel');
+            const reviewLabel = document.getElementById('reviewLabel');
             
             if (cat === 'movie' || cat === 'tv') {
                 subLabel.textContent = 'Director / Reparto / Año';
+                platformLabel.textContent = 'Plataforma / Dónde ver';
+                reviewLabel.textContent = 'Sinopsis / Trama';
                 platformContainer.classList.remove('hidden');
             } else if (cat === 'game') {
                 subLabel.textContent = 'Desarrollador / Año / Plataforma';
+                platformLabel.textContent = 'Plataformas (PC, PS5, Switch...)';
+                reviewLabel.textContent = 'Sinopsis / Reseña';
+                platformContainer.classList.remove('hidden');
+            } else if (cat === 'boardgame') {
+                subLabel.textContent = 'Diseñador / Nº Jugadores / Duración / Año';
+                platformLabel.textContent = 'Editorial / Distribuidora';
+                reviewLabel.textContent = 'Descripción / Mecánicas / Opinión';
                 platformContainer.classList.remove('hidden');
             } else if (cat === 'music') {
                 subLabel.textContent = 'Artista / Grupo / Año';
+                platformLabel.textContent = 'Dónde escuchar (Spotify, Apple...)';
+                reviewLabel.textContent = 'Tracklist / Reseña';
                 platformContainer.classList.remove('hidden');
             } else {
                 subLabel.textContent = 'Autor / Editorial / Año';
+                reviewLabel.textContent = 'Sinopsis / Resumen';
                 platformContainer.classList.add('hidden');
             }
 
@@ -713,31 +782,8 @@
                             }
                         }
                     } catch (e) { console.error('Google Books error:', e); }
-
-                    if (foundResults.length === 0) {
-                        try {
-                            const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(title)}&limit=5`);
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data.docs && data.docs.length > 0) {
-                                    foundResults = data.docs.map(doc => {
-                                        const coverUrl = doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : '';
-                                        const author = doc.author_name ? doc.author_name.join(', ') : 'Autor no indicado';
-                                        const year = doc.first_publish_year ? ` (${doc.first_publish_year})` : '';
-                                        return {
-                                            name: doc.title || title,
-                                            sub: `Autor: ${author}${year}`,
-                                            cover: coverUrl,
-                                            desc: '',
-                                            platform: '', platformLogo: ''
-                                        };
-                                    });
-                                }
-                            }
-                        } catch (e) { console.error('Open Library error:', e); }
-                    }
                 } 
-                else if (cat === 'game') {
+                else if (cat === 'game' || cat === 'boardgame') {
                     try {
                         const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
                         if (res.ok) {
@@ -754,28 +800,6 @@
                             }
                         }
                     } catch (e) { console.error('RAWG error:', e); }
-
-                    if (foundResults.length === 0) {
-                        try {
-                            const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=software&limit=5`);
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data.results && data.results.length > 0) {
-                                    foundResults = data.results.map(g => {
-                                        const icon = g.artworkUrl100 ? g.artworkUrl100.replace('100x100bb', '512x512bb') : '';
-                                        return {
-                                            name: g.trackName || title,
-                                            sub: g.primaryGenreName ? `Género: ${g.primaryGenreName}` : 'Juego',
-                                            cover: icon,
-                                            desc: g.description || '',
-                                            platform: 'PC / Consolas / Móvil',
-                                            platformLogo: ''
-                                        };
-                                    });
-                                }
-                            }
-                        } catch (e) { console.error('iTunes Game error:', e); }
-                    }
                 }
 
                 if (foundResults.length > 0) {
@@ -1037,7 +1061,7 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        // RENDERIZADO DE CARÁTULA EN ESTANTERÍA
+        // RENDERIZADO DE CARÁTULA EN ESTANTERÍA CON EFECTO CAJA DE CARTÓN PARA JUEGOS
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer';
@@ -1057,13 +1081,21 @@
                     </div>
                 `;
             } else {
-                // EXCLUSIVO: La hendidura vertical de pliegue sólo se aplica si la categoría es 'book'
-                const caseStyleClass = (item.category === 'book') ? 'case-book-shadow' : 'case-standard-shadow';
+                // SELECCIÓN DE ESTILO: 
+                // 'book' -> Hendidura de pliegue de libro
+                // 'game' o 'boardgame' -> Efecto Caja de Cartón Retro
+                // Otros -> Carátula Lisa Estándar
+                let caseStyleClass = 'case-standard-shadow';
+                if (item.category === 'book') {
+                    caseStyleClass = 'case-book-shadow';
+                } else if (item.category === 'game' || item.category === 'boardgame') {
+                    caseStyleClass = 'case-carton-shadow';
+                }
 
                 wrapper.innerHTML = `
-                    <div class="relative rounded-sm overflow-hidden ${caseStyleClass} bg-black aspect-[2/3] w-full border border-white/10">
+                    <div class="relative rounded-sm overflow-hidden ${caseStyleClass} bg-black aspect-[2/3] w-full">
                         <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/1e293b/ffffff?text=Sin+Imagen'">
-                        ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
+                        ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                     </div>
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
                         ${item.title}
@@ -1085,18 +1117,23 @@
                     ${logos.map(url => `<img src="${url}" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
                 </div>`;
             } else if (item.platform) {
-                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-compact-disc mr-1"></i> ${item.platform}</p>`;
+                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-layer-group mr-1"></i> ${item.platform}</p>`;
             }
 
             const isMusic = item.category === 'music';
             const imgAspectClass = isMusic ? 'aspect-square' : 'aspect-[2/3]';
 
+            let catTitle = 'Sinopsis / Trama';
+            if (isMusic) catTitle = 'Tracklist / Reseña';
+            else if (item.category === 'boardgame') catTitle = 'Descripción / Mecánicas de Juego';
+            else if (item.category === 'game') catTitle = 'Sinopsis / Reseña del Juego';
+
             const modalContent = document.getElementById('detailModalContent');
             modalContent.innerHTML = `
                 <div class="w-full md:w-1/3 flex-shrink-0">
                     <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover ${imgAspectClass}">
-                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-compact-disc mr-1"></i> ${item.format}</div>` : ''}
-                    ${!isMusic ? `<button onclick="reloadTMDBData('${item.id}', '${item.title.replace(/'/g, "\\'")}')" id="reloadBtn-${item.id}" class="w-full mt-3 bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs font-semibold py-2 px-3 rounded-lg border border-amber-600/40 transition flex items-center justify-center gap-2 shadow">
+                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-box mr-1"></i> ${item.format}</div>` : ''}
+                    ${!isMusic && item.category === 'movie' ? `<button onclick="reloadTMDBData('${item.id}', '${item.title.replace(/'/g, "\\'")}')" id="reloadBtn-${item.id}" class="w-full mt-3 bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs font-semibold py-2 px-3 rounded-lg border border-amber-600/40 transition flex items-center justify-center gap-2 shadow">
                         <i class="fa-solid fa-rotate mr-1"></i> Recargar Ficha (TMDB)
                     </button>` : ''}
                 </div>
@@ -1111,9 +1148,9 @@
                             </div>
                         </div>
                         <p class="text-xs text-amber-300/90 font-medium mt-2">${item.subtitle || ''}</p>
-                        ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Disponible en / Plataforma:</p>${logosHTML}</div>` : ''}
+                        ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Detalles / Plataforma / Editorial:</p>${logosHTML}</div>` : ''}
                         <div class="mt-4 pt-4 border-t border-amber-900/30">
-                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> ${isMusic ? 'Sinopsis / Tracklist' : 'Sinopsis / Trama'}</h4>
+                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> ${catTitle}</h4>
                             <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">${item.review || 'Sin detalles disponibles.'}</p>
                         </div>
                     </div>
@@ -1199,13 +1236,19 @@
             else if (cat === 'comic') readingLabel.textContent = 'Cómics';
             else readingLabel.textContent = 'Lectura';
 
+            const gamesLabel = document.getElementById('gamesBtnLabel');
+            if (cat === 'game') gamesLabel.textContent = 'Videojuegos';
+            else if (cat === 'boardgame') gamesLabel.textContent = 'Juegos de Mesa';
+            else gamesLabel.textContent = 'Juegos';
+
             const libLabel = document.getElementById('libraryBtnLabel');
             if (cat === 'library') libLabel.textContent = 'Mi Biblioteca';
             else if (cat === 'library_movie') libLabel.textContent = 'Biblio: Películas';
             else if (cat === 'library_tv') libLabel.textContent = 'Biblio: Series';
             else if (cat === 'library_book') libLabel.textContent = 'Biblio: Libros';
             else if (cat === 'library_comic') libLabel.textContent = 'Biblio: Cómics';
-            else if (cat === 'library_game') libLabel.textContent = 'Biblio: Juegos';
+            else if (cat === 'library_game') libLabel.textContent = 'Biblio: Videojuegos';
+            else if (cat === 'library_boardgame') libLabel.textContent = 'Biblio: Juegos Mesa';
             else if (cat === 'library_music') libLabel.textContent = 'Biblio: Música';
             else libLabel.textContent = 'Mi Biblioteca';
 
@@ -1215,7 +1258,8 @@
             else if (cat === 'pending_tv') pendingLabel.textContent = 'Pend: Series';
             else if (cat === 'pending_book') pendingLabel.textContent = 'Pend: Libros';
             else if (cat === 'pending_comic') pendingLabel.textContent = 'Pend: Cómics';
-            else if (cat === 'pending_game') pendingLabel.textContent = 'Pend: Juegos';
+            else if (cat === 'pending_game') pendingLabel.textContent = 'Pend: Videojuegos';
+            else if (cat === 'pending_boardgame') pendingLabel.textContent = 'Pend: Juegos Mesa';
             else if (cat === 'pending_music') pendingLabel.textContent = 'Pend: Música';
             else pendingLabel.textContent = 'Pendientes';
 
@@ -1230,6 +1274,7 @@
             document.getElementById('statusSelect').value = 'all';
             document.getElementById('audioVisualBtnLabel').textContent = 'Audiovisual';
             document.getElementById('readingBtnLabel').textContent = 'Lectura';
+            document.getElementById('gamesBtnLabel').textContent = 'Juegos';
             document.getElementById('libraryBtnLabel').textContent = 'Mi Biblioteca';
             document.getElementById('pendingBtnLabel').textContent = 'Pendientes';
             renderItems();
