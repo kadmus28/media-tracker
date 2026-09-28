@@ -191,7 +191,7 @@
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-50 shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
             
-            <!-- Logo Sello Retro Inclinado y Más Grande -->
+            <!-- Logo Sello Retro Inclinado -->
             <div onclick="resetToHome()" class="flex items-center cursor-pointer group py-1">
                 <div class="seal-badge-container flex items-center justify-center">
                     <img 
@@ -701,7 +701,7 @@
             return { names: '', logos: '' };
         }
 
-        // BÚSQUEDA AUTOMÁTICA MULTICANAL
+        // BÚSQUEDA AUTOMÁTICA MULTICANAL (OPTIMIZADA PARA JUEGOS DE MESA)
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
             const cat = document.getElementById('formCategory').value;
@@ -736,6 +736,90 @@
                         }
                     }
                 } 
+                else if (cat === 'boardgame') {
+                    // 1. Probar en iTunes (Excelentes carátulas HD de versiones físicas y digitales)
+                    try {
+                        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title + ' board game')}&entity=software&limit=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.results && data.results.length > 0) {
+                                foundResults = data.results.map(g => ({
+                                    name: g.trackName || title,
+                                    sub: `Juego de Mesa | Editorial: ${g.sellerName || 'Independiente'}`,
+                                    cover: g.artworkUrl512 || g.artworkUrl100 ? (g.artworkUrl512 || g.artworkUrl100).replace('100x100bb', '600x600bb') : '',
+                                    desc: g.description || '',
+                                    platform: 'Juego de Tablero / Edición Física',
+                                    platformLogo: ''
+                                }));
+                            }
+                        }
+                    } catch (e) { console.error('iTunes BoardGame error:', e); }
+
+                    // 2. Google Books como fallback para encontrar guías/cajas oficiales
+                    if (foundResults.length < 3) {
+                        try {
+                            const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title + ' board game')}&maxResults=5`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.items && data.items.length > 0) {
+                                    const bookResults = data.items.map(b => {
+                                        const info = b.volumeInfo || {};
+                                        let coverUrl = info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '') : '';
+                                        if (coverUrl.startsWith('http:')) coverUrl = coverUrl.replace('http:', 'https:');
+                                        const year = info.publishedDate ? ` (${info.publishedDate.split('-')[0]})` : '';
+                                        return {
+                                            name: info.title || title,
+                                            sub: `Editorial/Autor: ${info.publisher || 'Desconocido'}${year}`,
+                                            cover: coverUrl,
+                                            desc: info.description || '',
+                                            platform: 'Juego de Mesa / Libro de Reglas',
+                                            platformLogo: ''
+                                        };
+                                    });
+                                    foundResults = [...foundResults, ...bookResults];
+                                }
+                            }
+                        } catch (e) { console.error('Google Books BoardGame error:', e); }
+                    }
+
+                    // 3. RAWG de respaldo
+                    if (foundResults.length === 0) {
+                        try {
+                            const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.results && data.results.length > 0) {
+                                    foundResults = data.results.map(g => ({
+                                        name: g.name,
+                                        sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Juego de Mesa',
+                                        cover: g.background_image || '',
+                                        desc: '',
+                                        platform: 'Juego de Tablero / Cartas',
+                                        platformLogo: ''
+                                    }));
+                                }
+                            }
+                        } catch (e) { console.error('RAWG BoardGame error:', e); }
+                    }
+                }
+                else if (cat === 'game') {
+                    try {
+                        const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.results && data.results.length > 0) {
+                                foundResults = data.results.map(g => ({
+                                    name: g.name,
+                                    sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Videojuego',
+                                    cover: g.background_image || '',
+                                    desc: '',
+                                    platform: g.platforms ? g.platforms.map(p => p.platform.name).slice(0, 3).join(', ') : '',
+                                    platformLogo: ''
+                                }));
+                            }
+                        }
+                    } catch (e) { console.error('RAWG VideoGame error:', e); }
+                }
                 else if (cat === 'music') {
                     try {
                         const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=album&limit=5`);
@@ -782,24 +866,6 @@
                             }
                         }
                     } catch (e) { console.error('Google Books error:', e); }
-                } 
-                else if (cat === 'game' || cat === 'boardgame') {
-                    try {
-                        const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.results && data.results.length > 0) {
-                                foundResults = data.results.map(g => ({
-                                    name: g.name,
-                                    sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Juego',
-                                    cover: g.background_image || '',
-                                    desc: '',
-                                    platform: g.platforms ? g.platforms.map(p => p.platform.name).slice(0, 3).join(', ') : '',
-                                    platformLogo: ''
-                                }));
-                            }
-                        }
-                    } catch (e) { console.error('RAWG error:', e); }
                 }
 
                 if (foundResults.length > 0) {
@@ -821,7 +887,7 @@
                         resultsDiv.appendChild(row);
                     });
                 } else {
-                    alert(`No se encontraron resultados para "${title}". Rellena la portada manualmente.`);
+                    alert(`No se encontraron resultados para "${title}". Rellena la portada manualmente con la URL de la imagen.`);
                 }
             } catch (err) {
                 alert('Ocurrió un problema durante la búsqueda. Por favor reintenta.');
@@ -1061,7 +1127,7 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        // RENDERIZADO DE CARÁTULA EN ESTANTERÍA CON EFECTO CAJA DE CARTÓN PARA JUEGOS
+        // RENDERIZADO DE CARÁTULA EN ESTANTERÍA CON EFECTOS TEMÁTICOS
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer';
@@ -1081,10 +1147,6 @@
                     </div>
                 `;
             } else {
-                // SELECCIÓN DE ESTILO: 
-                // 'book' -> Hendidura de pliegue de libro
-                // 'game' o 'boardgame' -> Efecto Caja de Cartón Retro
-                // Otros -> Carátula Lisa Estándar
                 let caseStyleClass = 'case-standard-shadow';
                 if (item.category === 'book') {
                     caseStyleClass = 'case-book-shadow';
