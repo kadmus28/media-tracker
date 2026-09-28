@@ -210,11 +210,48 @@
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-amber-950/90 p-3 rounded-xl border border-amber-800/60 text-amber-100 backdrop-blur shadow-2xl">
             <div class="flex flex-wrap gap-1 items-center" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
-                <button onclick="setCategoryFilter('movie')" data-cat="movie" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Películas</button>
-                <button onclick="setCategoryFilter('tv')" data-cat="tv" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Series</button>
-                <button onclick="setCategoryFilter('book')" data-cat="book" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Libros</button>
-                <button onclick="setCategoryFilter('comic')" data-cat="comic" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Cómics</button>
-                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Juegos</button>
+                
+                <!-- Desplegable Audiovisual (Películas y Series) -->
+                <div class="relative group inline-block">
+                    <button data-cat="audiovisual" id="audioVisualDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-film text-xs text-amber-400"></i>
+                        <span id="audioVisualBtnLabel">Audiovisual</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
+                    </button>
+                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
+                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
+                            <button onclick="setCategoryFilter('movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
+                            </button>
+                            <button onclick="setCategoryFilter('tv')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-tv w-4 text-amber-400"></i> Series
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desplegable Lectura (Libros y Cómics) -->
+                <div class="relative group inline-block">
+                    <button data-cat="reading" id="readingDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-book text-xs text-amber-400"></i>
+                        <span id="readingBtnLabel">Lectura</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
+                    </button>
+                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
+                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
+                            <button onclick="setCategoryFilter('book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
+                            </button>
+                            <button onclick="setCategoryFilter('comic')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-mask w-4 text-amber-400"></i> Cómics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="setCategoryFilter('game')" data-cat="game" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-gamepad text-xs text-amber-400"></i> Juegos
+                </button>
                 <button onclick="setCategoryFilter('music')" data-cat="music" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1">
                     <i class="fa-solid fa-record-vinyl text-xs text-amber-400"></i> Música
                 </button>
@@ -1143,6 +1180,16 @@
             currentCategoryFilter = cat;
             currentPage = 1;
 
+            const audioVisualLabel = document.getElementById('audioVisualBtnLabel');
+            if (cat === 'movie') audioVisualLabel.textContent = 'Películas';
+            else if (cat === 'tv') audioVisualLabel.textContent = 'Series';
+            else audioVisualLabel.textContent = 'Audiovisual';
+
+            const readingLabel = document.getElementById('readingBtnLabel');
+            if (cat === 'book') readingLabel.textContent = 'Libros';
+            else if (cat === 'comic') readingLabel.textContent = 'Cómics';
+            else readingLabel.textContent = 'Lectura';
+
             const libLabel = document.getElementById('libraryBtnLabel');
             if (cat === 'library') libLabel.textContent = 'Mi Biblioteca';
             else if (cat === 'library_movie') libLabel.textContent = 'Biblio: Películas';
@@ -1172,6 +1219,8 @@
             currentPage = 1;
             document.getElementById('liveSearchInput').value = '';
             document.getElementById('statusSelect').value = 'all';
+            document.getElementById('audioVisualBtnLabel').textContent = 'Audiovisual';
+            document.getElementById('readingBtnLabel').textContent = 'Lectura';
             document.getElementById('libraryBtnLabel').textContent = 'Mi Biblioteca';
             document.getElementById('pendingBtnLabel').textContent = 'Pendientes';
             renderItems();
