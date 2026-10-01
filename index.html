@@ -401,6 +401,7 @@
                     <option value="completed">Completados</option>
                     <option value="in_progress">En curso</option>
                     <option value="planned">Pendientes</option>
+                    <option value="abandoned">Abandonados</option>
                 </select>
             </div>
         </div>
@@ -477,6 +478,7 @@
                             <option value="planned">Pendiente</option>
                             <option value="in_progress">En curso</option>
                             <option value="completed">Completado</option>
+                            <option value="abandoned">Abandonado</option>
                         </select>
                     </div>
                     <div>
@@ -519,7 +521,7 @@
 
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm text-stone-300">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-amber-700 hover:bg-amber-600 rounded-lg text-sm font-medium text-white">Guardar</button>
+                    <button id="saveItemBtn" type="submit" class="px-4 py-2 bg-amber-700 hover:bg-amber-600 rounded-lg text-sm font-medium text-white">Guardar</button>
                 </div>
             </form>
         </div>
@@ -548,6 +550,33 @@
         let searchQuery = '';
         let currentPage = 1;
         const ITEMS_PER_PAGE = 18;
+
+        // Dynamic content from the database and external catalogues must be escaped
+        // before it is placed in an HTML template.
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        function safeImageUrl(value) {
+            try {
+                const url = new URL(String(value || ''), window.location.href);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+            } catch {
+                return '';
+            }
+        }
+
+        function statusLabel(status) {
+            return ({ planned: 'Pendiente', in_progress: 'En curso', completed: 'Completado', abandoned: 'Abandonado' })[status] || 'Sin estado';
+        }
+
+        function spreadsheetSafeText(value) {
+            const text = String(value ?? '');
+            // Prevent spreadsheet formulas when a CSV/XLS file is opened.
+            return /^[\s\u0000-\u001f]*[=+@\-]/.test(text) ? `'${text}` : text;
+        }
 
         document.addEventListener('DOMContentLoaded', () => { fetchItems(); });
 
@@ -835,10 +864,10 @@
                         const coverImg = item.cover || `https://via.placeholder.com/100/1e293b/ffffff?text=${encodeURIComponent(item.name)}`;
                         
                         row.innerHTML = `
-                            <img src="${coverImg}" class="w-11 h-11 object-cover rounded shadow border border-amber-900/40">
+                            <img src="${escapeHTML(safeImageUrl(coverImg))}" alt="" class="w-11 h-11 object-cover rounded shadow border border-amber-900/40">
                             <div class="overflow-hidden">
-                                <p class="text-xs font-semibold text-amber-100 truncate">${item.name}</p>
-                                <p class="text-[11px] text-amber-400/80 truncate">${item.sub}</p>
+                                <p class="text-xs font-semibold text-amber-100 truncate">${escapeHTML(item.name)}</p>
+                                <p class="text-[11px] text-amber-400/80 truncate">${escapeHTML(item.sub)}</p>
                             </div>
                         `;
                         resultsDiv.appendChild(row);
@@ -956,12 +985,12 @@
                     <div class="vinyl-sleeve-container">
                         <div class="vinyl-record"></div>
                         <div class="vinyl-sleeve">
-                            <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/94a3b8?text=Sin+Imagen'">
+                        <img src="${escapeHTML(safeImageUrl(item.cover_url))}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/94a3b8?text=Sin+Imagen'">
                             ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                         </div>
                     </div>
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
-                        ${item.title}
+                        ${escapeHTML(item.title)}
                     </div>
                 `;
             } else {
@@ -979,11 +1008,11 @@
 
                 wrapper.innerHTML = `
                     <div class="relative rounded-sm overflow-hidden ${caseStyleClass} bg-black ${aspectClass} w-full">
-                        <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/ffffff?text=Sin+Imagen'">
+                        <img src="${escapeHTML(safeImageUrl(item.cover_url))}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/ffffff?text=Sin+Imagen'">
                         ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                     </div>
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
-                        ${item.title}
+                        ${escapeHTML(item.title)}
                     </div>
                 `;
             }
@@ -999,10 +1028,10 @@
             if (item.platform_logo) {
                 const logos = item.platform_logo.split(',').filter(Boolean);
                 logosHTML = `<div class="flex items-center gap-2 mt-2">
-                    ${logos.map(url => `<img src="${url}" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
+                    ${logos.map(url => `<img src="${escapeHTML(safeImageUrl(url))}" alt="" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
                 </div>`;
             } else if (item.platform) {
-                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-layer-group mr-1"></i> ${item.platform}</p>`;
+                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-layer-group mr-1"></i> ${escapeHTML(item.platform)}</p>`;
             }
 
             const isSquare = item.category === 'music' || item.category === 'boardgame';
@@ -1016,32 +1045,34 @@
             const modalContent = document.getElementById('detailModalContent');
             modalContent.innerHTML = `
                 <div class="w-full md:w-1/3 flex-shrink-0">
-                    <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover ${imgAspectClass}">
-                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-box mr-1"></i> ${item.format}</div>` : ''}
+                    <img src="${escapeHTML(safeImageUrl(item.cover_url))}" alt="${escapeHTML(item.title)}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover ${imgAspectClass}">
+                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-box mr-1"></i> ${escapeHTML(item.format)}</div>` : ''}
                 </div>
                 <div class="w-full md:w-2/3 flex flex-col justify-between">
                     <div>
                         <div class="flex items-start justify-between gap-3 pr-10">
-                            <h2 class="text-2xl font-bold text-amber-100">${item.title}</h2>
+                            <h2 class="text-2xl font-bold text-amber-100">${escapeHTML(item.title)}</h2>
                             <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
-                                <button onclick="editItem('${item.id}')" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <button data-action="edit" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
                                 <span class="border-r border-amber-900/60 h-4"></span>
-                                <button onclick="deleteItem('${item.id}')" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                <button data-action="delete" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
-                        <p class="text-xs text-amber-300/90 font-medium mt-2">${item.subtitle || ''}</p>
+                        <p class="text-xs text-amber-300/90 font-medium mt-2">${escapeHTML(item.subtitle)}</p>
                         ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Detalles / Plataforma / Editorial:</p>${logosHTML}</div>` : ''}
                         <div class="mt-4 pt-4 border-t border-amber-900/30">
                             <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> ${catTitle}</h4>
-                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">${item.review || 'Sin detalles disponibles.'}</p>
+                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">${escapeHTML(item.review || 'Sin detalles disponibles.')}</p>
                         </div>
                     </div>
                     <div class="mt-6 flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-amber-900/30">
-                        <span>Estado: <strong class="text-amber-200 capitalize">${item.status}</strong></span>
+                        <span>Estado: <strong class="text-amber-200">${statusLabel(item.status)}</strong></span>
                         ${item.in_library ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i> En Biblioteca Física</span>` : ''}
                     </div>
                 </div>
             `;
+            modalContent.querySelector('[data-action="edit"]').addEventListener('click', () => editItem(item.id));
+            modalContent.querySelector('[data-action="delete"]').addEventListener('click', () => deleteItem(item.id));
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
@@ -1184,7 +1215,7 @@
                 subtitle: document.getElementById('formSubtitle').value,
                 platform: document.getElementById('formPlatform').value,
                 platform_logo: document.getElementById('formPlatformLogo').value,
-                cover_url: document.getElementById('formCover').value,
+                cover_url: safeImageUrl(document.getElementById('formCover').value),
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
                 in_library: inLibrary,
@@ -1193,17 +1224,22 @@
                 review: document.getElementById('formReview').value
             };
 
-            let error;
-            if (id) {
-                const res = await supabaseClient.from('media_items').update(itemData).eq('id', String(id));
-                error = res.error;
-            } else {
-                const res = await supabaseClient.from('media_items').insert([itemData]);
-                error = res.error;
+            const saveButton = document.getElementById('saveItemBtn');
+            saveButton.disabled = true;
+            saveButton.textContent = 'Guardando…';
+            try {
+                const result = id
+                    ? await supabaseClient.from('media_items').update(itemData).eq('id', String(id))
+                    : await supabaseClient.from('media_items').insert([itemData]);
+                if (result.error) throw result.error;
+                closeModal();
+                await fetchItems();
+            } catch (err) {
+                alert('Error al guardar: ' + (err.message || 'Comprueba la conexión e inténtalo de nuevo.'));
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Guardar';
             }
-
-            if (error) alert('Error al guardar: ' + error.message);
-            else { closeModal(); fetchItems(); }
         }
 
         async function deleteItem(id) {
@@ -1246,7 +1282,7 @@
             
             items.forEach(item => {
                 const row = headers.map(header => {
-                    const val = item[header] !== undefined && item[header] !== null ? String(item[header]) : '';
+                    const val = spreadsheetSafeText(item[header]);
                     return `"${val.replace(/"/g, '""')}"`;
                 });
                 csvRows.push(row.join(','));
@@ -1267,21 +1303,21 @@
 
             let tableHTML = '<table border="1"><thead><tr style="background-color:#d4a373;color:#000;">';
             const headers = ['Título', 'Subtítulo', 'Categoría', 'Estado', 'Puntuación', 'En Biblioteca', 'Formatos', 'Lista Compra', 'Plataforma', 'Sinopsis'];
-            headers.forEach(h => tableHTML += `<th>${h}</th>`);
+            headers.forEach(h => tableHTML += `<th>${escapeHTML(h)}</th>`);
             tableHTML += '</tr></thead><tbody>';
 
             items.forEach(item => {
                 tableHTML += `<tr>
-                    <td>${item.title || ''}</td>
-                    <td>${item.subtitle || ''}</td>
-                    <td>${item.category || ''}</td>
-                    <td>${item.status || ''}</td>
-                    <td>${item.rating || 0}</td>
+                    <td>${escapeHTML(spreadsheetSafeText(item.title))}</td>
+                    <td>${escapeHTML(spreadsheetSafeText(item.subtitle))}</td>
+                    <td>${escapeHTML(spreadsheetSafeText(item.category))}</td>
+                    <td>${escapeHTML(spreadsheetSafeText(statusLabel(item.status)))}</td>
+                    <td>${Number(item.rating) || 0}</td>
                     <td>${item.in_library ? 'Sí' : 'No'}</td>
-                    <td>${item.format || ''}</td>
+                    <td>${escapeHTML(spreadsheetSafeText(item.format))}</td>
                     <td>${item.to_buy ? 'Sí' : 'No'}</td>
-                    <td>${item.platform || ''}</td>
-                    <td>${(item.review || '').replace(/\n/g, ' ')}</td>
+                    <td>${escapeHTML(spreadsheetSafeText(item.platform))}</td>
+                    <td>${escapeHTML(spreadsheetSafeText((item.review || '').replace(/\n/g, ' ')))}</td>
                 </tr>`;
             });
             tableHTML += '</tbody></table>';
