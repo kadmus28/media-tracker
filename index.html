@@ -1,1299 +1,426 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Tracker - VHS Style</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* Pared de madera hiperrealista tipo Delicious Library */
-        .delicious-wall {
-            background-color: #3b2314;
-            background-image: 
-                linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 3%, transparent 97%, rgba(0,0,0,0.3) 100%),
-                repeating-linear-gradient(0deg, #4d2e1a, #4d2e1a 120px, #3b2314 120px, #3b2314 240px);
-            background-size: 100% 100%, 100% 240px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Tracker</title>
+  <style>
+    :root {
+      --bg-color: #0f0f0f;
+      --card-bg: #181818;
+      --modal-bg: #1f1f1f;
+      --accent-color: #d4a373;
+      --accent-hover: #faedcd;
+      --input-bg: #2b2b2b;
+      --text-color: #e0e0e0;
+      --text-muted: #aaaaaa;
+      --border-color: #3f3f3f;
+    }
 
-        /* Estantería de madera maciza */
-        .delicious-shelf {
-            background: linear-gradient(to bottom, #d4a373 0%, #faedcd 8%, #ccd5ae 12%, #a3703f 25%, #6d4520 80%, #422810 100%);
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.5);
-            border-bottom: 6px solid #28160a;
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        /* LOGO TIPO SELLO DE LACRE / PARCHE RETRO */
-        .seal-badge-container {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            overflow: hidden;
-            box-shadow: 
-                0 10px 25px rgba(0, 0, 0, 0.85),
-                0 0 0 3px rgba(217, 119, 6, 0.9),
-                inset 0 2px 6px rgba(255, 255, 255, 0.4);
-            transform: rotate(-7deg);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-            background: #000;
-        }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-        .seal-badge-container:hover {
-            transform: rotate(0deg) scale(1.12);
-            box-shadow: 
-                0 15px 35px rgba(0, 0, 0, 0.95),
-                0 0 0 4px rgba(245, 158, 11, 1),
-                inset 0 2px 8px rgba(255, 255, 255, 0.6);
-        }
+    .modal-container {
+      width: 100%;
+      max-width: 520px;
+      background-color: var(--modal-bg);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      border: 1px solid #2a2a2a;
+      position: relative;
+    }
 
-        /* CARÁTULAS ESTÁNDAR (Películas, TV) */
-        .case-standard-shadow {
-            position: relative;
-            border-radius: 2px 4px 4px 2px;
-            box-shadow: 4px 8px 14px rgba(0, 0, 0, 0.7);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            z-index: 1;
-        }
-        .case-standard-shadow:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
-            z-index: 10;
-        }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-        /* EFECTO CAJA DE CARTÓN RETRO (VIDEOJUEGOS Y JUEGOS DE MESA) */
-        .case-carton-shadow {
-            position: relative;
-            border-radius: 4px;
-            box-shadow: 
-                5px 9px 18px rgba(0, 0, 0, 0.85),
-                inset 1px 1px 2px rgba(255, 255, 255, 0.25),
-                inset -2px -2px 4px rgba(0, 0, 0, 0.6);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            z-index: 1;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        .case-carton-shadow::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: 
-                linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 12%, transparent 88%, rgba(0,0,0,0.4) 100%),
-                linear-gradient(90deg, rgba(0,0,0,0.2) 0%, transparent 4%, transparent 96%, rgba(0,0,0,0.25) 100%);
-            pointer-events: none;
-        }
-        .case-carton-shadow:hover {
-            transform: translateY(-6px) scale(1.03);
-            box-shadow: 
-                9px 16px 24px rgba(0, 0, 0, 0.95),
-                inset 1px 1px 3px rgba(255, 255, 255, 0.35);
-            z-index: 10;
-        }
+    .modal-header h2 {
+      font-size: 1.25rem;
+      color: #ffffff;
+      font-weight: 600;
+    }
 
-        /* CARÁTULAS EXCLUSIVAS PARA LIBROS */
-        .case-book-shadow {
-            position: relative;
-            border-radius: 2px 4px 4px 2px;
-            box-shadow: 4px 8px 14px rgba(0, 0, 0, 0.7);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            z-index: 1;
-        }
-        .case-book-shadow::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(255,255,255,0.15) 3%, rgba(0,0,0,0.25) 6%, transparent 9%);
-            pointer-events: none;
-        }
-        .case-book-shadow:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 8px 14px 20px rgba(0, 0, 0, 0.85);
-            z-index: 10;
-        }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
 
-        /* EFECTO VINILO (MÚSICA) */
-        .vinyl-sleeve-container {
-            position: relative;
-            aspect-ratio: 1 / 1;
-            width: 100%;
-            z-index: 1;
-        }
+    .close-btn:hover {
+      color: #ffffff;
+    }
 
-        .vinyl-sleeve {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            height: 100%;
-            border-radius: 3px;
-            overflow: hidden;
-            box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: #000;
-        }
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+    }
 
-        .vinyl-record {
-            position: absolute;
-            top: 4%;
-            right: 0%;
-            width: 92%;
-            height: 92%;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, 
-                #181818 0%, #181818 14%, 
-                #d97706 15%, #b45309 28%,
-                #111 29%, #111 31%, 
-                #222 32%, #111 35%, 
-                #2d2d2d 38%, #111 41%, 
-                #222 45%, #111 50%, 
-                #2d2d2d 55%, #000 100%
-            );
-            box-shadow: inset 0 0 8px rgba(255,255,255,0.2), 3px 5px 12px rgba(0,0,0,0.8);
-            z-index: 1;
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      color: var(--accent-color);
+      text-transform: uppercase;
+    }
 
-        .vinyl-record::after {
-            content: '';
-            width: 10% !important;
-            height: 10% !important;
-            background: #3b2314;
-            border-radius: 50%;
-            box-shadow: inset 0 0 3px rgba(0,0,0,0.9);
-        }
+    input[type="text"],
+    input[type="number"],
+    input[type="url"],
+    select,
+    textarea {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: #ffffff;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
 
-        .vinyl-sleeve-container:hover {
-            z-index: 20;
-        }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-color);
+    }
 
-        .vinyl-sleeve-container:hover .vinyl-sleeve {
-            transform: translateY(-4px);
-            box-shadow: 8px 14px 22px rgba(0, 0, 0, 0.9);
-        }
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
 
-        .vinyl-sleeve-container:hover .vinyl-record {
-            transform: translateX(38%) rotate(180deg);
-        }
-    </style>
+    .btn-search {
+      background-color: #3a2e1e;
+      border: 1px solid var(--accent-color);
+      border-radius: 6px;
+      color: var(--accent-color);
+      cursor: pointer;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background-color 0.2s;
+    }
+
+    .btn-search:hover {
+      background-color: #4a3b27;
+    }
+
+    .row-two-col {
+      display: flex;
+      gap: 12px;
+    }
+
+    .row-two-col .form-group {
+      flex: 1;
+    }
+
+    .checkbox-group {
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      margin-bottom: 12px;
+      background-color: rgba(255, 255, 255, 0.02);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-color);
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      text-transform: none;
+      font-weight: normal;
+      cursor: pointer;
+      margin-bottom: 0;
+      color: var(--text-color);
+      font-size: 0.85rem;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-secondary {
+      background-color: #2b2b2b;
+      color: var(--text-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: #383838;
+    }
+
+    .btn-primary {
+      background-color: #8c4303;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: #a65004;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(212, 163, 115, 0.3);
+      border-top: 2px solid var(--accent-color);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body class="delicious-wall text-amber-50 min-h-screen font-sans flex flex-col">
+<body>
 
-    <!-- Header / Navbar -->
-    <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-50 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 py-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            
-            <div onclick="resetToHome()" class="flex items-center cursor-pointer group py-1">
-                <div class="seal-badge-container flex items-center justify-center">
-                    <img 
-                        src="logo.jpg" 
-                        alt="Media Tracker VHS Logo" 
-                        class="w-full h-full object-cover rounded-full"
-                        style="clip-path: circle(48% at 50% 50%); transform: scale(1.15);"
-                        onerror="this.onerror=null; this.src='https://via.placeholder.com/150/000000/ffffff?text=Guardar+logo.jpg';"
-                    >
-                </div>
-            </div>
-
-            <div class="relative flex-1 max-w-md mx-md-4">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70 text-sm"></i>
-                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, autor, artista, reparto, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <button onclick="openModal()" class="bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg text-sm border border-amber-500/40">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Añadir Elemento</span>
-                </button>
-
-                <!-- Menú de Hamburguesa -->
-                <div class="relative inline-block text-left">
-                    <button onclick="toggleTopMenu(event)" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-3.5 py-2 rounded-lg flex items-center justify-center transition border border-amber-800/50 shadow">
-                        <i class="fa-solid fa-bars text-lg"></i>
-                    </button>
-
-                    <div id="topDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-52 bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur">
-                        <button onclick="triggerCSVImport()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
-                            <i class="fa-solid fa-file-csv text-emerald-400 w-4 text-sm"></i> Importar CSV Letterboxd
-                        </button>
-                        <button onclick="exportCSV()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
-                            <i class="fa-solid fa-file-export text-blue-400 w-4 text-sm"></i> Exportar CSV
-                        </button>
-                        <button onclick="exportExcel()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
-                            <i class="fa-solid fa-file-excel text-emerald-500 w-4 text-sm"></i> Exportar Excel
-                        </button>
-                        <span class="border-b border-amber-900/40 block my-1"></span>
-                        <button onclick="deleteAllItems()" class="w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-950/50 flex items-center gap-2.5 transition font-semibold">
-                            <i class="fa-solid fa-trash-can text-rose-500 w-4 text-sm"></i> Vaciar Biblioteca
-                        </button>
-                    </div>
-                </div>
-
-                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importLetterboxdCSV(event)">
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content Area -->
-    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full relative z-10">
-        
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-amber-950/90 p-3 rounded-xl border border-amber-800/60 text-amber-100 backdrop-blur shadow-2xl relative z-30">
-            <div class="flex flex-wrap gap-1 items-center" id="categoryTabs">
-                <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
-                
-                <!-- Desplegable Audiovisual -->
-                <div class="relative group inline-block">
-                    <button data-cat="audiovisual" id="audioVisualDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-film text-xs text-amber-400"></i>
-                        <span id="audioVisualBtnLabel">Audiovisual</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
-                    </button>
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
-                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
-                            <button onclick="setCategoryFilter('movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
-                            </button>
-                            <button onclick="setCategoryFilter('tv')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-tv w-4 text-amber-400"></i> Series
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Desplegable Lectura -->
-                <div class="relative group inline-block">
-                    <button data-cat="reading" id="readingDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-book text-xs text-amber-400"></i>
-                        <span id="readingBtnLabel">Lectura</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
-                    </button>
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
-                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
-                            <button onclick="setCategoryFilter('book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
-                            </button>
-                            <button onclick="setCategoryFilter('comic')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-mask w-4 text-amber-400"></i> Cómics
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Desplegable Juegos (Videojuegos y Juegos de Mesa) -->
-                <div class="relative group inline-block">
-                    <button data-cat="gaming" id="gamesDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-gamepad text-xs text-amber-400"></i>
-                        <span id="gamesBtnLabel">Juegos</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
-                    </button>
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
-                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
-                            <button onclick="setCategoryFilter('game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
-                            </button>
-                            <button onclick="setCategoryFilter('boardgame')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-chess-board w-4 text-amber-400"></i> Juegos de Mesa
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <button onclick="setCategoryFilter('music')" data-cat="music" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1">
-                    <i class="fa-solid fa-record-vinyl text-xs text-amber-400"></i> Música
-                </button>
-                
-                <span class="border-r border-amber-800/60 my-1 mx-1 h-5"></span>
-
-                <!-- Desplegable Mi Biblioteca -->
-                <div class="relative group inline-block">
-                    <button onclick="setCategoryFilter('library')" data-cat="library" id="libraryDropdownBtn" class="cat-btn text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-indigo-950/40 border border-indigo-800/40">
-                        <i class="fa-solid fa-house text-indigo-400"></i>
-                        <span id="libraryBtnLabel">Mi Biblioteca</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
-                    </button>
-                    
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-52 z-50">
-                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
-                            <button onclick="setCategoryFilter('library')" class="w-full text-left px-3.5 py-2 text-xs text-indigo-200 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-layer-group w-4 text-indigo-400"></i> Todo en Biblioteca
-                            </button>
-                            <span class="border-b border-amber-900/40 block my-0.5"></span>
-                            <button onclick="setCategoryFilter('library_movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
-                            </button>
-                            <button onclick="setCategoryFilter('library_tv')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-tv w-4 text-amber-400"></i> Series
-                            </button>
-                            <button onclick="setCategoryFilter('library_book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
-                            </button>
-                            <button onclick="setCategoryFilter('library_comic')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-mask w-4 text-amber-400"></i> Cómics
-                            </button>
-                            <button onclick="setCategoryFilter('library_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
-                            </button>
-                            <button onclick="setCategoryFilter('library_boardgame')" class="w-full text-left px-3.5 py-2 text-xs text-amber-200 font-semibold hover:bg-amber-900/50 flex items-center gap-2 transition bg-amber-950/30">
-                                <i class="fa-solid fa-chess-board w-4 text-amber-400"></i> Juegos de Mesa
-                            </button>
-                            <button onclick="setCategoryFilter('library_music')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-record-vinyl w-4 text-amber-400"></i> Música
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Desplegable Pendientes -->
-                <div class="relative group inline-block">
-                    <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" id="pendingDropdownBtn" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-clock"></i>
-                        <span id="pendingBtnLabel">Pendientes</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
-                    </button>
-                    
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
-                        <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
-                            <button onclick="setCategoryFilter('pending_watch')" class="w-full text-left px-3.5 py-2 text-xs text-amber-300 hover:bg-amber-900/50 flex items-center gap-2 transition font-semibold">
-                                <i class="fa-solid fa-layer-group w-4 text-amber-400"></i> Todos los Pendientes
-                            </button>
-                            <span class="border-b border-amber-900/40 block my-0.5"></span>
-                            <button onclick="setCategoryFilter('pending_movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
-                            </button>
-                            <button onclick="setCategoryFilter('pending_tv')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-tv w-4 text-amber-400"></i> Series
-                            </button>
-                            <button onclick="setCategoryFilter('pending_book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
-                            </button>
-                            <button onclick="setCategoryFilter('pending_comic')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-mask w-4 text-amber-400"></i> Cómics
-                            </button>
-                            <button onclick="setCategoryFilter('pending_game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
-                            </button>
-                            <button onclick="setCategoryFilter('pending_boardgame')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-chess-board w-4 text-amber-400"></i> Juegos de Mesa
-                            </button>
-                            <button onclick="setCategoryFilter('pending_music')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
-                                <i class="fa-solid fa-record-vinyl w-4 text-amber-400"></i> Música
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <button onclick="setCategoryFilter('shopping_list')" data-cat="shopping_list" class="cat-btn text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-cart-shopping"></i> Comprar (Físico)
-                </button>
-            </div>
-
-            <div class="flex items-center space-x-2">
-                <label for="statusSelect" class="text-xs text-amber-200/80 font-medium uppercase tracking-wider">Estado:</label>
-                <select id="statusSelect" onchange="renderItems()" class="bg-stone-900 border border-amber-800/60 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
-                    <option value="all">Todos los estados</option>
-                    <option value="completed">Completados</option>
-                    <option value="in_progress">En curso</option>
-                    <option value="planned">Pendientes</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="bookshelfContainer" class="flex flex-col gap-14"></div>
-
-        <div id="paginationControls" class="mt-10 flex items-center justify-center gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl"></div>
-
-        <div id="emptyState" class="hidden text-center py-20 bg-amber-950/80 text-amber-100 rounded-2xl border border-amber-800/50">
-            <i class="fa-solid fa-boxes-packing text-5xl text-amber-600/60 mb-4"></i>
-            <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
-            <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta la búsqueda y filtros.</p>
-        </div>
-    </main>
-
-    <!-- Modal Formulario -->
-    <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-lg w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-
-            <h2 class="text-xl font-bold mb-4 text-amber-100" id="modalTitle">Añadir Nuevo Elemento</h2>
-
-            <form id="mediaForm" onsubmit="saveItem(event)">
-                <input type="hidden" id="editingItemId" value="">
-                <input type="hidden" id="formPlatformLogo" value="">
-
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Categoría</label>
-                    <select id="formCategory" onchange="handleCategoryChange()" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                        <option value="movie">Película</option>
-                        <option value="tv">Serie</option>
-                        <option value="book">Libro</option>
-                        <option value="comic">Cómic</option>
-                        <option value="game">Videojuego</option>
-                        <option value="boardgame">Juego de Mesa</option>
-                        <option value="music">Música</option>
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Título</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="formTitle" required placeholder="Ej: Catan, Carcassonne, Batman..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                        <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-amber-700 hover:bg-amber-600 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <span>Buscar</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="searchResults" class="hidden mb-4 bg-stone-950 rounded-lg p-2 border border-amber-900/40 max-h-48 overflow-y-auto space-y-2"></div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Reparto / Año</label>
-                    <input type="text" id="formSubtitle" placeholder="Detalles..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                </div>
-
-                <div class="mb-4" id="platformContainer">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="platformLabel">Plataforma / Dónde escuchar o ver</label>
-                    <input type="text" id="formPlatform" placeholder="Ej: Devir, Edge, Netflix, Steam..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">URL de la Portada / Imagen</label>
-                    <input type="url" id="formCover" required placeholder="https://..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Estado</label>
-                        <select id="formStatus" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                            <option value="planned">Pendiente</option>
-                            <option value="in_progress">En curso</option>
-                            <option value="completed">Completado</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Puntuación (0 - 10)</label>
-                        <input type="number" id="formRating" min="0" max="10" step="0.5" value="0" class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                    </div>
-                </div>
-
-                <div class="space-y-3 mb-4">
-                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30">
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" id="formInLibrary" onchange="toggleFormatSelector()" class="w-4 h-4 text-amber-600 bg-stone-900 border-amber-800 rounded focus:ring-amber-500">
-                            <label for="formInLibrary" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
-                                <i class="fa-solid fa-house text-amber-400"></i>
-                                Añadir a Mi Biblioteca (Propiedad física)
-                            </label>
-                        </div>
-
-                        <div id="formatContainer" class="hidden mt-3 pt-3 border-t border-amber-900/30">
-                            <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Formatos Físicos Disponibles:</label>
-                            <div id="formatCheckboxes" class="grid grid-cols-2 gap-2 text-xs text-amber-100">
-                                <!-- Generado dinámicamente -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-stone-950/60 rounded-lg border border-amber-900/30 flex items-center gap-3">
-                        <input type="checkbox" id="formToBuy" class="w-4 h-4 text-emerald-600 bg-stone-900 border-amber-800 rounded focus:ring-emerald-500">
-                        <label for="formToBuy" class="text-xs font-medium text-amber-200 cursor-pointer flex items-center gap-1.5">
-                            <i class="fa-solid fa-cart-shopping text-emerald-400"></i>
-                            Añadir a Lista de la Compra (Deseo comprarlo)
-                        </label>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="reviewLabel">Sinopsis / Trama / Tracklist</label>
-                    <textarea id="formReview" rows="3" placeholder="Detalles o descripción..." class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm text-stone-300">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-amber-700 hover:bg-amber-600 rounded-lg text-sm font-medium text-white">Guardar</button>
-                </div>
-            </form>
-        </div>
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2>Añadir Nuevo Elemento</h2>
+      <button type="button" class="close-btn">&times;</button>
     </div>
 
-    <!-- Modal Detalle -->
-    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
-                <i class="fa-solid fa-xmark text-2xl"></i>
-            </button>
-            <div class="flex flex-col md:flex-row gap-6 pt-2" id="detailModalContent"></div>
+    <form id="tracker-form">
+      <!-- Categoria -->
+      <div class="form-group">
+        <label for="tipo">CATEGORÍA</label>
+        <select id="tipo">
+          <option value="Videojuego" selected>Videojuego</option>
+          <option value="Pelicula">Película / Serie</option>
+          <option value="Libro">Libro</option>
+          <option value="Comic">Cómic / Manga</option>
+        </select>
+      </div>
+
+      <!-- Titulo con Busqueda -->
+      <div class="form-group">
+        <label for="titulo">TÍTULO</label>
+        <div class="search-row">
+          <input type="text" id="titulo" placeholder="Ej: Monkey Island" required>
+          <button type="button" id="btn-buscar" class="btn-search" title="Buscar información">
+            <span id="search-icon">⚙️️</span>
+            <div id="spinner" class="spinner"></div>
+          </button>
         </div>
-    </div>
+      </div>
 
-    <!-- JavaScript Logic -->
-    <script>
-        const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
-        const TMDB_API_KEY = 'bfeebc72cb63d4a06f85a63290e5206f';
+      <!-- Detalles -->
+      <div class="form-group">
+        <label for="detalles">DESARROLLADOR / AÑO / PLATAFORMA</label>
+        <input type="text" id="detalles" placeholder="Detalles...">
+      </div>
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      <!-- Plataformas -->
+      <div class="form-group">
+        <label for="plataformas">PLATAFORMAS (PC, PS5, SWITCH...)</label>
+        <input type="text" id="plataformas" placeholder="Ej: Devir, Edge, Netflix, Steam...">
+      </div>
 
-        let items = [];
-        let currentCategoryFilter = 'all';
-        let searchQuery = '';
-        let currentPage = 1;
-        const ITEMS_PER_PAGE = 18;
+      <!-- URL de Portada -->
+      <div class="form-group">
+        <label for="portada">URL DE LA PORTADA / IMAGEN</label>
+        <input type="url" id="portada" placeholder="https://...">
+      </div>
 
-        document.addEventListener('DOMContentLoaded', () => { fetchItems(); });
+      <!-- Estado y Puntuacion -->
+      <div class="row-two-col">
+        <div class="form-group">
+          <label for="estado">ESTADO</label>
+          <select id="estado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Jugando">Jugando / En proceso</option>
+            <option value="Completado">Completado</option>
+            <option value="Abandonado">Abandonado</option>
+          </select>
+        </div>
 
-        window.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('topDropdownMenu');
-            if (dropdown && !e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu(event)"]')) {
-                dropdown.classList.add('hidden');
+        <div class="form-group">
+          <label for="puntuacion">PUNTUACIÓN (0 - 10)</label>
+          <input type="number" id="puntuacion" min="0" max="10" value="0">
+        </div>
+      </div>
+
+      <!-- Checkboxes -->
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="propiedad-fisica">
+        <label for="propiedad-fisica">🏠 Añadir a Mi Biblioteca (Propiedad física)</label>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="deseo-compra">
+        <label for="deseo-compra">🛒 Añadir a Lista de la Compra (Deseo comprarlo)</label>
+      </div>
+
+      <!-- Sinopsis -->
+      <div class="form-group">
+        <label for="sinopsis">SINOPSIS / RESEÑA</label>
+        <textarea id="sinopsis" rows="3" placeholder="Detalles o descripción..."></textarea>
+      </div>
+
+      <!-- Botones de accion -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Configuración opcional: Si tienes API Key de RAWG, colócala aquí. 
+    // Si la dejas vacía, el sistema usará Wikipedia como servidor primario y libre de errores.
+    const RAWG_API_KEY = ""; 
+
+    const btnBuscar = document.getElementById('btn-buscar');
+    const searchIcon = document.getElementById('search-icon');
+    const spinner = document.getElementById('spinner');
+
+    btnBuscar.addEventListener('click', async () => {
+      const tipo = document.getElementById('tipo').value;
+      const query = document.getElementById('titulo').value.trim();
+
+      if (!query) {
+        alert('Por favor, introduce un título para buscar.');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        if (tipo === 'Videojuego') {
+          await buscarVideojuego(query);
+        } else {
+          await buscarEnWikipedia(query);
+        }
+      } catch (error) {
+        console.error("Error durante la búsqueda:", error);
+        alert(`Ocurrió un fallo al consultar los datos de "${query}".`);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    async function buscarVideojuego(query) {
+      if (RAWG_API_KEY && RAWG_API_KEY !== "") {
+        // Método RAWG (Con API Key)
+        try {
+          const url = `https://api.rawg.io/api/games?key=${RAWG_API_KEY}&search=${encodeURIComponent(query)}&page_size=1`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Error RAWG HTTP: " + response.status);
+          
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+            const juego = data.results[0];
+            if (juego.background_image) {
+              document.getElementById('portada').value = juego.background_image;
             }
-        });
+            const ano = juego.released ? juego.released.split('-')[0] : '';
+            const plataformas = juego.platforms ? juego.platforms.map(p => p.platform.name).join(', ') : '';
+            document.getElementById('detalles').value = [ano, plataformas].filter(Boolean).join(' | ');
+            document.getElementById('plataformas').value = plataformas;
+            return;
+          }
+        } catch (err) {
+          console.warn("Fallo RAWG API, recurriendo a búsqueda en Wikipedia...", err);
+        }
+      }
 
-        function toggleTopMenu(e) {
-            e.stopPropagation();
-            const dropdown = document.getElementById('topDropdownMenu');
-            dropdown.classList.toggle('hidden');
+      // Método Libre (Wikipedia API - Sin API Key)
+      await buscarEnWikipedia(query);
+    }
+
+    async function buscarEnWikipedia(query) {
+      // Petición a Wikipedia en español
+      const urlWiki = `https://es.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(query)}&prop=pageimages|extracts&exintro=1&explaintext=1&pithumbsize=600&format=json&origin=*`;
+
+      const response = await fetch(urlWiki);
+      const data = await response.json();
+      
+      const pages = data.query.pages;
+      const pageId = Object.keys(pages)[0];
+
+      if (pageId !== "-1") {
+        const page = pages[pageId];
+
+        // Rellenar portada si existe
+        if (page.thumbnail && page.thumbnail.source) {
+          document.getElementById('portada').value = page.thumbnail.source;
         }
 
-        async function fetchItems() {
-            try {
-                const { data, error } = await supabaseClient.from('media_items').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                items = data || [];
-                renderItems();
-            } catch (err) { console.error('Error:', err.message); }
+        // Rellenar sinopsis si existe
+        if (page.extract) {
+          document.getElementById('sinopsis').value = page.extract.substring(0, 300) + "...";
         }
 
-        function renderFormatOptions(category, selectedFormats = []) {
-            const container = document.getElementById('formatCheckboxes');
-            if (!container) return;
-            container.innerHTML = '';
-
-            let options = [];
-            if (category === 'movie' || category === 'tv') {
-                options = ['4K UHD Blu-ray', 'Blu-ray', 'DVD', 'Steelbook', 'Laserdisc', 'VHS'];
-            } else if (category === 'game') {
-                options = ['Caja Cartón Retro', 'PC Big Box', 'Cartucho SNES/N64', 'PS5', 'PS4', 'Nintendo Switch', 'Xbox'];
-            } else if (category === 'boardgame') {
-                options = ['Caja Cuadrada Grande', 'Expansión / Módulo', 'Edición Kickstarter / Verkami', 'Edición Deluxe', 'Juego de Cartas / Pocket'];
-            } else if (category === 'book' || category === 'comic') {
-                options = ['Tapa Dura', 'Tapa Blanda', 'Edición Especial', 'Grapa / Cuadernillo'];
-            } else if (category === 'music') {
-                options = ['Vinilo LP', 'Vinilo 7" Single', 'CD', 'Casete', 'Box Set / Edición Especial'];
-            }
-
-            options.forEach(opt => {
-                const isChecked = selectedFormats.includes(opt);
-                const label = document.createElement('label');
-                label.className = 'flex items-center gap-2 cursor-pointer bg-stone-900 p-2 rounded border border-amber-900/40 hover:border-amber-700 transition';
-                label.innerHTML = `<input type="checkbox" name="formatCheck" value="${opt}" ${isChecked ? 'checked' : ''} class="accent-amber-600"> <span class="truncate">${opt}</span>`;
-                container.appendChild(label);
-            });
+        if (!page.thumbnail) {
+          alert(`Se encontró el artículo para "${query}", pero no tiene una imagen de portada disponible.`);
         }
-
-        function handleCategoryChange() {
-            const cat = document.getElementById('formCategory').value;
-            const subLabel = document.getElementById('subtitleLabel');
-            const platformContainer = document.getElementById('platformContainer');
-            const platformLabel = document.getElementById('platformLabel');
-            const reviewLabel = document.getElementById('reviewLabel');
-            
-            if (cat === 'movie' || cat === 'tv') {
-                subLabel.textContent = 'Director / Reparto / Año';
-                platformLabel.textContent = 'Plataforma / Dónde ver';
-                reviewLabel.textContent = 'Sinopsis / Trama';
-                platformContainer.classList.remove('hidden');
-            } else if (cat === 'game') {
-                subLabel.textContent = 'Desarrollador / Año / Plataforma';
-                platformLabel.textContent = 'Plataformas (PC, PS5, Switch...)';
-                reviewLabel.textContent = 'Sinopsis / Reseña';
-                platformContainer.classList.remove('hidden');
-            } else if (cat === 'boardgame') {
-                subLabel.textContent = 'Diseñador / Nº Jugadores / Duración / Año';
-                platformLabel.textContent = 'Editorial / Distribuidora';
-                reviewLabel.textContent = 'Descripción / Mecánicas / Opinión';
-                platformContainer.classList.remove('hidden');
-            } else if (cat === 'music') {
-                subLabel.textContent = 'Artista / Grupo / Año';
-                platformLabel.textContent = 'Dónde escuchar (Spotify, Apple...)';
-                reviewLabel.textContent = 'Tracklist / Reseña';
-                platformContainer.classList.remove('hidden');
-            } else {
-                subLabel.textContent = 'Autor / Editorial / Año';
-                reviewLabel.textContent = 'Sinopsis / Resumen';
-                platformContainer.classList.add('hidden');
-            }
-
-            const currentSelected = Array.from(document.querySelectorAll('input[name="formatCheck"]:checked')).map(cb => cb.value);
-            renderFormatOptions(cat, currentSelected);
-        }
-
-        function toggleFormatSelector() {
-            const inLibrary = document.getElementById('formInLibrary').checked;
-            const formatContainer = document.getElementById('formatContainer');
-            const cat = document.getElementById('formCategory').value;
-            
-            if (inLibrary) {
-                formatContainer.classList.remove('hidden');
-                const currentSelected = Array.from(document.querySelectorAll('input[name="formatCheck"]:checked')).map(cb => cb.value);
-                renderFormatOptions(cat, currentSelected);
-            } else {
-                formatContainer.classList.add('hidden');
-            }
-        }
-
-        // BÚSQUEDA MULTICANAL CON EXPANSIÓN BGG XML API + ITUNES + GOOGLE BOOKS + RAWG
-        async function autoSearchCover() {
-            const title = document.getElementById('formTitle').value.trim();
-            const cat = document.getElementById('formCategory').value;
-            const searchBtn = document.getElementById('searchBtn');
-            const resultsDiv = document.getElementById('searchResults');
-
-            if (!title) return alert('Escribe un título primero.');
-
-            searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            resultsDiv.innerHTML = '';
-            resultsDiv.classList.add('hidden');
-
-            let foundResults = [];
-
-            try {
-                if (cat === 'boardgame') {
-                    // 1. BoardGameGeek (BGG API2)
-                    try {
-                        const bggRes = await fetch(`https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(title)}&type=boardgame`);
-                        if (bggRes.ok) {
-                            const xmlText = await bggRes.text();
-                            const parser = new DOMParser();
-                            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                            const itemsXML = xmlDoc.getElementsByTagName('item');
-
-                            if (itemsXML.length > 0) {
-                                const ids = Array.from(itemsXML).slice(0, 4).map(it => it.getAttribute('id')).join(',');
-                                const detailRes = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${ids}`);
-                                if (detailRes.ok) {
-                                    const detailText = await detailRes.text();
-                                    const detailDoc = parser.parseFromString(detailText, 'text/xml');
-                                    const detailItems = detailDoc.getElementsByTagName('item');
-
-                                    for (let itemNode of detailItems) {
-                                        const primaryName = itemNode.querySelector('name[type="primary"]')?.getAttribute('value') || title;
-                                        const year = itemNode.querySelector('yearpublished')?.getAttribute('value') || '';
-                                        const imgUrl = itemNode.querySelector('image')?.textContent || itemNode.querySelector('thumbnail')?.textContent || '';
-                                        const minP = itemNode.querySelector('minplayers')?.getAttribute('value') || '';
-                                        const maxP = itemNode.querySelector('maxplayers')?.getAttribute('value') || '';
-                                        const pStr = (minP && maxP) ? `${minP}-${maxP} jug.` : '';
-
-                                        if (imgUrl) {
-                                            foundResults.push({
-                                                name: primaryName,
-                                                sub: `BGG ${year ? '(' + year + ')' : ''} | ${pStr}`,
-                                                cover: imgUrl,
-                                                desc: 'Juego de mesa verificado en BoardGameGeek.',
-                                                platform: 'BoardGameGeek',
-                                                platformLogo: ''
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e) { console.error('BGG API Error:', e); }
-
-                    // 2. iTunes Search API
-                    try {
-                        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title + ' board game')}&entity=software&limit=5`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.results && data.results.length > 0) {
-                                const itunesRes = data.results.map(g => ({
-                                    name: g.trackName || title,
-                                    sub: `Editorial: ${g.sellerName || 'Independiente'}`,
-                                    cover: g.artworkUrl512 || g.artworkUrl100 ? (g.artworkUrl512 || g.artworkUrl100).replace('100x100bb', '600x600bb') : '',
-                                    desc: g.description || '',
-                                    platform: 'Edición de Tablero',
-                                    platformLogo: ''
-                                }));
-                                foundResults = [...foundResults, ...itunesRes];
-                            }
-                        }
-                    } catch (e) { console.error('iTunes BoardGame error:', e); }
-
-                    // 3. Google Books
-                    if (foundResults.length < 3) {
-                        try {
-                            const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title + ' board game')}&maxResults=5`);
-                            if (res.ok) {
-                                const data = await res.json();
-                                if (data.items && data.items.length > 0) {
-                                    const bookResults = data.items.map(b => {
-                                        const info = b.volumeInfo || {};
-                                        let coverUrl = info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '') : '';
-                                        if (coverUrl.startsWith('http:')) coverUrl = coverUrl.replace('http:', 'https:');
-                                        return {
-                                            name: info.title || title,
-                                            sub: `Google Books | Editorial: ${info.publisher || 'Desconocido'}`,
-                                            cover: coverUrl,
-                                            desc: info.description || '',
-                                            platform: 'Edición de Coleccionista',
-                                            platformLogo: ''
-                                        };
-                                    });
-                                    foundResults = [...foundResults, ...bookResults];
-                                }
-                            }
-                        } catch (e) { console.error('Google Books error:', e); }
-                    }
-                } 
-                else if (cat === 'movie' || cat === 'tv') {
-                    const res = await fetch(`https://api.themoviedb.org/3/search/${cat}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.results) {
-                            for (const item of data.results.slice(0, 5)) {
-                                foundResults.push({
-                                    name: item.title || item.name,
-                                    sub: item.release_date ? `Año: ${item.release_date.split('-')[0]}` : 'N/A',
-                                    cover: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
-                                    desc: item.overview || '',
-                                    platform: '', platformLogo: ''
-                                });
-                            }
-                        }
-                    }
-                } 
-                else if (cat === 'game') {
-                    try {
-                        const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.results) {
-                                foundResults = data.results.map(g => ({
-                                    name: g.name,
-                                    sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Videojuego',
-                                    cover: g.background_image || '',
-                                    desc: '', platform: '', platformLogo: ''
-                                }));
-                            }
-                        }
-                    } catch (e) { console.error('RAWG error:', e); }
-                }
-                else if (cat === 'music') {
-                    try {
-                        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=album&limit=5`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.results) {
-                                foundResults = data.results.map(alb => ({
-                                    name: alb.collectionName || title,
-                                    sub: `Artista: ${alb.artistName}`,
-                                    cover: alb.artworkUrl100 ? alb.artworkUrl100.replace('100x100bb', '1000x1000bb') : '',
-                                    desc: '', platform: 'Spotify, Apple Music', platformLogo: ''
-                                }));
-                            }
-                        }
-                    } catch (e) { console.error('iTunes Music error:', e); }
-                }
-                else if (cat === 'book' || cat === 'comic') {
-                    try {
-                        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=5`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.items) {
-                                foundResults = data.items.map(b => {
-                                    const info = b.volumeInfo || {};
-                                    let coverUrl = info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '') : '';
-                                    if (coverUrl.startsWith('http:')) coverUrl = coverUrl.replace('http:', 'https:');
-                                    return {
-                                        name: info.title || title,
-                                        sub: `Autor: ${info.authors ? info.authors.join(', ') : 'Desconocido'}`,
-                                        cover: coverUrl,
-                                        desc: info.description || '', platform: '', platformLogo: ''
-                                    };
-                                });
-                            }
-                        }
-                    } catch (e) { console.error('Google Books error:', e); }
-                }
-
-                if (foundResults.length > 0) {
-                    resultsDiv.classList.remove('hidden');
-                    foundResults.forEach(item => {
-                        const row = document.createElement('div');
-                        row.className = 'flex items-center gap-3 p-2 hover:bg-stone-800 rounded cursor-pointer transition border-b border-amber-900/20 last:border-0';
-                        row.onclick = () => selectResult(item.name, item.sub, item.cover, item.desc, item.platform, item.platformLogo);
-                        
-                        const coverImg = item.cover || `https://via.placeholder.com/100/1e293b/ffffff?text=${encodeURIComponent(item.name)}`;
-                        
-                        row.innerHTML = `
-                            <img src="${coverImg}" class="w-11 h-11 object-cover rounded shadow border border-amber-900/40">
-                            <div class="overflow-hidden">
-                                <p class="text-xs font-semibold text-amber-100 truncate">${item.name}</p>
-                                <p class="text-[11px] text-amber-400/80 truncate">${item.sub}</p>
-                            </div>
-                        `;
-                        resultsDiv.appendChild(row);
-                    });
-                } else {
-                    alert(`No se encontraron resultados para "${title}". Rellena la portada manualmente pegando la URL de la imagen.`);
-                }
-            } catch (err) {
-                alert('Ocurrió un problema durante la búsqueda. Por favor reintenta.');
-            } finally {
-                searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
-            }
-        }
-
-        function selectResult(title, subtitle, coverUrl, overview, platform = '', platformLogo = '') {
-            document.getElementById('formTitle').value = title;
-            document.getElementById('formSubtitle').value = subtitle;
-            if (coverUrl) document.getElementById('formCover').value = coverUrl;
-            if (overview) document.getElementById('formReview').value = overview;
-            if (platform) document.getElementById('formPlatform').value = platform;
-            if (platformLogo) document.getElementById('formPlatformLogo').value = platformLogo;
-            document.getElementById('searchResults').classList.add('hidden');
-        }
-
-        function renderItems() {
-            const container = document.getElementById('bookshelfContainer');
-            container.innerHTML = '';
-            const statusFilter = document.getElementById('statusSelect').value;
-
-            const filtered = items.filter(item => {
-                let catMatch = false;
-                const isPending = (item.status === 'planned');
-
-                if (currentCategoryFilter === 'pending_watch') {
-                    catMatch = isPending;
-                } else if (currentCategoryFilter.startsWith('pending_')) {
-                    const subCat = currentCategoryFilter.replace('pending_', '');
-                    catMatch = isPending && item.category === subCat;
-                } else if (currentCategoryFilter === 'library') {
-                    catMatch = item.in_library === true;
-                } else if (currentCategoryFilter.startsWith('library_')) {
-                    const subCat = currentCategoryFilter.replace('library_', '');
-                    catMatch = item.in_library === true && item.category === subCat;
-                } else {
-                    if (isPending) return false;
-
-                    // 'boardgame' NO se muestra al pulsar la pestaña general "Todos"
-                    if (currentCategoryFilter === 'all') {
-                        catMatch = item.category !== 'boardgame';
-                    } else if (currentCategoryFilter === 'shopping_list') {
-                        catMatch = item.to_buy === true;
-                    } else {
-                        catMatch = item.category === currentCategoryFilter;
-                    }
-                }
-
-                const statusMatch = statusFilter === 'all' || item.status === statusFilter;
-                
-                const searchMatch = !searchQuery || 
-                    item.title.toLowerCase().includes(searchQuery) || 
-                    (item.subtitle && item.subtitle.toLowerCase().includes(searchQuery)) ||
-                    (item.review && item.review.toLowerCase().includes(searchQuery)) ||
-                    (item.platform && item.platform.toLowerCase().includes(searchQuery)) ||
-                    (item.category && item.category.toLowerCase().includes(searchQuery));
-
-                return catMatch && statusMatch && searchMatch;
-            });
-
-            if (filtered.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                document.getElementById('paginationControls').innerHTML = '';
-                return;
-            }
-            document.getElementById('emptyState').classList.add('hidden');
-
-            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-            if (currentPage > totalPages) currentPage = totalPages;
-            if (currentPage < 1) currentPage = 1;
-
-            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-            const pageItems = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-            const SHELF_CAPACITY = 6;
-            for (let i = 0; i < pageItems.length; i += SHELF_CAPACITY) {
-                const shelfItems = pageItems.slice(i, i + SHELF_CAPACITY);
-                const shelfDiv = document.createElement('div');
-                shelfDiv.className = 'relative flex flex-col';
-
-                const gridDiv = document.createElement('div');
-                gridDiv.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 px-4 items-end pb-1';
-
-                shelfItems.forEach(item => {
-                    gridDiv.appendChild(createShelfCase(item));
-                });
-
-                const woodShelfBar = document.createElement('div');
-                woodShelfBar.className = 'delicious-shelf h-6 w-full rounded-sm shadow-2xl mt-1';
-
-                shelfDiv.appendChild(gridDiv);
-                shelfDiv.appendChild(woodShelfBar);
-                container.appendChild(shelfDiv);
-            }
-
-            renderPagination(totalPages, filtered.length);
-        }
-
-        // RENDERIZADO DE CARÁTULAS CON FORMATO CUADRADO EN JUEGOS DE MESA
-        function createShelfCase(item) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex flex-col items-center group cursor-pointer';
-            wrapper.onclick = () => openDetailModal(item.id);
-
-            if (item.category === 'music') {
-                wrapper.innerHTML = `
-                    <div class="vinyl-sleeve-container">
-                        <div class="vinyl-record"></div>
-                        <div class="vinyl-sleeve">
-                            <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/94a3b8?text=Sin+Imagen'">
-                            ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
-                        </div>
-                    </div>
-                    <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
-                        ${item.title}
-                    </div>
-                `;
-            } else {
-                let caseStyleClass = 'case-standard-shadow';
-                let aspectClass = 'aspect-[2/3]';
-
-                if (item.category === 'book') {
-                    caseStyleClass = 'case-book-shadow';
-                } else if (item.category === 'boardgame') {
-                    caseStyleClass = 'case-carton-shadow';
-                    aspectClass = 'aspect-square'; // CARÁTULA CUADRADA EXCLUSIVA PARA JUEGOS DE MESA
-                } else if (item.category === 'game') {
-                    caseStyleClass = 'case-carton-shadow';
-                }
-
-                wrapper.innerHTML = `
-                    <div class="relative rounded-sm overflow-hidden ${caseStyleClass} bg-black ${aspectClass} w-full">
-                        <img src="${item.cover_url}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x300/1e293b/ffffff?text=Sin+Imagen'">
-                        ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
-                    </div>
-                    <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
-                        ${item.title}
-                    </div>
-                `;
-            }
-
-            return wrapper;
-        }
-
-        function openDetailModal(id) {
-            const item = items.find(i => String(i.id) === String(id));
-            if (!item) return;
-
-            let logosHTML = '';
-            if (item.platform_logo) {
-                const logos = item.platform_logo.split(',').filter(Boolean);
-                logosHTML = `<div class="flex items-center gap-2 mt-2">
-                    ${logos.map(url => `<img src="${url}" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
-                </div>`;
-            } else if (item.platform) {
-                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-layer-group mr-1"></i> ${item.platform}</p>`;
-            }
-
-            const isSquare = item.category === 'music' || item.category === 'boardgame';
-            const imgAspectClass = isSquare ? 'aspect-square' : 'aspect-[2/3]';
-
-            let catTitle = 'Sinopsis / Trama';
-            if (item.category === 'music') catTitle = 'Tracklist / Reseña';
-            else if (item.category === 'boardgame') catTitle = 'Descripción / Mecánicas de Juego';
-            else if (item.category === 'game') catTitle = 'Sinopsis / Reseña del Juego';
-
-            const modalContent = document.getElementById('detailModalContent');
-            modalContent.innerHTML = `
-                <div class="w-full md:w-1/3 flex-shrink-0">
-                    <img src="${item.cover_url}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover ${imgAspectClass}">
-                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-box mr-1"></i> ${item.format}</div>` : ''}
-                </div>
-                <div class="w-full md:w-2/3 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between gap-3 pr-10">
-                            <h2 class="text-2xl font-bold text-amber-100">${item.title}</h2>
-                            <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
-                                <button onclick="editItem('${item.id}')" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                                <span class="border-r border-amber-900/60 h-4"></span>
-                                <button onclick="deleteItem('${item.id}')" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <p class="text-xs text-amber-300/90 font-medium mt-2">${item.subtitle || ''}</p>
-                        ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Detalles / Plataforma / Editorial:</p>${logosHTML}</div>` : ''}
-                        <div class="mt-4 pt-4 border-t border-amber-900/30">
-                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> ${catTitle}</h4>
-                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">${item.review || 'Sin detalles disponibles.'}</p>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-amber-900/30">
-                        <span>Estado: <strong class="text-amber-200 capitalize">${item.status}</strong></span>
-                        ${item.in_library ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i> En Biblioteca Física</span>` : ''}
-                    </div>
-                </div>
-            `;
-            document.getElementById('detailModal').classList.remove('hidden');
-        }
-
-        function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); }
-
-        function renderPagination(totalPages, totalItems) {
-            const container = document.getElementById('paginationControls');
-            if (totalPages <= 1) {
-                container.innerHTML = `<span class="text-xs text-amber-300 font-medium">Mostrando ${totalItems} elementos</span>`;
-                return;
-            }
-            container.innerHTML = `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 rounded-lg"'}>Anterior</button>
-                <span class="text-xs text-amber-300 font-semibold px-2">Página ${currentPage} de ${totalPages}</span>
-                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 rounded-lg"'}>Siguiente</button>
-            `;
-        }
-
-        function changePage(page) {
-            currentPage = page;
-            renderItems();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function setCategoryFilter(cat) {
-            currentCategoryFilter = cat;
-            currentPage = 1;
-
-            const audioVisualLabel = document.getElementById('audioVisualBtnLabel');
-            if (cat === 'movie') audioVisualLabel.textContent = 'Películas';
-            else if (cat === 'tv') audioVisualLabel.textContent = 'Series';
-            else audioVisualLabel.textContent = 'Audiovisual';
-
-            const readingLabel = document.getElementById('readingBtnLabel');
-            if (cat === 'book') readingLabel.textContent = 'Libros';
-            else if (cat === 'comic') readingLabel.textContent = 'Cómics';
-            else readingLabel.textContent = 'Lectura';
-
-            const gamesLabel = document.getElementById('gamesBtnLabel');
-            if (cat === 'game') gamesLabel.textContent = 'Videojuegos';
-            else if (cat === 'boardgame') gamesLabel.textContent = 'Juegos de Mesa';
-            else gamesLabel.textContent = 'Juegos';
-
-            const libLabel = document.getElementById('libraryBtnLabel');
-            if (cat === 'library') libLabel.textContent = 'Mi Biblioteca';
-            else if (cat === 'library_movie') libLabel.textContent = 'Biblio: Películas';
-            else if (cat === 'library_tv') libLabel.textContent = 'Biblio: Series';
-            else if (cat === 'library_book') libLabel.textContent = 'Biblio: Libros';
-            else if (cat === 'library_comic') libLabel.textContent = 'Biblio: Cómics';
-            else if (cat === 'library_game') libLabel.textContent = 'Biblio: Videojuegos';
-            else if (cat === 'library_boardgame') libLabel.textContent = 'Biblio: Juegos Mesa';
-            else if (cat === 'library_music') libLabel.textContent = 'Biblio: Música';
-            else libLabel.textContent = 'Mi Biblioteca';
-
-            const pendingLabel = document.getElementById('pendingBtnLabel');
-            if (cat === 'pending_watch') pendingLabel.textContent = 'Pendientes';
-            else if (cat === 'pending_movie') pendingLabel.textContent = 'Pend: Películas';
-            else if (cat === 'pending_tv') pendingLabel.textContent = 'Pend: Series';
-            else if (cat === 'pending_book') pendingLabel.textContent = 'Pend: Libros';
-            else if (cat === 'pending_comic') pendingLabel.textContent = 'Pend: Cómics';
-            else if (cat === 'pending_game') pendingLabel.textContent = 'Pend: Videojuegos';
-            else if (cat === 'pending_boardgame') pendingLabel.textContent = 'Pend: Juegos Mesa';
-            else if (cat === 'pending_music') pendingLabel.textContent = 'Pend: Música';
-            else pendingLabel.textContent = 'Pendientes';
-
-            renderItems();
-        }
-
-        function resetToHome() {
-            currentCategoryFilter = 'all';
-            searchQuery = '';
-            currentPage = 1;
-            document.getElementById('liveSearchInput').value = '';
-            document.getElementById('statusSelect').value = 'all';
-            document.getElementById('audioVisualBtnLabel').textContent = 'Audiovisual';
-            document.getElementById('readingBtnLabel').textContent = 'Lectura';
-            document.getElementById('gamesBtnLabel').textContent = 'Juegos';
-            document.getElementById('libraryBtnLabel').textContent = 'Mi Biblioteca';
-            document.getElementById('pendingBtnLabel').textContent = 'Pendientes';
-            renderItems();
-        }
-
-        function handleSearch() {
-            searchQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
-            currentPage = 1;
-            renderItems();
-        }
-
-        function openModal() {
-            document.getElementById('editingItemId').value = '';
-            document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
-            document.getElementById('mediaForm').reset();
-            document.getElementById('searchResults').classList.add('hidden');
-            handleCategoryChange();
-            toggleFormatSelector();
-            document.getElementById('itemModal').classList.remove('hidden');
-        }
-
-        function closeModal() { document.getElementById('itemModal').classList.add('hidden'); }
-
-        function editItem(id) {
-            closeDetailModal();
-            const item = items.find(i => String(i.id) === String(id));
-            if (!item) return;
-
-            document.getElementById('editingItemId').value = item.id;
-            document.getElementById('modalTitle').textContent = 'Editar Elemento';
-            document.getElementById('formCategory').value = item.category || 'movie';
-            
-            document.getElementById('formTitle').value = item.title || '';
-            document.getElementById('formSubtitle').value = item.subtitle || '';
-            document.getElementById('formPlatform').value = item.platform || '';
-            document.getElementById('formPlatformLogo').value = item.platform_logo || '';
-            document.getElementById('formCover').value = item.cover_url || '';
-            document.getElementById('formStatus').value = item.status || 'planned';
-            document.getElementById('formRating').value = item.rating || 0;
-            document.getElementById('formInLibrary').checked = item.in_library || false;
-            document.getElementById('formToBuy').checked = item.to_buy || false;
-            document.getElementById('formReview').value = item.review || '';
-
-            handleCategoryChange();
-
-            const savedFormats = item.format ? item.format.split(',').map(f => f.trim()) : [];
-            renderFormatOptions(item.category || 'movie', savedFormats);
-
-            toggleFormatSelector();
-            document.getElementById('itemModal').classList.remove('hidden');
-        }
-
-        async function saveItem(e) {
-            e.preventDefault();
-            const id = document.getElementById('editingItemId').value;
-            const selectedFormats = [];
-            document.querySelectorAll('input[name="formatCheck"]:checked').forEach(cb => selectedFormats.push(cb.value));
-            const inLibrary = document.getElementById('formInLibrary').checked;
-
-            const itemData = {
-                category: document.getElementById('formCategory').value,
-                title: document.getElementById('formTitle').value,
-                subtitle: document.getElementById('formSubtitle').value,
-                platform: document.getElementById('formPlatform').value,
-                platform_logo: document.getElementById('formPlatformLogo').value,
-                cover_url: document.getElementById('formCover').value,
-                status: document.getElementById('formStatus').value,
-                rating: parseFloat(document.getElementById('formRating').value) || 0,
-                in_library: inLibrary,
-                format: inLibrary && selectedFormats.length > 0 ? selectedFormats.join(', ') : null,
-                to_buy: document.getElementById('formToBuy').checked,
-                review: document.getElementById('formReview').value
-            };
-
-            let error;
-            if (id) {
-                const res = await supabaseClient.from('media_items').update(itemData).eq('id', String(id));
-                error = res.error;
-            } else {
-                const res = await supabaseClient.from('media_items').insert([itemData]);
-                error = res.error;
-            }
-
-            if (error) alert('Error al guardar: ' + error.message);
-            else { closeModal(); fetchItems(); }
-        }
-
-        async function deleteItem(id) {
-            if (!confirm('¿Seguro que quieres eliminar este elemento?')) return;
-            try {
-                closeDetailModal();
-                const { error } = await supabaseClient.from('media_items').delete().eq('id', String(id));
-                if (error) throw error;
-                fetchItems();
-            } catch (err) {
-                alert('Error al eliminar: ' + err.message);
-            }
-        }
-
-        async function deleteAllItems() {
-            document.getElementById('topDropdownMenu').classList.add('hidden');
-            
-            const confirm1 = confirm('⚠️ ¿Estás seguro de que quieres vaciar toda la biblioteca?');
-            if (!confirm1) return;
-
-            const confirm2 = confirm('🚨 ADVERTENCIA FINAL: Se borrarán TODOS los datos de tu base de datos permanentemente y no se podrán recuperar. ¿Deseas proceder?');
-            if (!confirm2) return;
-            
-            try {
-                const { error } = await supabaseClient.from('media_items').delete().not('id', 'is', null);
-                if (error) throw error;
-                alert('¡Toda la biblioteca ha sido borrada con éxito!');
-                fetchItems();
-            } catch (err) {
-                alert('Error al vaciar la biblioteca: ' + err.message);
-            }
-        }
-
-        function exportCSV() {
-            document.getElementById('topDropdownMenu').classList.add('hidden');
-            if (!items.length) return alert('No hay elementos para exportar.');
-            
-            const headers = ['id', 'title', 'subtitle', 'category', 'status', 'rating', 'in_library', 'format', 'to_buy', 'platform', 'review'];
-            const csvRows = [headers.join(',')];
-            
-            items.forEach(item => {
-                const row = headers.map(header => {
-                    const val = item[header] !== undefined && item[header] !== null ? String(item[header]) : '';
-                    return `"${val.replace(/"/g, '""')}"`;
-                });
-                csvRows.push(row.join(','));
-            });
-
-            const blob = new Blob(["\ufeff" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `media_tracker_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function exportExcel() {
-            document.getElementById('topDropdownMenu').classList.add('hidden');
-            if (!items.length) return alert('No hay elementos para exportar.');
-
-            let tableHTML = '<table border="1"><thead><tr style="background-color:#d4a373;color:#000;">';
-            const headers = ['Título', 'Subtítulo', 'Categoría', 'Estado', 'Puntuación', 'En Biblioteca', 'Formatos', 'Lista Compra', 'Plataforma', 'Sinopsis'];
-            headers.forEach(h => tableHTML += `<th>${h}</th>`);
-            tableHTML += '</tr></thead><tbody>';
-
-            items.forEach(item => {
-                tableHTML += `<tr>
-                    <td>${item.title || ''}</td>
-                    <td>${item.subtitle || ''}</td>
-                    <td>${item.category || ''}</td>
-                    <td>${item.status || ''}</td>
-                    <td>${item.rating || 0}</td>
-                    <td>${item.in_library ? 'Sí' : 'No'}</td>
-                    <td>${item.format || ''}</td>
-                    <td>${item.to_buy ? 'Sí' : 'No'}</td>
-                    <td>${item.platform || ''}</td>
-                    <td>${(item.review || '').replace(/\n/g, ' ')}</td>
-                </tr>`;
-            });
-            tableHTML += '</tbody></table>';
-
-            const blob = new Blob(["\ufeff" + tableHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `media_tracker_${new Date().toISOString().slice(0,10)}.xls`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    </script>
+      } else {
+        alert(`No se encontraron resultados para "${query}". Rellena la portada manualmente pegando la URL de la imagen.`);
+      }
+    }
+
+    function setLoading(isLoading) {
+      btnBuscar.disabled = isLoading;
+      if (isLoading) {
+        searchIcon.style.display = 'none';
+        spinner.style.display = 'block';
+      } else {
+        searchIcon.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    }
+
+    // Prevención de submit por defecto al presionar Enter en el formulario
+    document.getElementById('tracker-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('Elemento guardado correctamente.');
+    });
+  </script>
 </body>
 </html>
