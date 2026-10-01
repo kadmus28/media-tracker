@@ -229,6 +229,9 @@
                         <button onclick="exportExcel()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-file-excel text-emerald-500 w-4 text-sm"></i> Exportar Excel
                         </button>
+                        <button onclick="configureRawgApiKey()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
+                            <i class="fa-solid fa-key text-amber-400 w-4 text-sm"></i> Configurar búsqueda de videojuegos
+                        </button>
                         <span class="border-b border-amber-900/40 block my-1"></span>
                         <button onclick="deleteAllItems()" class="w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-950/50 flex items-center gap-2.5 transition font-semibold">
                             <i class="fa-solid fa-trash-can text-rose-500 w-4 text-sm"></i> Vaciar Biblioteca
@@ -415,6 +418,10 @@
             <h3 class="text-lg font-medium text-amber-200">No hay elementos en este estante</h3>
             <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta la búsqueda y filtros.</p>
         </div>
+
+        <p class="mt-8 text-center text-[10px] text-amber-200/40">
+            Datos de videojuegos proporcionados por <a href="https://rawg.io/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">RAWG</a>.
+        </p>
     </main>
 
     <!-- Modal Formulario -->
@@ -454,7 +461,7 @@
                     </div>
                 </div>
 
-                <div id="searchResults" class="hidden mb-4 bg-stone-950 rounded-lg p-2 border border-amber-900/40 max-h-48 overflow-y-auto space-y-2"></div>
+                <div id="searchResults" role="status" aria-live="polite" class="hidden mb-4 bg-stone-950 rounded-lg p-2 border border-amber-900/40 max-h-48 overflow-y-auto space-y-2"></div>
 
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2" id="subtitleLabel">Director / Reparto / Año</label>
@@ -542,6 +549,7 @@
         const SUPABASE_URL = 'https://akyewbyhbgcvlcblkerb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreWV3YnloYmdjdmxjYmxrZXJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzczNTYsImV4cCI6MjEwNTgxMzM1Nn0.J3eunUN-qE99cgocSSNO93oNH9nZbSP-C-dJYSyPdlA';
         const TMDB_API_KEY = 'bfeebc72cb63d4a06f85a63290e5206f';
+        const RAWG_API_KEY_STORAGE = 'media-tracker.rawg-api-key';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -576,6 +584,28 @@
             const text = String(value ?? '');
             // Prevent spreadsheet formulas when a CSV/XLS file is opened.
             return /^[\s\u0000-\u001f]*[=+@\-]/.test(text) ? `'${text}` : text;
+        }
+
+        function configureRawgApiKey() {
+            const existingKey = localStorage.getItem(RAWG_API_KEY_STORAGE) || '';
+            const newKey = prompt(
+                'Pega tu clave personal de RAWG. Se guardará únicamente en este navegador, no en el archivo del proyecto. Puedes obtenerla en rawg.io/apidocs. Deja el campo vacío para borrarla.',
+                existingKey
+            );
+            if (newKey === null) return;
+
+            const trimmedKey = newKey.trim();
+            if (trimmedKey) localStorage.setItem(RAWG_API_KEY_STORAGE, trimmedKey);
+            else localStorage.removeItem(RAWG_API_KEY_STORAGE);
+            alert(trimmedKey ? 'Clave guardada en este navegador.' : 'Clave de RAWG eliminada.');
+        }
+
+        function showSearchMessage(message, kind = 'info') {
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.textContent = message;
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.classList.toggle('text-rose-300', kind === 'error');
+            resultsDiv.classList.toggle('text-amber-200', kind !== 'error');
         }
 
         document.addEventListener('DOMContentLoaded', () => { fetchItems(); });
@@ -687,13 +717,16 @@
             const searchBtn = document.getElementById('searchBtn');
             const resultsDiv = document.getElementById('searchResults');
 
-            if (!title) return alert('Escribe un título primero.');
+            if (!title) return showSearchMessage('Escribe un título primero.', 'error');
 
+            searchBtn.disabled = true;
             searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             resultsDiv.innerHTML = '';
             resultsDiv.classList.add('hidden');
 
             let foundResults = [];
+            let searchError = '';
+            let rawgAttribution = false;
 
             try {
                 if (cat === 'boardgame') {
@@ -801,20 +834,41 @@
                     }
                 } 
                 else if (cat === 'game') {
-                    try {
-                        const res = await fetch(`https://api.rawg.io/api/games?key=6f10c69d80d24ee18055ee8db0f19a0d&search=${encodeURIComponent(title)}&page_size=5`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.results) {
-                                foundResults = data.results.map(g => ({
-                                    name: g.name,
-                                    sub: g.released ? `Año: ${g.released.split('-')[0]}` : 'Videojuego',
-                                    cover: g.background_image || '',
-                                    desc: '', platform: '', platformLogo: ''
-                                }));
+                    const rawgApiKey = localStorage.getItem(RAWG_API_KEY_STORAGE);
+                    if (!rawgApiKey) {
+                        searchError = 'Falta configurar la clave de RAWG. Abre el menú ☰ y selecciona «Configurar búsqueda de videojuegos».';
+                    } else {
+                        try {
+                            const url = new URL('https://api.rawg.io/api/games');
+                            url.search = new URLSearchParams({ key: rawgApiKey, search: title, page_size: '5' }).toString();
+                            const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+                            if (res.status === 401 || res.status === 403) {
+                                throw new Error('RAWG rechazó la clave. Revisa que sea válida y vuelve a guardarla desde el menú.');
                             }
+                            if (res.status === 429) {
+                                throw new Error('RAWG ha alcanzado el límite de consultas. Espera un poco y vuelve a intentarlo.');
+                            }
+                            if (!res.ok) throw new Error(`RAWG respondió con el error ${res.status}.`);
+
+                            const data = await res.json();
+                            foundResults = (data.results || []).map(g => ({
+                                name: g.name,
+                                sub: [g.released ? `Año: ${g.released.split('-')[0]}` : '', (g.platforms || []).slice(0, 3).map(p => p.platform?.name).filter(Boolean).join(', ')].filter(Boolean).join(' · ') || 'Videojuego',
+                                cover: g.background_image || '',
+                                desc: '',
+                                platform: (g.platforms || []).slice(0, 4).map(p => p.platform?.name).filter(Boolean).join(', '),
+                                platformLogo: ''
+                            }));
+                            rawgAttribution = foundResults.length > 0;
+                        } catch (err) {
+                            console.error('RAWG error:', err);
+                            searchError = err.name === 'TimeoutError' || err.name === 'AbortError'
+                                ? 'RAWG tardó demasiado en responder. Comprueba la conexión y vuelve a intentarlo.'
+                                : err instanceof TypeError
+                                    ? 'No se pudo conectar con RAWG. Comprueba tu conexión o si el servicio está disponible.'
+                                    : err.message;
                         }
-                    } catch (e) { console.error('RAWG error:', e); }
+                    }
                 }
                 else if (cat === 'music') {
                     try {
@@ -872,12 +926,25 @@
                         `;
                         resultsDiv.appendChild(row);
                     });
+                    if (rawgAttribution) {
+                        const credit = document.createElement('a');
+                        credit.href = 'https://rawg.io/';
+                        credit.target = '_blank';
+                        credit.rel = 'noopener noreferrer';
+                        credit.className = 'block pt-1 text-[10px] text-amber-400/70 hover:text-amber-300';
+                        credit.textContent = 'Datos de videojuegos proporcionados por RAWG';
+                        resultsDiv.appendChild(credit);
+                    }
+                } else if (searchError) {
+                    showSearchMessage(searchError, 'error');
                 } else {
-                    alert(`No se encontraron resultados para "${title}". Rellena la portada manualmente pegando la URL de la imagen.`);
+                    showSearchMessage(`No se encontraron resultados para «${title}». Puedes completar la portada manualmente pegando una URL.`, 'info');
                 }
             } catch (err) {
-                alert('Ocurrió un problema durante la búsqueda. Por favor reintenta.');
+                console.error('Error de búsqueda:', err);
+                showSearchMessage('Ocurrió un problema durante la búsqueda. Comprueba la conexión y vuelve a intentarlo.', 'error');
             } finally {
+                searchBtn.disabled = false;
                 searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>Buscar</span>';
             }
         }
