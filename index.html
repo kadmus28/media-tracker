@@ -418,6 +418,7 @@
             </div>
         </div>
 
+        <div id="personFilterBar" class="hidden mb-5 mx-auto w-fit max-w-full"></div>
         <div id="bookshelfContainer" class="flex flex-col gap-14"></div>
 
         <div id="paginationControls" class="mt-10 flex items-center justify-center gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl"></div>
@@ -428,9 +429,14 @@
             <p class="text-sm text-amber-300/60 mt-1">Añade nuevos contenidos o ajusta la búsqueda y filtros.</p>
         </div>
 
-        <p class="mt-8 text-center text-[10px] text-amber-200/40">
-            Datos de videojuegos proporcionados por <a href="https://rawg.io/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">RAWG</a>.
-        </p>
+        <div class="mt-8 flex flex-col items-center gap-2 text-center text-[10px] text-amber-200/50">
+            <p>Datos de videojuegos proporcionados por <a href="https://rawg.io/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">RAWG</a>.</p>
+            <div class="flex items-center gap-2" aria-label="Créditos de fuentes audiovisuales">
+                <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB" class="h-7 w-7" loading="lazy">
+                <p>Este producto utiliza la API de TMDB, pero no está respaldado ni certificado por TMDB. La disponibilidad de streaming procede de JustWatch a través de TMDB.</p>
+            </div>
+            <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">This product uses the TMDB API but is not endorsed or certified by TMDB.</a>
+        </div>
     </main>
 
     <!-- Modal Formulario -->
@@ -445,6 +451,7 @@
             <form id="mediaForm" onsubmit="saveItem(event)">
                 <input type="hidden" id="editingItemId" value="">
                 <input type="hidden" id="formPlatformLogo" value="">
+                <input type="hidden" id="formExternalId" value="">
 
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Categoría</label>
@@ -571,7 +578,7 @@
 
     <!-- Modal Detalle -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-5xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[92vh] overflow-y-auto">
             <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
                 <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
@@ -593,6 +600,10 @@
         let searchQuery = '';
         let currentPage = 1;
         let currentUser = null;
+        let activePersonFilter = null;
+        let activeDetailItemId = null;
+        const tmdbDetailsCache = new Map();
+        const tmdbPendingRequests = new Map();
         const ITEMS_PER_PAGE = 18;
 
         // Dynamic content from the database and external catalogues must be escaped
@@ -933,10 +944,10 @@
                             for (const item of data.results.slice(0, 5)) {
                                 foundResults.push({
                                     name: item.title || item.name,
-                                    sub: item.release_date ? `Año: ${item.release_date.split('-')[0]}` : 'N/A',
+                                    sub: (item.release_date || item.first_air_date) ? `Año: ${(item.release_date || item.first_air_date).split('-')[0]}` : 'N/A',
                                     cover: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
                                     desc: item.overview || '',
-                                    platform: '', platformLogo: ''
+                                    platform: '', platformLogo: '', externalId: item.id ? `tmdb:${item.id}` : ''
                                 });
                             }
                         }
@@ -1022,7 +1033,7 @@
                     foundResults.forEach(item => {
                         const row = document.createElement('div');
                         row.className = 'flex items-center gap-3 p-2 hover:bg-stone-800 rounded cursor-pointer transition border-b border-amber-900/20 last:border-0';
-                        row.onclick = () => selectResult(item.name, item.sub, item.cover, item.desc, item.platform, item.platformLogo);
+                        row.onclick = () => selectResult(item.name, item.sub, item.cover, item.desc, item.platform, item.platformLogo, item.externalId || '');
                         
                         const coverImg = item.cover || `https://via.placeholder.com/100/1e293b/ffffff?text=${encodeURIComponent(item.name)}`;
                         
@@ -1058,22 +1069,41 @@
             }
         }
 
-        function selectResult(title, subtitle, coverUrl, overview, platform = '', platformLogo = '') {
+        function selectResult(title, subtitle, coverUrl, overview, platform = '', platformLogo = '', externalId = '') {
             document.getElementById('formTitle').value = title;
             document.getElementById('formSubtitle').value = subtitle;
             if (coverUrl) document.getElementById('formCover').value = coverUrl;
             if (overview) document.getElementById('formReview').value = overview;
             if (platform) document.getElementById('formPlatform').value = platform;
             if (platformLogo) document.getElementById('formPlatformLogo').value = platformLogo;
+            document.getElementById('formExternalId').value = externalId;
             document.getElementById('searchResults').classList.add('hidden');
+        }
+
+        function renderPersonFilterBar() {
+            const bar = document.getElementById('personFilterBar');
+            if (!activePersonFilter) {
+                bar.classList.add('hidden');
+                bar.innerHTML = '';
+                return;
+            }
+            bar.classList.remove('hidden');
+            bar.innerHTML = `
+                <div class="flex items-center gap-3 rounded-xl border border-amber-800/60 bg-stone-900 px-4 py-2 text-sm shadow-lg">
+                    <i class="fa-solid fa-user-tag text-amber-400"></i>
+                    <span class="text-amber-100">${activePersonFilter.mediaType === 'tv' ? 'Series' : 'Películas'} de <strong>${escapeHTML(activePersonFilter.name)}</strong>: ${activePersonFilter.itemIds.size}</span>
+                    <button type="button" onclick="clearPersonFilter()" class="ml-1 rounded-md px-2 py-1 text-stone-300 hover:bg-stone-800 hover:text-white" aria-label="Quitar filtro de persona" title="Quitar filtro"><i class="fa-solid fa-xmark"></i></button>
+                </div>`;
         }
 
         function renderItems() {
             const container = document.getElementById('bookshelfContainer');
             container.innerHTML = '';
             const statusFilter = document.getElementById('statusSelect').value;
+            renderPersonFilterBar();
 
             const filtered = items.filter(item => {
+                if (activePersonFilter) return activePersonFilter.itemIds.has(String(item.id));
                 let catMatch = false;
                 const isPending = (item.status === 'planned');
 
@@ -1114,10 +1144,14 @@
 
             if (filtered.length === 0) {
                 document.getElementById('emptyState').classList.remove('hidden');
+                document.querySelector('#emptyState h3').textContent = activePersonFilter
+                    ? `No hay ${activePersonFilter.mediaType === 'tv' ? 'series' : 'películas'} registradas de ${activePersonFilter.name}`
+                    : 'No hay elementos en este estante';
                 document.getElementById('paginationControls').innerHTML = '';
                 return;
             }
             document.getElementById('emptyState').classList.add('hidden');
+            document.querySelector('#emptyState h3').textContent = 'No hay elementos en este estante';
 
             const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
             if (currentPage > totalPages) currentPage = totalPages;
@@ -1150,11 +1184,26 @@
             renderPagination(totalPages, filtered.length);
         }
 
+        function platformBadgeHTML(item) {
+            if (!['movie', 'tv'].includes(item.category)) return '';
+            const names = [...new Set(String(item.platform || '').split(',').map(name => name.trim()).filter(Boolean))];
+            const logos = String(item.platform_logo || '').split(',').map(url => url.trim()).filter(Boolean);
+            if (!names.length && !logos.length) return '';
+            const count = Math.min(Math.max(names.length, logos.length), 3);
+            const badges = Array.from({ length: count }, (_, index) => {
+                const name = names[index] || `Servicio ${index + 1}`;
+                const logo = logos[index] ? `<img src="${escapeHTML(safeImageUrl(logos[index]))}" alt="" class="w-5 h-5 rounded object-contain bg-white/90 p-0.5" onerror="this.hidden=true">` : '<i class="fa-solid fa-play text-[9px] text-amber-300"></i>';
+                return `<span class="inline-flex items-center gap-1 rounded-full border border-amber-900/50 bg-stone-950/90 px-1.5 py-1 text-[9px] leading-none text-amber-100" title="${escapeHTML(name)}">${logo}<span class="max-w-16 truncate">${escapeHTML(name)}</span></span>`;
+            }).join('');
+            return `<div class="flex flex-wrap justify-center gap-1 mt-1.5 max-w-full">${badges}</div>`;
+        }
+
         // RENDERIZADO DE CARÁTULAS CON FORMATO CUADRADO EN JUEGOS DE MESA
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer';
             wrapper.onclick = () => openDetailModal(item.id);
+            const platformBadges = platformBadgeHTML(item);
 
             if (item.category === 'music') {
                 wrapper.innerHTML = `
@@ -1168,6 +1217,7 @@
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
                         ${escapeHTML(item.title)}
                     </div>
+                    ${platformBadges}
                 `;
             } else {
                 let caseStyleClass = 'case-standard-shadow';
@@ -1190,72 +1240,265 @@
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
                         ${escapeHTML(item.title)}
                     </div>
+                    ${platformBadges}
                 `;
             }
 
             return wrapper;
         }
 
+        function tmdbImage(path, size = 'w185') {
+            return path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
+        }
+
+        async function tmdbRequest(path, params = {}) {
+            const url = new URL(`https://api.themoviedb.org/3${path}`);
+            url.searchParams.set('api_key', TMDB_API_KEY);
+            Object.entries({ language: 'es-ES', ...params }).forEach(([key, value]) => url.searchParams.set(key, value));
+            const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
+            if (!response.ok) throw new Error(`TMDB respondió ${response.status}`);
+            return response.json();
+        }
+
+        function normalizeMediaTitle(value) {
+            return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+        }
+
+        function mediaYear(value) {
+            return String(value || '').match(/\b(?:18|19|20|21)\d{2}\b/)?.[0] || '';
+        }
+
+        function storedPlatformHTML(item) {
+            const names = [...new Set(String(item.platform || '').split(',').map(value => value.trim()).filter(Boolean))];
+            const logos = String(item.platform_logo || '').split(',').map(value => value.trim()).filter(Boolean);
+            const count = Math.min(Math.max(names.length, logos.length), 8);
+            if (!count) return '<p class="text-sm text-stone-400">No hay plataformas guardadas para este título.</p>';
+            return `<div class="flex flex-wrap gap-2">${Array.from({ length: count }, (_, index) => {
+                const name = names[index] || `Plataforma ${index + 1}`;
+                const logo = logos[index] ? `<img src="${escapeHTML(safeImageUrl(logos[index]))}" alt="" class="h-7 w-7 rounded object-contain bg-white/90 p-0.5" onerror="this.hidden=true">` : '<i class="fa-solid fa-play text-amber-300"></i>';
+                return `<span class="inline-flex items-center gap-2 rounded-lg border border-amber-900/50 bg-stone-950/70 px-2.5 py-1.5 text-xs text-amber-100">${logo}<span>${escapeHTML(name)}</span></span>`;
+            }).join('')}</div>`;
+        }
+
+        function renderTmdbDetail(item, metadata) {
+            const panel = document.getElementById('tmdbDetailsPanel');
+            if (!panel || activeDetailItemId !== String(item.id)) return;
+            const details = metadata.details || {};
+            const credits = metadata.credits || {};
+            const people = new Map();
+            const directorPeople = item.category === 'movie'
+                ? (credits.crew || []).filter(person => person.job === 'Director')
+                : [...(details.created_by || []), ...(credits.crew || []).filter(person => person.job === 'Director')];
+            directorPeople.forEach(person => { if (person.id) people.set(String(person.id), person); });
+            const directors = [...people.values()];
+            const cast = (credits.cast || []).filter(person => person.id).slice(0, 12);
+            const personButton = (person, role = '') => `
+                <button type="button" data-person-id="${Number(person.id)}" data-person-name="${escapeHTML(person.name || '')}" class="group flex w-full items-center gap-2 rounded-lg border border-amber-900/30 bg-stone-950/55 p-2 text-left transition hover:border-amber-500/70 hover:bg-amber-950/40">
+                    ${person.profile_path ? `<img src="${escapeHTML(tmdbImage(person.profile_path, 'w92'))}" alt="" loading="lazy" class="h-11 w-9 rounded object-cover bg-stone-800" onerror="this.hidden=true">` : '<span class="flex h-11 w-9 items-center justify-center rounded bg-stone-800 text-stone-500"><i class="fa-solid fa-user"></i></span>'}
+                    <span class="min-w-0"><span class="block truncate text-xs font-semibold text-amber-100 group-hover:text-amber-300">${escapeHTML(person.name || 'Desconocido')}</span>${role ? `<span class="block truncate text-[10px] text-stone-400">${escapeHTML(role)}</span>` : ''}</span>
+                </button>`;
+
+            const providerRegion = metadata.providers?.results?.ES || null;
+            const providerGroups = ['flatrate', 'free', 'ads', 'rent', 'buy'];
+            const providerList = [...new Map(providerGroups.flatMap(group => providerRegion?.[group] || []).map(provider => [provider.provider_id, provider])).values()];
+            const platformMarkup = providerList.length ? `
+                <div class="flex flex-wrap gap-2">${providerList.map(provider => `
+                    <span class="inline-flex items-center gap-2 rounded-lg border border-amber-900/50 bg-stone-950/70 px-2.5 py-1.5 text-xs text-amber-100" title="${escapeHTML(provider.provider_name)}">
+                        ${provider.logo_path ? `<img src="${escapeHTML(tmdbImage(provider.logo_path, 'w92'))}" alt="" class="h-7 w-7 rounded object-contain bg-white/90 p-0.5" onerror="this.hidden=true">` : '<i class="fa-solid fa-play text-amber-300"></i>'}
+                        <span>${escapeHTML(provider.provider_name)}</span>
+                    </span>`).join('')}</div>
+                <p class="mt-1 text-[10px] text-stone-500">Disponibilidad en España, datos de JustWatch a través de TMDB.</p>` : storedPlatformHTML(item);
+
+            const release = details.release_date || details.first_air_date || '';
+            const year = release.slice(0, 4) || mediaYear(item.subtitle);
+            const runtime = details.runtime || (details.episode_run_time || []).find(Boolean);
+            const genres = (details.genres || []).map(genre => genre.name).filter(Boolean);
+            const rating = Number(details.vote_average) > 0 ? Number(details.vote_average).toFixed(1) : '';
+            const facts = [year, runtime ? `${runtime} min${item.category === 'tv' ? ' por episodio' : ''}` : '', rating ? `TMDB ${rating}/10` : ''].filter(Boolean);
+
+            panel.innerHTML = `
+                <div class="mt-4 space-y-4 border-t border-amber-900/30 pt-4">
+                    <div class="flex flex-wrap gap-2">${facts.map(fact => `<span class="rounded-full bg-stone-800 px-3 py-1 text-xs text-amber-200">${escapeHTML(fact)}</span>`).join('')}${genres.map(genre => `<span class="rounded-full border border-stone-700 px-3 py-1 text-xs text-stone-300">${escapeHTML(genre)}</span>`).join('')}</div>
+                    <section><h3 class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-400">Disponible en</h3>${platformMarkup}</section>
+                    <section><h3 class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-400">${item.category === 'tv' ? 'Creadores / dirección' : 'Dirección'}</h3>${directors.length ? `<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">${directors.map(person => personButton(person, person.known_for_department || (item.category === 'tv' ? 'Creador / director' : 'Director'))).join('')}</div>` : '<p class="text-sm text-stone-400">No consta información de dirección.</p>'}</section>
+                    <section><div class="mb-2 flex items-baseline justify-between gap-2"><h3 class="text-xs font-bold uppercase tracking-wider text-stone-400">Reparto</h3><span class="text-[10px] text-stone-500">Pulsa un nombre para ver coincidencias en tu catálogo</span></div>${cast.length ? `<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">${cast.map(person => personButton(person, person.character || '')).join('')}</div>` : '<p class="text-sm text-stone-400">No consta información de reparto.</p>'}</section>
+                    ${details.overview ? `<section><h3 class="mb-1 text-xs font-bold uppercase tracking-wider text-stone-400">Sinopsis</h3><p class="text-sm leading-relaxed text-stone-300">${escapeHTML(details.overview)}</p></section>` : ''}
+                </div>`;
+
+            panel.querySelectorAll('[data-person-id]').forEach(button => button.addEventListener('click', () => {
+                filterByPerson(Number(button.dataset.personId), button.dataset.personName, item.category);
+            }));
+        }
+
+        async function getTmdbItemMetadata(item) {
+            const cached = tmdbDetailsCache.get(String(item.id));
+            if (cached) return cached;
+            if (tmdbPendingRequests.has(String(item.id))) return tmdbPendingRequests.get(String(item.id));
+
+            const request = (async () => {
+                const type = item.category === 'tv' ? 'tv' : 'movie';
+                const storedId = String(item.external_id || '').match(/^tmdb:(\d+)$/)?.[1];
+                let tmdbId = storedId;
+                if (!tmdbId) {
+                    const search = await tmdbRequest(`/search/${type}`, { query: item.title, include_adult: 'false' });
+                    const targetTitle = normalizeMediaTitle(item.title);
+                    const targetYear = mediaYear(item.subtitle);
+                    const candidates = (search.results || []).map(result => {
+                        const aliases = [result.title, result.original_title, result.name, result.original_name].map(normalizeMediaTitle);
+                        const resultYear = (result.release_date || result.first_air_date || '').slice(0, 4);
+                        let score = aliases.includes(targetTitle) ? 10 : 0;
+                        if (targetYear && resultYear === targetYear) score += 4;
+                        if (targetYear && resultYear && resultYear !== targetYear) score -= 8;
+                        return { result, score };
+                    }).sort((a, b) => b.score - a.score);
+                    tmdbId = candidates[0]?.result?.id;
+                }
+                if (!tmdbId) throw new Error('No se encontró esta ficha en TMDB.');
+
+                const [details, credits, providers] = await Promise.all([
+                    tmdbRequest(`/${type}/${tmdbId}`),
+                    tmdbRequest(`/${type}/${tmdbId}/credits`),
+                    tmdbRequest(`/${type}/${tmdbId}/watch/providers`).catch(() => ({ results: {} }))
+                ]);
+                const metadata = { type, tmdbId: String(tmdbId), details, credits, providers };
+                tmdbDetailsCache.set(String(item.id), metadata);
+                const previousExternalId = item.external_id;
+                item.external_id = `tmdb:${tmdbId}`;
+
+                const providerRegion = providers.results?.ES;
+                const providerList = [...new Map(['flatrate', 'free', 'ads', 'rent', 'buy'].flatMap(group => providerRegion?.[group] || []).map(provider => [provider.provider_id, provider])).values()];
+                const updates = { external_id: `tmdb:${tmdbId}` };
+                if (providerList.length) {
+                    updates.platform = providerList.map(provider => provider.provider_name).join(', ');
+                    updates.platform_logo = providerList.map(provider => tmdbImage(provider.logo_path, 'w92')).filter(Boolean).join(',');
+                }
+                const platformChanged = updates.platform !== undefined && (updates.platform !== item.platform || updates.platform_logo !== item.platform_logo);
+                const idChanged = String(previousExternalId || '') !== `tmdb:${tmdbId}`;
+                if (platformChanged) {
+                    item.platform = updates.platform;
+                    item.platform_logo = updates.platform_logo;
+                }
+                if (currentUser && (idChanged || platformChanged)) {
+                    const { error } = await supabaseClient.from('media_items').update(updates).eq('id', item.id);
+                    if (error) console.warn('No se pudieron guardar los datos TMDB:', error.message);
+                }
+                if (platformChanged) {
+                    renderItems();
+                }
+                return metadata;
+            })();
+
+            tmdbPendingRequests.set(String(item.id), request);
+            try { return await request; }
+            finally { tmdbPendingRequests.delete(String(item.id)); }
+        }
+
+        async function filterByPerson(personId, personName, sourceCategory) {
+            const mediaType = sourceCategory === 'tv' ? 'tv' : 'movie';
+            closeDetailModal();
+            activePersonFilter = { personId, name: personName, mediaType, itemIds: new Set() };
+            currentCategoryFilter = 'all';
+            currentPage = 1;
+            document.getElementById('statusSelect').value = 'all';
+            document.getElementById('liveSearchInput').value = '';
+            searchQuery = '';
+            renderItems();
+            const bar = document.getElementById('personFilterBar');
+            bar.innerHTML = `<div class="flex items-center gap-3 rounded-xl border border-amber-800/60 bg-stone-900 px-4 py-2 text-sm text-amber-100"><i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Buscando películas de <strong>${escapeHTML(personName)}</strong> en tu catálogo…</div>`;
+
+            try {
+                const credits = await tmdbRequest(`/person/${personId}/combined_credits`);
+                const titleIndex = new Map();
+                const creditRows = (credits.cast || []).concat(credits.crew || []).filter(credit => credit.media_type === mediaType);
+                creditRows.forEach(credit => {
+                    const year = (credit.release_date || credit.first_air_date || '').slice(0, 4);
+                    const extId = String(credit.id);
+                    [credit.title, credit.original_title, credit.name, credit.original_name].filter(Boolean).forEach(title => {
+                        const key = normalizeMediaTitle(title);
+                        if (!titleIndex.has(key)) titleIndex.set(key, []);
+                        titleIndex.get(key).push({ year, id: extId });
+                    });
+                });
+
+                const matches = items.filter(item => {
+                    if (item.category !== mediaType) return false;
+                    const extId = String(item.external_id || '').match(/^tmdb:(\d+)$/)?.[1];
+                    if (extId && creditRows.some(credit => String(credit.id) === extId)) return true;
+                    const candidates = titleIndex.get(normalizeMediaTitle(item.title)) || [];
+                    if (!candidates.length) return false;
+                    const year = mediaYear(item.subtitle);
+                    return !year || candidates.some(candidate => !candidate.year || candidate.year === year);
+                });
+
+                if (activePersonFilter?.personId === personId) {
+                    activePersonFilter.itemIds = new Set(matches.map(item => String(item.id)));
+                    renderItems();
+                }
+            } catch (error) {
+                console.error('No se pudo consultar la filmografía:', error);
+                activePersonFilter = null;
+                renderItems();
+                alert('No se pudo consultar la filmografía en TMDB. Comprueba la conexión e inténtalo de nuevo.');
+            }
+        }
+
+        function clearPersonFilter() {
+            activePersonFilter = null;
+            resetToHome();
+        }
+
         function openDetailModal(id) {
             const item = items.find(i => String(i.id) === String(id));
             if (!item) return;
-
-            let logosHTML = '';
-            if (item.platform_logo) {
-                const logos = item.platform_logo.split(',').filter(Boolean);
-                logosHTML = `<div class="flex items-center gap-2 mt-2">
-                    ${logos.map(url => `<img src="${escapeHTML(safeImageUrl(url))}" alt="" class="w-7 h-7 rounded-md object-cover border border-amber-900/40 shadow">`).join('')}
-                </div>`;
-            } else if (item.platform) {
-                logosHTML = `<p class="text-xs text-amber-300 font-semibold mt-1"><i class="fa-solid fa-layer-group mr-1"></i> ${escapeHTML(item.platform)}</p>`;
-            }
-
+            activeDetailItemId = String(item.id);
             const isSquare = item.category === 'music' || item.category === 'boardgame';
             const imgAspectClass = isSquare ? 'aspect-square' : 'aspect-[2/3]';
-
-            let catTitle = 'Sinopsis / Trama';
-            if (item.category === 'music') catTitle = 'Tracklist / Reseña';
-            else if (item.category === 'boardgame') catTitle = 'Descripción / Mecánicas de Juego';
-            else if (item.category === 'game') catTitle = 'Sinopsis / Reseña del Juego';
-
+            const isAudiovisual = ['movie', 'tv'].includes(item.category);
             const detailActions = currentUser ? `
-                <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
-                    <button data-action="edit" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                    <span class="border-r border-amber-900/60 h-4"></span>
-                    <button data-action="delete" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                <div class="flex items-center gap-2 rounded-lg border border-amber-900/40 bg-stone-950/60 px-2 py-1.5 shadow-inner">
+                    <button data-action="edit" class="p-1.5 text-sm text-amber-400 transition hover:text-amber-300" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <span class="h-4 border-r border-amber-900/60"></span>
+                    <button data-action="delete" class="p-1.5 text-sm text-rose-400 transition hover:text-rose-300" title="Borrar"><i class="fa-solid fa-trash"></i></button>
                 </div>` : '';
-
-            const modalContent = document.getElementById('detailModalContent');
-            modalContent.innerHTML = `
-                <div class="w-full md:w-1/3 flex-shrink-0">
-                    <img src="${escapeHTML(safeImageUrl(item.cover_url))}" alt="${escapeHTML(item.title)}" class="w-full rounded-xl shadow-2xl border border-amber-900/40 object-cover ${imgAspectClass}">
-                    ${item.format ? `<div class="mt-3 text-center bg-amber-900/50 text-amber-200 border border-amber-700/50 text-xs font-bold py-1 px-3 rounded-lg"><i class="fa-solid fa-box mr-1"></i> ${escapeHTML(item.format)}</div>` : ''}
+            const detailContent = document.getElementById('detailModalContent');
+            detailContent.innerHTML = `
+                <div class="w-full flex-shrink-0 md:w-1/4">
+                    <img src="${escapeHTML(safeImageUrl(item.cover_url))}" alt="${escapeHTML(item.title)}" class="${imgAspectClass} w-full rounded-xl border border-amber-900/40 object-cover shadow-2xl">
+                    ${item.format ? `<div class="mt-3 rounded-lg border border-amber-700/50 bg-amber-900/50 px-3 py-1 text-center text-xs font-bold text-amber-200"><i class="fa-solid fa-box mr-1"></i> ${escapeHTML(item.format)}</div>` : ''}
                 </div>
-                <div class="w-full md:w-2/3 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-start justify-between gap-3 pr-10">
-                            <h2 class="text-2xl font-bold text-amber-100">${escapeHTML(item.title)}</h2>
-                            ${detailActions}
-                        </div>
-                        <p class="text-xs text-amber-300/90 font-medium mt-2">${escapeHTML(item.subtitle)}</p>
-                        ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Detalles / Plataforma / Editorial:</p>${logosHTML}</div>` : ''}
-                        <div class="mt-4 pt-4 border-t border-amber-900/30">
-                            <h4 class="text-xs font-semibold text-stone-400 uppercase mb-1"><i class="fa-solid fa-align-left mr-1"></i> ${catTitle}</h4>
-                            <p class="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">${escapeHTML(item.review || 'Sin detalles disponibles.')}</p>
-                        </div>
+                <div class="flex w-full flex-col md:w-3/4">
+                    <div class="flex items-start justify-between gap-3 pr-10">
+                        <div><h2 class="text-2xl font-bold text-amber-100">${escapeHTML(item.title)}</h2><p class="mt-2 text-xs font-medium text-amber-300/90">${escapeHTML(item.subtitle)}</p></div>
+                        ${detailActions}
                     </div>
-                    <div class="mt-6 flex items-center justify-between text-xs text-stone-400 pt-3 border-t border-amber-900/30">
+                    ${isAudiovisual ? `<div id="tmdbDetailsPanel" class="mt-2"><p class="mt-4 text-sm text-stone-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-amber-400"></i>Cargando ficha, reparto y plataformas…</p></div>` : `
+                        <div class="mt-4 border-t border-amber-900/30 pt-4"><h3 class="mb-2 text-xs font-bold uppercase tracking-wider text-stone-400">Plataformas / edición</h3>${storedPlatformHTML(item)}</div>`}
+                    ${item.review ? `<div class="mt-4 border-t border-amber-900/30 pt-4"><h3 class="mb-1 text-xs font-bold uppercase tracking-wider text-stone-400">Reseña / notas personales</h3><p class="max-h-40 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-stone-300">${escapeHTML(item.review)}</p></div>` : ''}
+                    <div class="mt-5 flex items-center justify-between border-t border-amber-900/30 pt-3 text-xs text-stone-400">
                         <span>Estado: <strong class="text-amber-200">${statusLabel(item.status)}</strong></span>
-                        ${item.in_library ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check-circle mr-1"></i> En Biblioteca Física</span>` : ''}
+                        ${item.in_library ? `<span class="font-semibold text-emerald-400"><i class="fa-solid fa-check-circle mr-1"></i> En Biblioteca Física</span>` : ''}
                     </div>
-                </div>
-            `;
-            modalContent.querySelector('[data-action="edit"]')?.addEventListener('click', () => editItem(item.id));
-            modalContent.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteItem(item.id));
+                </div>`;
+            detailContent.querySelector('[data-action="edit"]')?.addEventListener('click', () => editItem(item.id));
+            detailContent.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteItem(item.id));
             document.getElementById('detailModal').classList.remove('hidden');
+
+            if (isAudiovisual) {
+                getTmdbItemMetadata(item).then(metadata => renderTmdbDetail(item, metadata)).catch(error => {
+                    console.warn('No se pudo completar la ficha de TMDB:', error);
+                    const panel = document.getElementById('tmdbDetailsPanel');
+                    if (panel && activeDetailItemId === String(item.id)) {
+                        panel.innerHTML = `<div class="mt-4 space-y-4 border-t border-amber-900/30 pt-4"><h3 class="text-xs font-bold uppercase tracking-wider text-stone-400">Plataformas</h3>${storedPlatformHTML(item)}<p class="text-xs text-amber-300/80">No se pudo cargar la ficha ampliada desde TMDB. Se muestran las plataformas guardadas.</p></div>`;
+                    }
+                });
+            }
         }
 
-        function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); }
+        function closeDetailModal() {
+            activeDetailItemId = null;
+            document.getElementById('detailModal').classList.add('hidden');
+        }
 
         function renderPagination(totalPages, totalItems) {
             const container = document.getElementById('paginationControls');
@@ -1277,6 +1520,7 @@
         }
 
         function setCategoryFilter(cat) {
+            activePersonFilter = null;
             currentCategoryFilter = cat;
             currentPage = 1;
 
@@ -1321,6 +1565,7 @@
         }
 
         function resetToHome() {
+            activePersonFilter = null;
             currentCategoryFilter = 'all';
             searchQuery = '';
             currentPage = 1;
@@ -1335,6 +1580,7 @@
         }
 
         function handleSearch() {
+            activePersonFilter = null;
             searchQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
             currentPage = 1;
             renderItems();
@@ -1367,6 +1613,7 @@
             document.getElementById('formSubtitle').value = item.subtitle || '';
             document.getElementById('formPlatform').value = item.platform || '';
             document.getElementById('formPlatformLogo').value = item.platform_logo || '';
+            document.getElementById('formExternalId').value = item.external_id || '';
             document.getElementById('formCover').value = item.cover_url || '';
             document.getElementById('formStatus').value = item.status || 'planned';
             document.getElementById('formRating').value = item.rating || 0;
@@ -1397,6 +1644,7 @@
                 subtitle: document.getElementById('formSubtitle').value,
                 platform: document.getElementById('formPlatform').value,
                 platform_logo: document.getElementById('formPlatformLogo').value,
+                external_id: document.getElementById('formExternalId').value || null,
                 cover_url: safeImageUrl(document.getElementById('formCover').value),
                 user_id: currentUser.id,
                 status: document.getElementById('formStatus').value,
