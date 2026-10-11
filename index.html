@@ -208,7 +208,16 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <button onclick="openModal()" class="bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition shadow-lg text-sm border border-amber-500/40">
+                <button id="signInButton" onclick="openAuthModal()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition shadow-lg text-sm border border-amber-800/50">
+                    <i class="fa-solid fa-right-to-bracket"></i><span>Iniciar sesión</span>
+                </button>
+                <div id="signedInPanel" class="hidden items-center gap-2">
+                    <span id="signedInLabel" class="max-w-36 truncate text-xs text-amber-200"></span>
+                    <button onclick="signOut()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-2.5 py-2 rounded-lg text-xs border border-amber-800/50" title="Cerrar sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+                <button id="addItemButton" onclick="openModal()" class="hidden bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg items-center justify-center space-x-2 transition shadow-lg text-sm border border-amber-500/40">
                     <i class="fa-solid fa-plus"></i>
                     <span>Añadir Elemento</span>
                 </button>
@@ -233,7 +242,7 @@
                             <i class="fa-solid fa-key text-amber-400 w-4 text-sm"></i> Configurar búsqueda de videojuegos
                         </button>
                         <span class="border-b border-amber-900/40 block my-1"></span>
-                        <button onclick="deleteAllItems()" class="w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-950/50 flex items-center gap-2.5 transition font-semibold">
+                        <button id="deleteAllItemsButton" onclick="deleteAllItems()" class="hidden w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-950/50 items-center gap-2.5 transition font-semibold">
                             <i class="fa-solid fa-trash-can text-rose-500 w-4 text-sm"></i> Vaciar Biblioteca
                         </button>
                     </div>
@@ -534,6 +543,32 @@
         </div>
     </div>
 
+    <!-- Acceso privado: las cuentas se crean desde Supabase, no hay registro público -->
+    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-md w-full p-6 border border-amber-800/60 shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-3 right-3 text-stone-400 hover:text-white p-2" aria-label="Cerrar">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h2 class="text-xl font-bold mb-2 text-amber-100">Acceso de propietario</h2>
+            <p class="text-sm text-stone-400 mb-5">Inicia sesión para añadir, editar o borrar elementos.</p>
+            <form id="authForm" onsubmit="signIn(event)" class="space-y-4">
+                <div>
+                    <label for="authEmail" class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Correo electrónico</label>
+                    <input id="authEmail" type="email" autocomplete="username" required class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                </div>
+                <div>
+                    <label for="authPassword" class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Contraseña</label>
+                    <input id="authPassword" type="password" autocomplete="current-password" required class="w-full bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                </div>
+                <p id="authError" role="alert" class="hidden text-sm text-rose-300"></p>
+                <div class="flex justify-end gap-3 pt-1">
+                    <button type="button" onclick="closeAuthModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm text-stone-300">Cancelar</button>
+                    <button id="authSubmitButton" type="submit" class="px-4 py-2 bg-amber-700 hover:bg-amber-600 rounded-lg text-sm font-medium text-white">Entrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Detalle -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -557,6 +592,7 @@
         let currentCategoryFilter = 'all';
         let searchQuery = '';
         let currentPage = 1;
+        let currentUser = null;
         const ITEMS_PER_PAGE = 18;
 
         // Dynamic content from the database and external catalogues must be escaped
@@ -608,7 +644,80 @@
             resultsDiv.classList.toggle('text-amber-200', kind !== 'error');
         }
 
-        document.addEventListener('DOMContentLoaded', () => { fetchItems(); });
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        async function initializeApp() {
+            const { data, error } = await supabaseClient.auth.getSession();
+            if (error) console.error('No se pudo recuperar la sesión:', error.message);
+            currentUser = data?.session?.user || null;
+            updateAuthControls();
+
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                currentUser = session?.user || null;
+                updateAuthControls();
+                if (!currentUser) {
+                    closeModal();
+                    closeDetailModal();
+                }
+                renderItems();
+            });
+
+            await fetchItems();
+        }
+
+        function updateAuthControls() {
+            const signedIn = Boolean(currentUser);
+            document.getElementById('signInButton').classList.toggle('hidden', signedIn);
+            document.getElementById('signedInPanel').classList.toggle('hidden', !signedIn);
+            document.getElementById('signedInPanel').classList.toggle('flex', signedIn);
+            document.getElementById('signedInLabel').textContent = currentUser?.email || 'Sesión iniciada';
+            document.getElementById('addItemButton').classList.toggle('hidden', !signedIn);
+            document.getElementById('addItemButton').classList.toggle('flex', signedIn);
+            document.getElementById('deleteAllItemsButton').classList.toggle('hidden', !signedIn);
+            document.getElementById('deleteAllItemsButton').classList.toggle('flex', signedIn);
+        }
+
+        function openAuthModal() {
+            document.getElementById('authError').classList.add('hidden');
+            document.getElementById('authModal').classList.remove('hidden');
+            document.getElementById('authEmail').focus();
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        async function signIn(event) {
+            event.preventDefault();
+            const button = document.getElementById('authSubmitButton');
+            const errorBox = document.getElementById('authError');
+            button.disabled = true;
+            button.textContent = 'Entrando…';
+            errorBox.classList.add('hidden');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: document.getElementById('authEmail').value.trim(),
+                    password: document.getElementById('authPassword').value
+                });
+                if (error) throw error;
+                currentUser = data.user;
+                updateAuthControls();
+                closeAuthModal();
+                document.getElementById('authForm').reset();
+            } catch (error) {
+                errorBox.textContent = error.message || 'No se pudo iniciar sesión.';
+                errorBox.classList.remove('hidden');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Entrar';
+            }
+        }
+
+        async function signOut() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) alert('No se pudo cerrar sesión: ' + error.message);
+        }
 
         window.addEventListener('click', (e) => {
             const dropdown = document.getElementById('topDropdownMenu');
@@ -1109,6 +1218,13 @@
             else if (item.category === 'boardgame') catTitle = 'Descripción / Mecánicas de Juego';
             else if (item.category === 'game') catTitle = 'Sinopsis / Reseña del Juego';
 
+            const detailActions = currentUser ? `
+                <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
+                    <button data-action="edit" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <span class="border-r border-amber-900/60 h-4"></span>
+                    <button data-action="delete" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                </div>` : '';
+
             const modalContent = document.getElementById('detailModalContent');
             modalContent.innerHTML = `
                 <div class="w-full md:w-1/3 flex-shrink-0">
@@ -1119,11 +1235,7 @@
                     <div>
                         <div class="flex items-start justify-between gap-3 pr-10">
                             <h2 class="text-2xl font-bold text-amber-100">${escapeHTML(item.title)}</h2>
-                            <div class="flex items-center gap-2.5 bg-stone-950/60 px-3 py-1.5 rounded-lg border border-amber-900/40 shadow-inner flex-shrink-0">
-                                <button data-action="edit" class="text-amber-400 hover:text-amber-300 p-1.5 text-sm transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                                <span class="border-r border-amber-900/60 h-4"></span>
-                                <button data-action="delete" class="text-rose-400 hover:text-rose-300 p-1.5 text-sm transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
-                            </div>
+                            ${detailActions}
                         </div>
                         <p class="text-xs text-amber-300/90 font-medium mt-2">${escapeHTML(item.subtitle)}</p>
                         ${logosHTML ? `<div class="mt-3"><p class="text-xs font-semibold text-stone-400 uppercase">Detalles / Plataforma / Editorial:</p>${logosHTML}</div>` : ''}
@@ -1138,8 +1250,8 @@
                     </div>
                 </div>
             `;
-            modalContent.querySelector('[data-action="edit"]').addEventListener('click', () => editItem(item.id));
-            modalContent.querySelector('[data-action="delete"]').addEventListener('click', () => deleteItem(item.id));
+            modalContent.querySelector('[data-action="edit"]')?.addEventListener('click', () => editItem(item.id));
+            modalContent.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteItem(item.id));
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
@@ -1229,6 +1341,7 @@
         }
 
         function openModal() {
+            if (!currentUser) return openAuthModal();
             document.getElementById('editingItemId').value = '';
             document.getElementById('modalTitle').textContent = 'Añadir Nuevo Elemento';
             document.getElementById('mediaForm').reset();
@@ -1241,6 +1354,7 @@
         function closeModal() { document.getElementById('itemModal').classList.add('hidden'); }
 
         function editItem(id) {
+            if (!currentUser) return openAuthModal();
             closeDetailModal();
             const item = items.find(i => String(i.id) === String(id));
             if (!item) return;
@@ -1271,6 +1385,7 @@
 
         async function saveItem(e) {
             e.preventDefault();
+            if (!currentUser) return openAuthModal();
             const id = document.getElementById('editingItemId').value;
             const selectedFormats = [];
             document.querySelectorAll('input[name="formatCheck"]:checked').forEach(cb => selectedFormats.push(cb.value));
@@ -1283,6 +1398,7 @@
                 platform: document.getElementById('formPlatform').value,
                 platform_logo: document.getElementById('formPlatformLogo').value,
                 cover_url: safeImageUrl(document.getElementById('formCover').value),
+                user_id: currentUser.id,
                 status: document.getElementById('formStatus').value,
                 rating: parseFloat(document.getElementById('formRating').value) || 0,
                 in_library: inLibrary,
@@ -1310,6 +1426,7 @@
         }
 
         async function deleteItem(id) {
+            if (!currentUser) return openAuthModal();
             if (!confirm('¿Seguro que quieres eliminar este elemento?')) return;
             try {
                 closeDetailModal();
@@ -1322,6 +1439,7 @@
         }
 
         async function deleteAllItems() {
+            if (!currentUser) return openAuthModal();
             document.getElementById('topDropdownMenu').classList.add('hidden');
             
             const confirm1 = confirm('⚠️ ¿Estás seguro de que quieres vaciar toda la biblioteca?');
