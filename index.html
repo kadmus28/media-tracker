@@ -1184,26 +1184,11 @@
             renderPagination(totalPages, filtered.length);
         }
 
-        function platformBadgeHTML(item) {
-            if (!['movie', 'tv'].includes(item.category)) return '';
-            const names = [...new Set(String(item.platform || '').split(',').map(name => name.trim()).filter(Boolean))];
-            const logos = String(item.platform_logo || '').split(',').map(url => url.trim()).filter(Boolean);
-            if (!names.length && !logos.length) return '';
-            const count = Math.min(Math.max(names.length, logos.length), 3);
-            const badges = Array.from({ length: count }, (_, index) => {
-                const name = names[index] || `Servicio ${index + 1}`;
-                const logo = logos[index] ? `<img src="${escapeHTML(safeImageUrl(logos[index]))}" alt="" class="w-5 h-5 rounded object-contain bg-white/90 p-0.5" onerror="this.hidden=true">` : '<i class="fa-solid fa-play text-[9px] text-amber-300"></i>';
-                return `<span class="inline-flex items-center gap-1 rounded-full border border-amber-900/50 bg-stone-950/90 px-1.5 py-1 text-[9px] leading-none text-amber-100" title="${escapeHTML(name)}">${logo}<span class="max-w-16 truncate">${escapeHTML(name)}</span></span>`;
-            }).join('');
-            return `<div class="flex flex-wrap justify-center gap-1 mt-1.5 max-w-full">${badges}</div>`;
-        }
-
         // RENDERIZADO DE CARÁTULAS CON FORMATO CUADRADO EN JUEGOS DE MESA
         function createShelfCase(item) {
             const wrapper = document.createElement('div');
             wrapper.className = 'flex flex-col items-center group cursor-pointer';
             wrapper.onclick = () => openDetailModal(item.id);
-            const platformBadges = platformBadgeHTML(item);
 
             if (item.category === 'music') {
                 wrapper.innerHTML = `
@@ -1217,7 +1202,6 @@
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
                         ${escapeHTML(item.title)}
                     </div>
-                    ${platformBadges}
                 `;
             } else {
                 let caseStyleClass = 'case-standard-shadow';
@@ -1240,7 +1224,6 @@
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
                         ${escapeHTML(item.title)}
                     </div>
-                    ${platformBadges}
                 `;
             }
 
