@@ -1253,6 +1253,35 @@
             return String(value || '').match(/\b(?:18|19|20|21)\d{2}\b/)?.[0] || '';
         }
 
+        async function findDuplicateMedia(itemData) {
+            const titleKey = normalizeMediaTitle(itemData.title);
+            const wantedYear = mediaYear(itemData.subtitle);
+            const externalId = String(itemData.external_id || '');
+            if (!titleKey && !externalId) return [];
+
+            const matches = [];
+            let offset = 0;
+            let page;
+            do {
+                const { data, error } = await supabaseClient.from('media_items')
+                    .select('id,title,subtitle,external_id,category')
+                    .eq('category', itemData.category)
+                    .range(offset, offset + 999);
+                if (error) throw error;
+                page = data || [];
+                page.forEach(existing => {
+                    const sameExternalId = externalId && String(existing.external_id || '') === externalId;
+                    const sameTitle = titleKey && normalizeMediaTitle(existing.title) === titleKey;
+                    const existingYear = mediaYear(existing.subtitle);
+                    const compatibleYear = !wantedYear || !existingYear || wantedYear === existingYear;
+                    if (sameExternalId || (sameTitle && compatibleYear)) matches.push(existing);
+                });
+                offset += page.length;
+            } while (page.length === 1000);
+
+            return matches;
+        }
+
         function storedPlatformHTML(item) {
             const names = [...new Set(String(item.platform || '').split(',').map(value => value.trim()).filter(Boolean))];
             const logos = String(item.platform_logo || '').split(',').map(value => value.trim()).filter(Boolean);
@@ -1641,8 +1670,22 @@
 
             const saveButton = document.getElementById('saveItemBtn');
             saveButton.disabled = true;
-            saveButton.textContent = 'Guardando…';
+            saveButton.textContent = id ? 'Guardando…' : 'Comprobando…';
             try {
+                if (!id) {
+                    const duplicates = await findDuplicateMedia(itemData);
+                    if (duplicates.length) {
+                        const existingTitles = duplicates.slice(0, 4).map(item => {
+                            const year = mediaYear(item.subtitle);
+                            return `• ${item.title}${year ? ` (${year})` : ''}`;
+                        }).join('\n');
+                        const more = duplicates.length > 4 ? `\n…y ${duplicates.length - 4} más.` : '';
+                        const category = document.querySelector(`#formCategory option[value=\"${CSS.escape(itemData.category)}\"]`)?.textContent || itemData.category;
+                        const addAnyway = confirm(`Ya existe ${duplicates.length === 1 ? 'un elemento' : `${duplicates.length} elementos`} parecido en ${category}:\n\n${existingTitles}${more}\n\n¿Quieres añadirlo de todas formas?`);
+                        if (!addAnyway) return;
+                    }
+                }
+                saveButton.textContent = 'Guardando…';
                 const result = id
                     ? await supabaseClient.from('media_items').update(itemData).eq('id', String(id))
                     : await supabaseClient.from('media_items').insert([itemData]);
