@@ -435,6 +435,7 @@
 
         <div class="mt-8 flex flex-col items-center gap-2 text-center text-[10px] text-amber-200/50">
             <p>Datos de videojuegos proporcionados por <a href="https://rawg.io/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">RAWG</a>.</p>
+            <p>Datos de juegos de mesa: <a href="https://boardgamegeek.com/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">Powered by BoardGameGeek</a>.</p>
             <div class="flex items-center gap-2" aria-label="Créditos de fuentes audiovisuales">
                 <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB" class="h-7 w-7" loading="lazy">
                 <p>Este producto utiliza la API de TMDB, pero no está respaldado ni certificado por TMDB. La disponibilidad de streaming procede de JustWatch a través de TMDB.</p>
@@ -889,6 +890,77 @@
             }
         }
 
+        // ---------- BoardGameGeek vía Edge Function (supabase/functions/bgg-proxy) ----------
+        // Devuelve el XML de BGG, o null si la función aún no está desplegada o
+        // todavía no tiene el token (en ese caso la búsqueda sigue con iTunes y Google Books).
+        async function bggProxy(action, params) {
+            const { data } = await supabaseClient.auth.getSession();
+            const accessToken = data?.session?.access_token;
+            if (!accessToken) return null;
+            const url = new URL(`${SUPABASE_URL}/functions/v1/bgg-proxy`);
+            url.search = new URLSearchParams({ action, ...params }).toString();
+            let res;
+            try {
+                res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}`, apikey: SUPABASE_KEY }, signal: AbortSignal.timeout(20000) });
+            } catch {
+                return null; // función no desplegada (sin CORS) o sin conexión
+            }
+            if ([404, 503].includes(res.status)) return null;
+            if (!res.ok) {
+                const detail = await res.json().catch(() => ({}));
+                throw new Error(detail.error || `bgg-proxy respondió ${res.status}`);
+            }
+            return res.text();
+        }
+
+        function bggText(node, selector, attr = 'value') {
+            const el = node.querySelector(selector);
+            return el ? (attr ? el.getAttribute(attr) || '' : el.textContent || '') : '';
+        }
+
+        async function searchBoardGameGeek(title) {
+            const searchXml = await bggProxy('search', { query: title });
+            if (!searchXml) return [];
+            const parser = new DOMParser();
+            const target = normalizeMediaTitle(title);
+            const hits = [...parser.parseFromString(searchXml, 'text/xml').getElementsByTagName('item')]
+                .map(node => ({ id: node.getAttribute('id'), name: bggText(node, 'name') }))
+                .filter(hit => /^\d+$/.test(hit.id || ''));
+            if (!hits.length) return [];
+            // Primero coincidencias exactas de título; BGG devuelve a veces cientos de resultados.
+            hits.sort((a, b) => (normalizeMediaTitle(b.name) === target) - (normalizeMediaTitle(a.name) === target));
+            const ids = [...new Set(hits.map(hit => hit.id))].slice(0, 10).join(',');
+            const thingXml = await bggProxy('thing', { id: ids });
+            if (!thingXml) return [];
+
+            return [...parser.parseFromString(thingXml, 'text/xml').getElementsByTagName('item')].map(node => {
+                const id = node.getAttribute('id');
+                const year = bggText(node, 'yearpublished');
+                const minPlayers = bggText(node, 'minplayers');
+                const maxPlayers = bggText(node, 'maxplayers');
+                const minTime = bggText(node, 'minplaytime');
+                const maxTime = bggText(node, 'maxplaytime') || bggText(node, 'playingtime');
+                const designers = [...node.querySelectorAll('link[type="boardgamedesigner"]')].map(l => l.getAttribute('value')).filter(v => v && v !== '(Uncredited)').slice(0, 2);
+                const publisher = node.querySelector('link[type="boardgamepublisher"]')?.getAttribute('value') || '';
+                const usersRated = Number(bggText(node, 'statistics usersrated')) || 0;
+                const average = Number(bggText(node, 'statistics average')) || 0;
+                const players = minPlayers && maxPlayers ? (minPlayers === maxPlayers ? `${minPlayers} jug.` : `${minPlayers}-${maxPlayers} jug.`) : '';
+                const duration = maxTime && maxTime !== '0' ? (minTime && minTime !== maxTime && minTime !== '0' ? `${minTime}-${maxTime} min` : `${maxTime} min`) : '';
+                const description = bggText(node, 'description', null).replace(/\s*\n\s*\n\s*/g, '\n\n').trim();
+                return {
+                    name: bggText(node, 'name[type="primary"]') || title,
+                    sub: [designers.join(', '), players, duration, year].filter(Boolean).join(' · '),
+                    cover: bggText(node, 'image', null).trim() || bggText(node, 'thumbnail', null).trim(),
+                    desc: description.length > 1500 ? description.slice(0, 1500).trimEnd() + '…' : description,
+                    platform: publisher,
+                    platformLogo: '',
+                    externalId: id ? `bgg:${id}` : '',
+                    score: (normalizeMediaTitle(bggText(node, 'name[type="primary"]')) === target ? 1e9 : 0) + usersRated,
+                    average
+                };
+            }).filter(result => result.cover).sort((a, b) => b.score - a.score).slice(0, 6);
+        }
+
         // BÚSQUEDA MULTICANAL CON EXPANSIÓN BGG XML API + ITUNES + GOOGLE BOOKS + RAWG
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
@@ -906,49 +978,16 @@
             let foundResults = [];
             let searchError = '';
             let rawgAttribution = false;
+            let bggAttribution = false;
 
             try {
                 if (cat === 'boardgame') {
-                    // 1. BoardGameGeek (BGG API2)
+                    // 1. BoardGameGeek, a través de la Edge Function bgg-proxy (token oculto)
                     try {
-                        const bggRes = await fetch(`https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(title)}&type=boardgame`);
-                        if (bggRes.ok) {
-                            const xmlText = await bggRes.text();
-                            const parser = new DOMParser();
-                            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                            const itemsXML = xmlDoc.getElementsByTagName('item');
-
-                            if (itemsXML.length > 0) {
-                                const ids = Array.from(itemsXML).slice(0, 4).map(it => it.getAttribute('id')).join(',');
-                                const detailRes = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${ids}`);
-                                if (detailRes.ok) {
-                                    const detailText = await detailRes.text();
-                                    const detailDoc = parser.parseFromString(detailText, 'text/xml');
-                                    const detailItems = detailDoc.getElementsByTagName('item');
-
-                                    for (let itemNode of detailItems) {
-                                        const primaryName = itemNode.querySelector('name[type="primary"]')?.getAttribute('value') || title;
-                                        const year = itemNode.querySelector('yearpublished')?.getAttribute('value') || '';
-                                        const imgUrl = itemNode.querySelector('image')?.textContent || itemNode.querySelector('thumbnail')?.textContent || '';
-                                        const minP = itemNode.querySelector('minplayers')?.getAttribute('value') || '';
-                                        const maxP = itemNode.querySelector('maxplayers')?.getAttribute('value') || '';
-                                        const pStr = (minP && maxP) ? `${minP}-${maxP} jug.` : '';
-
-                                        if (imgUrl) {
-                                            foundResults.push({
-                                                name: primaryName,
-                                                sub: `BGG ${year ? '(' + year + ')' : ''} | ${pStr}`,
-                                                cover: imgUrl,
-                                                desc: 'Juego de mesa verificado en BoardGameGeek.',
-                                                platform: 'BoardGameGeek',
-                                                platformLogo: ''
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e) { console.error('BGG API Error:', e); }
+                        const bggResults = await searchBoardGameGeek(title);
+                        foundResults.push(...bggResults);
+                        bggAttribution = bggResults.length > 0;
+                    } catch (e) { console.warn('BGG no disponible:', e.message); }
 
                     // 2. iTunes Search API
                     try {
@@ -1105,6 +1144,15 @@
                         `;
                         resultsDiv.appendChild(row);
                     });
+                    if (bggAttribution) {
+                        const credit = document.createElement('a');
+                        credit.href = 'https://boardgamegeek.com/';
+                        credit.target = '_blank';
+                        credit.rel = 'noopener noreferrer';
+                        credit.className = 'block pt-1 text-[10px] text-amber-400/70 hover:text-amber-300';
+                        credit.textContent = 'Powered by BoardGameGeek';
+                        resultsDiv.appendChild(credit);
+                    }
                     if (rawgAttribution) {
                         const credit = document.createElement('a');
                         credit.href = 'https://rawg.io/';
