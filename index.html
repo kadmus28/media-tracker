@@ -961,6 +961,85 @@
             }).filter(result => result.cover).sort((a, b) => b.score - a.score).slice(0, 6);
         }
 
+        // ---------- Videojuegos: Wikipedia (carátula oficial) + Wikidata (datos) ----------
+        // La Wikipedia en inglés tiene las carátulas (la española no admite imágenes con derechos).
+        // La sinopsis se toma en español si existe el artículo; si no, en inglés.
+        async function wikiApi(host, params) {
+            const url = new URL(`https://${host}/w/api.php`);
+            url.search = new URLSearchParams({ format: 'json', origin: '*', ...params }).toString();
+            const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+            if (!res.ok) throw new Error(`Wikipedia respondió ${res.status}`);
+            return res.json();
+        }
+
+        async function searchWikipediaGames(title) {
+            const data = await wikiApi('en.wikipedia.org', {
+                action: 'query', generator: 'search', gsrsearch: `${title} video game`, gsrlimit: '10', gsrnamespace: '0',
+                prop: 'pageimages|description|langlinks|pageprops|extracts', piprop: 'thumbnail', pithumbsize: '600', pilicense: 'any',
+                lllang: 'es', ppprop: 'wikibase_item', exintro: '1', explaintext: '1', exsentences: '3', exlimit: 'max'
+            });
+            // Solo fichas de juegos concretos ("2013 video game", "upcoming video game"...), no personajes, sagas ni anexos.
+            const isGame = d => /^(\d{4}|upcoming|unreleased|cancelled)\b.*game$/i.test(d) && !/board|card|tabletop|pen-and-paper|character|series|franchise/i.test(d);
+            const wanted = normalizeMediaTitle(title);
+            const score = p => {
+                const names = [p.title, p.langlinks?.[0]?.['*']].filter(Boolean).map(n => normalizeMediaTitle(n.replace(/\s*\([^)]*\)\s*$/, '')));
+                return names.includes(wanted) ? 0 : names.some(n => n.startsWith(wanted) || wanted.startsWith(n)) ? 1 : 2;
+            };
+            const pages = Object.values(data.query?.pages || {})
+                .filter(p => isGame(p.description || '') && p.thumbnail?.source)
+                .sort((a, b) => score(a) - score(b) || a.index - b.index)
+                .slice(0, 6);
+            if (!pages.length) return [];
+
+            // Datos de Wikidata: desarrollador (P178), fecha (P577) y plataformas (P400)
+            const ids = pages.map(p => p.pageprops?.wikibase_item).filter(Boolean);
+            const claimsOf = {}; let labelIds = [];
+            try {
+                const wd = await wikiApi('www.wikidata.org', { action: 'wbgetentities', ids: ids.join('|'), props: 'claims' });
+                const values = (entity, prop) => ((entity?.claims || {})[prop] || []).map(c => c.mainsnak?.datavalue?.value).filter(Boolean);
+                ids.forEach(id => {
+                    const e = wd.entities?.[id];
+                    const c = { dev: values(e, 'P178').map(v => v.id).slice(0, 2), plat: values(e, 'P400').map(v => v.id).slice(0, 6), year: (values(e, 'P577')[0]?.time || '').slice(1, 5) };
+                    claimsOf[id] = c; labelIds.push(...c.dev, ...c.plat);
+                });
+            } catch (e) { console.warn('Wikidata no disponible:', e.message); }
+            const labels = {};
+            labelIds = [...new Set(labelIds)];
+            for (let i = 0; i < labelIds.length; i += 50) {
+                try {
+                    const lab = await wikiApi('www.wikidata.org', { action: 'wbgetentities', ids: labelIds.slice(i, i + 50).join('|'), props: 'labels', languages: 'es|en' });
+                    Object.entries(lab.entities || {}).forEach(([id, e]) => { labels[id] = e.labels?.es?.value || e.labels?.en?.value || ''; });
+                } catch (e) { /* sin etiquetas */ }
+            }
+
+            // Sinopsis en español cuando exista el artículo
+            const esTitles = pages.map(p => p.langlinks?.[0]?.['*']).filter(Boolean);
+            const esExtracts = {};
+            if (esTitles.length) {
+                try {
+                    const es = await wikiApi('es.wikipedia.org', { action: 'query', titles: esTitles.join('|'), prop: 'extracts', exintro: '1', explaintext: '1', exsentences: '3', exlimit: 'max', redirects: '1' });
+                    Object.values(es.query?.pages || {}).forEach(p => { if (p.extract) esExtracts[p.title] = p.extract; });
+                } catch (e) { /* se usa la sinopsis en inglés */ }
+            }
+
+            return pages.map(p => {
+                const c = claimsOf[p.pageprops?.wikibase_item] || { dev: [], plat: [], year: '' };
+                const year = c.year || (p.description || '').match(/\d{4}/)?.[0] || '';
+                const dev = c.dev.map(id => labels[id]).filter(Boolean).join(', ');
+                const platforms = c.plat.map(id => labels[id]).filter(Boolean);
+                const esTitle = p.langlinks?.[0]?.['*'];
+                return {
+                    name: (esTitle || p.title).replace(/\s*\((?:videojuego|video ?game)[^)]*\)\s*$/i, ''),
+                    sub: [dev, year, platforms.slice(0, 3).join(', ')].filter(Boolean).join(' / ') || p.description,
+                    cover: String(p.thumbnail.source).split('?')[0],
+                    desc: (esTitle && esExtracts[esTitle]) || p.extract || '',
+                    platform: platforms.join(', '),
+                    platformLogo: '',
+                    externalId: p.pageprops?.wikibase_item ? `wikidata:${p.pageprops.wikibase_item}` : ''
+                };
+            });
+        }
+
         // BÚSQUEDA MULTICANAL CON EXPANSIÓN BGG XML API + ITUNES + GOOGLE BOOKS + RAWG
         async function autoSearchCover() {
             const title = document.getElementById('formTitle').value.trim();
@@ -979,6 +1058,7 @@
             let searchError = '';
             let rawgAttribution = false;
             let bggAttribution = false;
+            let wikiAttribution = false;
 
             try {
                 if (cat === 'boardgame') {
@@ -1052,24 +1132,25 @@
                     }
                 } 
                 else if (cat === 'game') {
+                    // 1. Wikipedia: carátula oficial + desarrollador, año y plataformas (sin clave)
+                    try {
+                        const wikiResults = await searchWikipediaGames(title);
+                        foundResults.push(...wikiResults);
+                        wikiAttribution = wikiResults.length > 0;
+                    } catch (e) { console.warn('Wikipedia no disponible:', e.message); }
+
+                    // 2. RAWG (opcional, si hay clave configurada): más resultados y plataformas
                     const rawgApiKey = localStorage.getItem(RAWG_API_KEY_STORAGE);
-                    if (!rawgApiKey) {
-                        searchError = 'Falta configurar la clave de RAWG. Abre el menú ☰ y selecciona «Configurar búsqueda de videojuegos».';
-                    } else {
+                    if (rawgApiKey) {
                         try {
                             const url = new URL('https://api.rawg.io/api/games');
                             url.search = new URLSearchParams({ key: rawgApiKey, search: title, page_size: '5' }).toString();
                             const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
-                            if (res.status === 401 || res.status === 403) {
-                                throw new Error('RAWG rechazó la clave. Revisa que sea válida y vuelve a guardarla desde el menú.');
-                            }
-                            if (res.status === 429) {
-                                throw new Error('RAWG ha alcanzado el límite de consultas. Espera un poco y vuelve a intentarlo.');
-                            }
+                            if (res.status === 401 || res.status === 403) throw new Error('RAWG rechazó la clave. Revisa que sea válida y vuelve a guardarla desde el menú.');
+                            if (res.status === 429) throw new Error('RAWG ha alcanzado el límite de consultas. Espera un poco y vuelve a intentarlo.');
                             if (!res.ok) throw new Error(`RAWG respondió con el error ${res.status}.`);
-
                             const data = await res.json();
-                            foundResults = (data.results || []).map(g => ({
+                            const rawgResults = (data.results || []).map(g => ({
                                 name: g.name,
                                 sub: [g.released ? `Año: ${g.released.split('-')[0]}` : '', (g.platforms || []).slice(0, 3).map(p => p.platform?.name).filter(Boolean).join(', ')].filter(Boolean).join(' · ') || 'Videojuego',
                                 cover: g.background_image || '',
@@ -1077,14 +1158,15 @@
                                 platform: (g.platforms || []).slice(0, 4).map(p => p.platform?.name).filter(Boolean).join(', '),
                                 platformLogo: ''
                             }));
-                            rawgAttribution = foundResults.length > 0;
+                            foundResults.push(...rawgResults);
+                            rawgAttribution = rawgResults.length > 0;
                         } catch (err) {
                             console.error('RAWG error:', err);
-                            searchError = err.name === 'TimeoutError' || err.name === 'AbortError'
-                                ? 'RAWG tardó demasiado en responder. Comprueba la conexión y vuelve a intentarlo.'
-                                : err instanceof TypeError
-                                    ? 'No se pudo conectar con RAWG. Comprueba tu conexión o si el servicio está disponible.'
-                                    : err.message;
+                            if (!foundResults.length) {
+                                searchError = err.name === 'TimeoutError' || err.name === 'AbortError'
+                                    ? 'RAWG tardó demasiado en responder. Comprueba la conexión y vuelve a intentarlo.'
+                                    : err instanceof TypeError ? 'No se pudo conectar con RAWG. Comprueba tu conexión.' : err.message;
+                            }
                         }
                     }
                 }
@@ -1144,6 +1226,15 @@
                         `;
                         resultsDiv.appendChild(row);
                     });
+                    if (wikiAttribution) {
+                        const credit = document.createElement('a');
+                        credit.href = 'https://en.wikipedia.org/';
+                        credit.target = '_blank';
+                        credit.rel = 'noopener noreferrer';
+                        credit.className = 'block pt-1 text-[10px] text-amber-400/70 hover:text-amber-300';
+                        credit.textContent = 'Carátulas y datos: Wikipedia / Wikidata';
+                        resultsDiv.appendChild(credit);
+                    }
                     if (bggAttribution) {
                         const credit = document.createElement('a');
                         credit.href = 'https://boardgamegeek.com/';
@@ -1319,14 +1410,14 @@
                     caseStyleClass = 'case-book-shadow';
                 } else if (item.category === 'boardgame') {
                     caseStyleClass = 'case-carton-shadow';
-                    aspectClass = 'aspect-square'; // CARÁTULA CUADRADA EXCLUSIVA PARA JUEGOS DE MESA
+                    aspectClass = ''; // juegos de mesa: la caja con su proporción real, sin recortar
                 } else if (item.category === 'game') {
                     caseStyleClass = 'case-carton-shadow';
                 }
 
                 wrapper.innerHTML = `
                     <div class="relative rounded-sm overflow-hidden ${caseStyleClass} bg-black ${aspectClass} w-full">
-                        <img src="${escapeHTML(safeImageUrl(item.cover_url) || COVER_FALLBACK)}" alt="${escapeHTML(item.title)}" loading="lazy" class="w-full h-full object-cover" onerror="this.onerror=null;this.src=COVER_FALLBACK">
+                        <img src="${escapeHTML(safeImageUrl(item.cover_url) || COVER_FALLBACK)}" alt="${escapeHTML(item.title)}" loading="lazy" class="${item.category === 'boardgame' ? 'w-full h-auto block' : 'w-full h-full object-cover'}" onerror="this.onerror=null;this.src=COVER_FALLBACK">
                         ${item.rating > 0 ? `<div class="absolute bottom-1 right-1 bg-black/80 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow z-20"><i class="fa-solid fa-star text-[9px]"></i> ${item.rating}</div>` : ''}
                     </div>
                     <div class="mt-1 bg-black/80 text-amber-100 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-900/80 truncate max-w-full text-center shadow">
@@ -1572,8 +1663,8 @@
             const item = items.find(i => String(i.id) === String(id));
             if (!item) return;
             activeDetailItemId = String(item.id);
-            const isSquare = item.category === 'music' || item.category === 'boardgame';
-            const imgAspectClass = isSquare ? 'aspect-square' : 'aspect-[2/3]';
+            // Juegos de mesa: cada caja con su proporción real (no siempre son cuadradas)
+            const imgAspectClass = item.category === 'boardgame' ? 'h-auto' : item.category === 'music' ? 'aspect-square' : 'aspect-[2/3]';
             const isAudiovisual = ['movie', 'tv'].includes(item.category);
             const detailActions = currentUser ? `
                 <div class="flex items-center gap-2 rounded-lg border border-amber-900/40 bg-stone-950/60 px-2 py-1.5 shadow-inner">
