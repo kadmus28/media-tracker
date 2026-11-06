@@ -435,7 +435,7 @@
 
         <div class="mt-8 flex flex-col items-center gap-2 text-center text-[10px] text-amber-200/50">
             <p>Datos de videojuegos proporcionados por <a href="https://rawg.io/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">RAWG</a>.</p>
-            <p>Datos de juegos de mesa: <a href="https://boardgamegeek.com/" target="_blank" rel="noopener noreferrer" class="underline hover:text-amber-300">Powered by BoardGameGeek</a>.</p>
+            <p><a href="https://boardgamegeek.com/" target="_blank" rel="noopener noreferrer" aria-label="Powered by BoardGameGeek" class="inline-block opacity-80 hover:opacity-100"><img src="powered-by-bgg.svg" alt="Powered by BGG" class="h-7 w-auto"></a></p>
             <div class="flex items-center gap-2" aria-label="Créditos de fuentes audiovisuales">
                 <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB" class="h-7 w-7" loading="lazy">
                 <p>Este producto utiliza la API de TMDB, pero no está respaldado ni certificado por TMDB. La disponibilidad de streaming procede de JustWatch a través de TMDB.</p>
@@ -1149,8 +1149,9 @@
                         credit.href = 'https://boardgamegeek.com/';
                         credit.target = '_blank';
                         credit.rel = 'noopener noreferrer';
-                        credit.className = 'block pt-1 text-[10px] text-amber-400/70 hover:text-amber-300';
-                        credit.textContent = 'Powered by BoardGameGeek';
+                        credit.className = 'inline-block pt-2 opacity-90 hover:opacity-100';
+                        credit.setAttribute('aria-label', 'Powered by BoardGameGeek');
+                        credit.innerHTML = '<img src="powered-by-bgg.svg" alt="Powered by BGG" class="h-6 w-auto">';
                         resultsDiv.appendChild(credit);
                     }
                     if (rawgAttribution) {
@@ -1585,6 +1586,7 @@
                 <div class="w-full flex-shrink-0 md:w-1/4">
                     <img src="${escapeHTML(safeImageUrl(item.cover_url) || COVER_FALLBACK)}" alt="${escapeHTML(item.title)}" onerror="this.onerror=null;this.src=COVER_FALLBACK" class="${imgAspectClass} w-full rounded-xl border border-amber-900/40 object-cover shadow-2xl">
                     ${item.format ? `<div class="mt-3 rounded-lg border border-amber-700/50 bg-amber-900/50 px-3 py-1 text-center text-xs font-bold text-amber-200"><i class="fa-solid fa-box mr-1"></i> ${escapeHTML(item.format)}</div>` : ''}
+                    ${/^bgg:\d+$/.test(String(item.external_id || '')) ? `<a href="https://boardgamegeek.com/boardgame/${String(item.external_id).slice(4)}" target="_blank" rel="noopener noreferrer" aria-label="Ver en BoardGameGeek" class="mt-3 flex justify-center opacity-90 hover:opacity-100"><img src="powered-by-bgg.svg" alt="Powered by BGG" class="h-7 w-auto"></a>` : ''}
                 </div>
                 <div class="flex w-full flex-col md:w-3/4">
                     <div class="flex items-start justify-between gap-3 pr-10">
