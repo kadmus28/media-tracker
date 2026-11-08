@@ -2,7 +2,7 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Media Tracker</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <link rel="manifest" href="./manifest.webmanifest">
@@ -186,15 +186,45 @@
         .vinyl-sleeve-container:hover .vinyl-record {
             transform: translateX(38%) rotate(180deg);
         }
+
+        /* ===== Táctil y móvil ===== */
+        /* Desplegables abiertos por toque (en táctil no existe el "pasar el ratón") */
+        .dd-open > .dd-menu { display: block; }
+        @media (hover: none) { .dd:not(.dd-open) > .dd-menu { display: none !important; } }
+        .mobile-chips { scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+        .mobile-chips::-webkit-scrollbar { display: none; }
+        .mobile-chips > * { scroll-snap-align: start; }
+        button, a, select, label { -webkit-tap-highlight-color: transparent; }
+
+        @media (max-width: 767px) {
+            .seal-badge-container {
+                width: 46px;
+                height: 46px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(217, 119, 6, 0.9);
+            }
+            /* 16px evita que iPhone haga zoom al tocar un campo */
+            input, select, textarea { font-size: 16px !important; }
+            /* Modales como hoja inferior a pantalla completa */
+            .modal-sheet { align-items: flex-end !important; padding: 0 !important; }
+            .modal-sheet > div {
+                max-width: 100% !important;
+                width: 100% !important;
+                border-radius: 1.25rem 1.25rem 0 0 !important;
+                max-height: 94dvh !important;
+                overflow-y: auto;
+                padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important;
+            }
+            #topDropdownMenu button { font-size: 0.875rem; padding-top: 0.85rem; padding-bottom: 0.85rem; }
+        }
     </style>
 </head>
 <body class="delicious-wall text-amber-50 min-h-screen font-sans flex flex-col">
 
     <!-- Header / Navbar -->
     <header class="border-b border-amber-950/80 bg-stone-950/90 text-amber-50 backdrop-blur sticky top-0 z-50 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 py-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-row items-center justify-between gap-2 md:gap-4" style="padding-top: max(0.5rem, env(safe-area-inset-top));">
             
-            <div onclick="resetToHome()" class="flex items-center cursor-pointer group py-1">
+            <div onclick="resetToHome()" class="flex items-center cursor-pointer group py-1 shrink-0" title="Inicio" role="button" aria-label="Ir al inicio">
                 <div class="seal-badge-container flex items-center justify-center">
                     <img 
                         src="logo.jpg" 
@@ -206,29 +236,29 @@
                 </div>
             </div>
 
-            <div class="relative flex-1 max-w-md mx-md-4">
+            <div class="relative flex-1 min-w-0 md:max-w-md">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-amber-400/70 text-sm"></i>
-                <input type="text" id="liveSearchInput" oninput="handleSearch()" placeholder="Buscar título, autor, artista, reparto, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
+                <input type="text" id="liveSearchInput" oninput="handleSearch()" enterkeyhint="search" autocomplete="off" placeholder="Buscar título, autor, artista, reparto, año..." class="w-full bg-stone-900 border border-amber-800/60 rounded-xl pl-9 pr-4 py-2.5 md:py-1.5 text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-500 shadow-inner">
             </div>
             
-            <div class="flex items-center gap-3">
-                <button id="signInButton" onclick="openAuthModal()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition shadow-lg text-sm border border-amber-800/50">
-                    <i class="fa-solid fa-right-to-bracket"></i><span>Iniciar sesión</span>
+            <div class="flex items-center gap-2 md:gap-3 shrink-0">
+                <button id="signInButton" onclick="openAuthModal()" aria-label="Iniciar sesión" title="Iniciar sesión" class="bg-stone-800 hover:bg-stone-700 text-amber-200 font-medium px-3 min-h-[44px] md:min-h-0 py-2 rounded-lg flex items-center justify-center gap-2 transition shadow-lg text-sm border border-amber-800/50">
+                    <i class="fa-solid fa-right-to-bracket"></i><span class="hidden sm:inline">Iniciar sesión</span>
                 </button>
                 <div id="signedInPanel" class="hidden items-center gap-2">
-                    <span id="signedInLabel" class="max-w-36 truncate text-xs text-amber-200"></span>
-                    <button onclick="signOut()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-2.5 py-2 rounded-lg text-xs border border-amber-800/50" title="Cerrar sesión">
+                    <span id="signedInLabel" class="hidden lg:block max-w-36 truncate text-xs text-amber-200"></span>
+                    <button onclick="signOut()" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-3 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 py-2 rounded-lg text-xs border border-amber-800/50" title="Cerrar sesión" aria-label="Cerrar sesión">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
-                <button id="addItemButton" onclick="openModal()" class="hidden bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg items-center justify-center space-x-2 transition shadow-lg text-sm border border-amber-500/40">
+                <button id="addItemButton" onclick="openModal()" class="hidden max-md:!hidden bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg items-center justify-center space-x-2 transition shadow-lg text-sm border border-amber-500/40">
                     <i class="fa-solid fa-plus"></i>
                     <span>Añadir Elemento</span>
                 </button>
 
                 <!-- Menú de Hamburguesa -->
                 <div class="relative inline-block text-left">
-                    <button onclick="toggleTopMenu(event)" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-3.5 py-2 rounded-lg flex items-center justify-center transition border border-amber-800/50 shadow">
+                    <button onclick="toggleTopMenu(event)" aria-label="Menú" class="bg-stone-800 hover:bg-stone-700 text-amber-200 px-3.5 min-h-[44px] min-w-[44px] md:min-h-0 py-2 rounded-lg flex items-center justify-center transition border border-amber-800/50 shadow">
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
 
@@ -258,20 +288,21 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full relative z-10">
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 md:py-8 flex-1 w-full relative z-10">
         
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-amber-950/90 p-3 rounded-xl border border-amber-800/60 text-amber-100 backdrop-blur shadow-2xl relative z-30">
-            <div class="flex flex-wrap gap-1 items-center" id="categoryTabs">
+        <div class="flex flex-wrap items-center justify-between gap-3 md:gap-4 mb-5 md:mb-8 bg-amber-950/90 p-2.5 md:p-3 rounded-xl border border-amber-800/60 text-amber-100 backdrop-blur shadow-2xl relative z-30">
+            <div id="mobileCatNav" class="md:hidden w-full min-w-0 space-y-2"></div>
+            <div class="hidden md:flex flex-wrap gap-1 items-center" id="categoryTabs">
                 <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-btn bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">Todos</button>
                 
                 <!-- Desplegable Audiovisual -->
-                <div class="relative group inline-block">
+                <div class="relative group inline-block dd">
                     <button data-cat="audiovisual" id="audioVisualDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                         <i class="fa-solid fa-film text-xs text-amber-400"></i>
                         <span id="audioVisualBtnLabel">Audiovisual</span>
                         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
                     </button>
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
+                    <div class="dd-menu hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
                         <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
                             <button onclick="setCategoryFilter('movie')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-film w-4 text-amber-400"></i> Películas
@@ -284,13 +315,13 @@
                 </div>
 
                 <!-- Desplegable Lectura -->
-                <div class="relative group inline-block">
+                <div class="relative group inline-block dd">
                     <button data-cat="reading" id="readingDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                         <i class="fa-solid fa-book text-xs text-amber-400"></i>
                         <span id="readingBtnLabel">Lectura</span>
                         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
                     </button>
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
+                    <div class="dd-menu hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-44 z-50">
                         <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
                             <button onclick="setCategoryFilter('book')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-book w-4 text-amber-400"></i> Libros
@@ -303,13 +334,13 @@
                 </div>
 
                 <!-- Desplegable Juegos (Videojuegos y Juegos de Mesa) -->
-                <div class="relative group inline-block">
+                <div class="relative group inline-block dd">
                     <button data-cat="gaming" id="gamesDropdownBtn" class="cat-btn text-amber-200/80 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                         <i class="fa-solid fa-gamepad text-xs text-amber-400"></i>
                         <span id="gamesBtnLabel">Juegos</span>
                         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
                     </button>
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
+                    <div class="dd-menu hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
                         <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
                             <button onclick="setCategoryFilter('game')" class="w-full text-left px-3.5 py-2 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-gamepad w-4 text-amber-400"></i> Videojuegos
@@ -328,14 +359,14 @@
                 <span class="border-r border-amber-800/60 my-1 mx-1 h-5"></span>
 
                 <!-- Desplegable Mi Biblioteca -->
-                <div class="relative group inline-block">
+                <div class="relative group inline-block dd">
                     <button onclick="setCategoryFilter('library')" data-cat="library" id="libraryDropdownBtn" class="cat-btn text-indigo-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-indigo-950/40 border border-indigo-800/40">
                         <i class="fa-solid fa-house text-indigo-400"></i>
                         <span id="libraryBtnLabel">Mi Biblioteca</span>
                         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
                     </button>
                     
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-52 z-50">
+                    <div class="dd-menu hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-52 z-50">
                         <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
                             <button onclick="setCategoryFilter('library')" class="w-full text-left px-3.5 py-2 text-xs text-indigo-200 hover:bg-amber-900/50 flex items-center gap-2 transition">
                                 <i class="fa-solid fa-layer-group w-4 text-indigo-400"></i> Todo en Biblioteca
@@ -367,14 +398,14 @@
                 </div>
 
                 <!-- Desplegable Pendientes -->
-                <div class="relative group inline-block">
+                <div class="relative group inline-block dd">
                     <button onclick="setCategoryFilter('pending_watch')" data-cat="pending_watch" id="pendingDropdownBtn" class="cat-btn text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
                         <i class="fa-solid fa-clock"></i>
                         <span id="pendingBtnLabel">Pendientes</span>
                         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
                     </button>
                     
-                    <div class="hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
+                    <div class="dd-menu hidden group-hover:block hover:block absolute left-0 top-full pt-1 w-48 z-50">
                         <div class="bg-stone-900 border border-amber-800/80 rounded-xl shadow-2xl py-1 overflow-hidden backdrop-blur">
                             <button onclick="setCategoryFilter('pending_watch')" class="w-full text-left px-3.5 py-2 text-xs text-amber-300 hover:bg-amber-900/50 flex items-center gap-2 transition font-semibold">
                                 <i class="fa-solid fa-layer-group w-4 text-amber-400"></i> Todos los Pendientes
@@ -410,9 +441,9 @@
                 </button>
             </div>
 
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 w-full md:w-auto">
                 <label for="statusSelect" class="text-xs text-amber-200/80 font-medium uppercase tracking-wider">Estado:</label>
-                <select id="statusSelect" onchange="renderItems()" class="bg-stone-900 border border-amber-800/60 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                <select id="statusSelect" onchange="renderItems()" class="flex-1 md:flex-none bg-stone-900 border border-amber-800/60 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
                     <option value="all">Todos los estados</option>
                     <option value="completed">Completados</option>
                     <option value="in_progress">En curso</option>
@@ -423,9 +454,9 @@
         </div>
 
         <div id="personFilterBar" class="hidden mb-5 mx-auto w-fit max-w-full"></div>
-        <div id="bookshelfContainer" class="flex flex-col gap-14"></div>
+        <div id="bookshelfContainer" class="flex flex-col gap-8 md:gap-14"></div>
 
-        <div id="paginationControls" class="mt-10 flex items-center justify-center gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl"></div>
+        <div id="paginationControls" class="mt-8 md:mt-10 flex items-center justify-between sm:justify-center gap-2 sm:gap-3 bg-amber-950/80 p-3 rounded-xl border border-amber-800/50 backdrop-blur max-w-md mx-auto shadow-xl"></div>
 
         <div id="emptyState" class="hidden text-center py-20 bg-amber-950/80 text-amber-100 rounded-2xl border border-amber-800/50">
             <i class="fa-solid fa-boxes-packing text-5xl text-amber-600/60 mb-4"></i>
@@ -445,9 +476,9 @@
     </main>
 
     <!-- Modal Formulario -->
-    <div id="itemModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="itemModal" class="modal-sheet fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-lg w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2">
+            <button type="button" onclick="closeModal()" aria-label="Cerrar" class="absolute top-3 right-3 text-stone-400 hover:text-white p-2 min-w-[44px] min-h-[44px]">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
 
@@ -474,8 +505,8 @@
                 <div class="mb-4">
                     <label class="block text-xs font-semibold text-amber-300/80 uppercase tracking-wider mb-2">Título</label>
                     <div class="flex gap-2">
-                        <input type="text" id="formTitle" required placeholder="Ej: Catan, Carcassonne, Batman..." class="flex-1 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
-                        <button type="button" id="searchBtn" onclick="autoSearchCover()" class="bg-amber-700 hover:bg-amber-600 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
+                        <input type="text" id="formTitle" required enterkeyhint="search" placeholder="Ej: Catan, Carcassonne, Batman..." class="flex-1 min-w-0 bg-stone-950 border border-amber-900/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-600">
+                        <button type="button" id="searchBtn" onclick="autoSearchCover()" class="shrink-0 min-h-[44px] md:min-h-0 bg-amber-700 hover:bg-amber-600 px-3 py-2 rounded-lg text-sm text-white font-medium transition flex items-center gap-1.5">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <span>Buscar</span>
                         </button>
@@ -556,7 +587,7 @@
     </div>
 
     <!-- Acceso privado: las cuentas se crean desde Supabase, no hay registro público -->
-    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 hidden">
+    <div id="authModal" class="modal-sheet fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-md w-full p-6 border border-amber-800/60 shadow-2xl relative">
             <button onclick="closeAuthModal()" class="absolute top-3 right-3 text-stone-400 hover:text-white p-2" aria-label="Cerrar">
                 <i class="fa-solid fa-xmark text-xl"></i>
@@ -581,8 +612,15 @@
         </div>
     </div>
 
+    <!-- Botón flotante "Añadir" (solo móvil) -->
+    <button id="addFab" onclick="openModal()" aria-label="Añadir elemento" title="Añadir elemento"
+        class="hidden md:!hidden fixed z-40 right-4 w-14 h-14 rounded-full bg-amber-600 hover:bg-amber-500 active:scale-95 text-white shadow-2xl border border-amber-300/40 items-center justify-center transition"
+        style="bottom: calc(1rem + env(safe-area-inset-bottom));">
+        <i class="fa-solid fa-plus text-xl"></i>
+    </button>
+
     <!-- Modal Importación Letterboxd -->
-    <div id="importModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 hidden">
+    <div id="importModal" class="modal-sheet fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-lg w-full p-6 border border-amber-800/60 shadow-2xl">
             <h2 class="text-xl font-bold mb-1 text-amber-100 flex items-center gap-2"><i class="fa-solid fa-file-csv text-emerald-400"></i> Importar desde Letterboxd</h2>
             <p id="importFiles" class="text-xs text-stone-400 mb-4 truncate"></p>
@@ -612,11 +650,13 @@
     </div>
 
     <!-- Modal Detalle -->
-    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div id="detailModal" class="modal-sheet fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-5xl w-full p-6 border border-amber-800/60 shadow-2xl relative max-h-[92vh] overflow-y-auto">
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white p-2" title="Cerrar">
-                <i class="fa-solid fa-xmark text-2xl"></i>
-            </button>
+            <div class="sticky top-0 z-20 h-0 flex justify-end">
+                <button onclick="closeDetailModal()" aria-label="Cerrar" class="-mt-3 -mr-3 text-stone-200 hover:text-white p-2 w-11 h-11 rounded-full bg-stone-800/95 border border-stone-600 shadow-lg flex items-center justify-center" title="Cerrar">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+            </div>
             <div class="flex flex-col md:flex-row gap-6 pt-2" id="detailModalContent"></div>
         </div>
     </div>
@@ -698,6 +738,8 @@
         document.addEventListener('DOMContentLoaded', initializeApp);
 
         async function initializeApp() {
+            setupTouchDropdowns();
+            renderMobileNav();
             const { data, error } = await supabaseClient.auth.getSession();
             if (error) console.error('No se pudo recuperar la sesión:', error.message);
             currentUser = data?.session?.user || null;
@@ -724,6 +766,8 @@
             document.getElementById('signedInLabel').textContent = currentUser?.email || 'Sesión iniciada';
             document.getElementById('addItemButton').classList.toggle('hidden', !signedIn);
             document.getElementById('addItemButton').classList.toggle('flex', signedIn);
+            document.getElementById('addFab').classList.toggle('hidden', !signedIn);
+            document.getElementById('addFab').classList.toggle('flex', signedIn);
             document.getElementById('deleteAllItemsButton').classList.toggle('hidden', !signedIn);
             document.getElementById('deleteAllItemsButton').classList.toggle('flex', signedIn);
         }
@@ -770,11 +814,159 @@
             if (error) alert('No se pudo cerrar sesión: ' + error.message);
         }
 
-        window.addEventListener('click', (e) => {
+        // Con un menú abierto, tocar fuera solo lo cierra (no activa lo que haya debajo).
+        document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('topDropdownMenu');
-            if (dropdown && !e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu(event)"]')) {
-                dropdown.classList.add('hidden');
+            const menuOpen = dropdown && !dropdown.classList.contains('hidden');
+            const ddOpen = document.querySelector('.dd.dd-open');
+            const outsideMenu = menuOpen && !e.target.closest('#topDropdownMenu') && !e.target.closest('button[onclick="toggleTopMenu(event)"]');
+            const outsideDd = ddOpen && !e.target.closest('.dd');
+            if (outsideMenu) dropdown.classList.add('hidden');
+            if (outsideDd) closeTouchDropdowns();
+            if (outsideMenu || outsideDd) { e.preventDefault(); e.stopPropagation(); }
+        }, true);
+
+        // ================= TÁCTIL / MÓVIL =================
+        // En pantallas táctiles no hay "pasar el ratón", así que los desplegables
+        // de categorías se abren y cierran con un toque.
+        const isTouchLike = () => window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+        function closeTouchDropdowns(except = null) {
+            document.querySelectorAll('.dd.dd-open').forEach(dd => {
+                if (dd === except) return;
+                dd.classList.remove('dd-open');
+                dd.querySelector(':scope > button')?.setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        function setupTouchDropdowns() {
+            document.querySelectorAll('.dd > button').forEach(btn => {
+                btn.setAttribute('aria-haspopup', 'true');
+                btn.setAttribute('aria-expanded', 'false');
+                btn.addEventListener('click', () => {
+                    if (!isTouchLike()) return;
+                    const dd = btn.parentElement;
+                    const open = !dd.classList.contains('dd-open');
+                    closeTouchDropdowns(dd);
+                    dd.classList.toggle('dd-open', open);
+                    btn.setAttribute('aria-expanded', String(open));
+                });
+            });
+        }
+
+        // Navegación del móvil: fila deslizable de categorías + tres accesos grandes
+        // (Biblioteca, Pendientes, Comprar) y, dentro de ellos, sus subcategorías.
+        const MOBILE_CATEGORIES = [
+            { key: 'movie', label: 'Películas', icon: 'fa-film' },
+            { key: 'tv', label: 'Series', icon: 'fa-tv' },
+            { key: 'book', label: 'Libros', icon: 'fa-book' },
+            { key: 'comic', label: 'Cómics', icon: 'fa-mask' },
+            { key: 'game', label: 'Videojuegos', icon: 'fa-gamepad' },
+            { key: 'boardgame', label: 'Juegos de mesa', icon: 'fa-chess-board' },
+            { key: 'music', label: 'Música', icon: 'fa-record-vinyl' }
+        ];
+
+        function mobileChip(cat, label, icon, active, tone = 'amber') {
+            const tones = {
+                amber: active ? 'bg-amber-600 text-white border-amber-400' : 'bg-stone-900/80 text-amber-100 border-amber-800/60',
+                indigo: active ? 'bg-indigo-600 text-white border-indigo-300' : 'bg-stone-900/80 text-indigo-200 border-indigo-800/60'
+            };
+            return `<button type="button" onclick="setCategoryFilter('${cat}')" aria-pressed="${active}"
+                class="shrink-0 inline-flex items-center gap-1.5 min-h-[40px] px-3.5 rounded-full border text-sm font-medium whitespace-nowrap transition ${tones[tone]}">
+                ${icon ? `<i class="fa-solid ${icon} text-xs opacity-80"></i>` : ''}${escapeHTML(label)}</button>`;
+        }
+
+        function mobileNavChange() {
+            const col = document.getElementById('mNavCol').value;
+            const sec = document.getElementById('mNavSec').value;
+            let key;
+            if (col === 'shopping') key = 'shopping_list';
+            else if (col === 'library') key = sec === 'all' ? 'library' : `library_${sec}`;
+            else if (col === 'pending') key = sec === 'all' ? 'pending_watch' : `pending_${sec}`;
+            else key = sec;
+            setCategoryFilter(key);
+        }
+
+        function renderMobileNav() {
+            const nav = document.getElementById('mobileCatNav');
+            if (!nav) return;
+            const cat = currentCategoryFilter;
+            const col = cat.startsWith('library') ? 'library' : cat.startsWith('pending') ? 'pending' : cat === 'shopping_list' ? 'shopping' : 'all';
+            let sec = 'all';
+            if (col === 'library' && cat.startsWith('library_')) sec = cat.slice(8);
+            else if (col === 'pending' && cat.startsWith('pending_') && cat !== 'pending_watch') sec = cat.slice(8);
+            else if (col === 'all') sec = MOBILE_CATEGORIES.some(c => c.key === cat) ? cat : 'all';
+            const opt = (v, l, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`;
+            const selCls = 'mnav-select w-full min-h-[44px] rounded-lg bg-stone-900 border border-amber-800/70 text-amber-100 text-base pl-3 pr-8 appearance-none';
+            const wrap = (label, id, opts, disabled) => `<label class="flex-1 min-w-0 relative block">
+                    <span class="block text-[10px] uppercase tracking-wider text-amber-300/80 mb-0.5 pl-1">${label}</span>
+                    <select id="${id}" onchange="mobileNavChange()" class="${selCls}${disabled ? ' opacity-50' : ''}"${disabled ? ' disabled' : ''}>${opts}</select>
+                    <i class="fa-solid fa-chevron-down pointer-events-none absolute right-3 bottom-3.5 text-xs text-amber-400"></i>
+                </label>`;
+            nav.innerHTML = `<div class="flex gap-2">
+                ${wrap('Colección', 'mNavCol', opt('all', 'Todo', col) + opt('library', 'Mi Biblioteca', col) + opt('pending', 'Pendientes', col) + opt('shopping', 'Lista de compra', col), false)}
+                ${wrap('Categoría', 'mNavSec', opt('all', 'Todas', sec) + MOBILE_CATEGORIES.map(c => opt(c.key, c.label, sec)).join(''), col === 'shopping')}
+            </div>`;
+        }
+
+        // --- Botón/gesto "atrás" del móvil: cierra la ventana abierta en vez de salir ---
+        const HISTORY_MODALS = ['detailModal', 'itemModal', 'authModal', 'importModal'];
+        let modalHistoryDepth = 0;
+        let ignoreNextPop = false;
+        function openModalCount() {
+            return HISTORY_MODALS.filter(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); }).length;
+        }
+        function syncModalHistory() {
+            const n = openModalCount();
+            while (modalHistoryDepth < n) { history.pushState({ mtModal: true }, ''); modalHistoryDepth++; }
+            if (n < modalHistoryDepth) {
+                const diff = modalHistoryDepth - n;
+                modalHistoryDepth = n;
+                ignoreNextPop = true;
+                history.go(-diff);
             }
+            document.body.classList.toggle('overflow-hidden', n > 0);
+        }
+        window.addEventListener('popstate', () => {
+            if (ignoreNextPop) { ignoreNextPop = false; return; }
+            if (modalHistoryDepth > 0) {
+                modalHistoryDepth--;
+                if (!closeTopModal()) modalHistoryDepth = openModalCount();
+            }
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            const mo = new MutationObserver(syncModalHistory);
+            HISTORY_MODALS.forEach(id => { const el = document.getElementById(id); if (el) mo.observe(el, { attributes: true, attributeFilter: ['class'] }); });
+        });
+
+        function closeTopModal() {
+            const order = ['importModal', 'authModal', 'itemModal', 'detailModal'];
+            const open = order.find(id => !document.getElementById(id)?.classList.contains('hidden'));
+            if (!open) return false;
+            if (open === 'importModal') closeImportModal();
+            else if (open === 'authModal') closeAuthModal();
+            else if (open === 'itemModal') closeModal();
+            else closeDetailModal();
+            return true;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const menu = document.getElementById('topDropdownMenu');
+            if (!menu.classList.contains('hidden')) return menu.classList.add('hidden');
+            if (document.querySelector('.dd.dd-open')) return closeTouchDropdowns();
+            closeTopModal();
+        });
+
+        // Tocar el fondo oscuro de un modal lo cierra (salvo el de importación en curso).
+        ['itemModal', 'authModal', 'detailModal', 'importModal'].forEach(id => {
+            document.getElementById(id)?.addEventListener('click', (e) => {
+                if (e.target.id !== id) return;
+                if (id === 'importModal') closeImportModal();
+                else if (id === 'authModal') closeAuthModal();
+                else if (id === 'itemModal') return; // evita perder un formulario a medias
+                else closeDetailModal();
+            });
         });
 
         function toggleTopMenu(e) {
@@ -1366,7 +1558,7 @@
                 shelfDiv.className = 'relative flex flex-col';
 
                 const gridDiv = document.createElement('div');
-                gridDiv.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 px-4 items-end pb-1';
+                gridDiv.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-5 sm:gap-6 px-2 sm:px-4 items-end pb-1';
 
                 shelfItems.forEach(item => {
                     gridDiv.appendChild(createShelfCase(item));
@@ -1674,7 +1866,7 @@
                 </div>` : '';
             const detailContent = document.getElementById('detailModalContent');
             detailContent.innerHTML = `
-                <div class="w-full flex-shrink-0 md:w-1/4">
+                <div class="w-1/2 max-w-[200px] mx-auto md:mx-0 md:max-w-none flex-shrink-0 md:w-1/4">
                     <img src="${escapeHTML(safeImageUrl(item.cover_url) || COVER_FALLBACK)}" alt="${escapeHTML(item.title)}" onerror="this.onerror=null;this.src=COVER_FALLBACK" class="${imgAspectClass} w-full rounded-xl border border-amber-900/40 object-cover shadow-2xl">
                     ${item.format ? `<div class="mt-3 rounded-lg border border-amber-700/50 bg-amber-900/50 px-3 py-1 text-center text-xs font-bold text-amber-200"><i class="fa-solid fa-box mr-1"></i> ${escapeHTML(item.format)}</div>` : ''}
                     ${/^bgg:\d+$/.test(String(item.external_id || '')) ? `<a href="https://boardgamegeek.com/boardgame/${String(item.external_id).slice(4)}" target="_blank" rel="noopener noreferrer" aria-label="Ver en BoardGameGeek" class="mt-3 flex justify-center opacity-90 hover:opacity-100"><img src="powered-by-bgg.svg" alt="Powered by BGG" class="h-7 w-auto"></a>` : ''}
@@ -1715,13 +1907,23 @@
         function renderPagination(totalPages, totalItems) {
             const container = document.getElementById('paginationControls');
             if (totalPages <= 1) {
-                container.innerHTML = `<span class="text-xs text-amber-300 font-medium">Mostrando ${totalItems} elementos</span>`;
+                container.innerHTML = `<span class="w-full text-center text-xs text-amber-300 font-medium">Mostrando ${totalItems} elementos</span>`;
                 return;
             }
+            const navButton = (target, disabled, label, icon, iconFirst) => `
+                <button type="button" onclick="changePage(${target})" ${disabled ? 'disabled' : ''} aria-label="${label}"
+                    class="inline-flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-3 sm:px-4 rounded-lg text-sm transition ${disabled ? 'opacity-40 cursor-not-allowed text-amber-200 bg-stone-900' : 'text-amber-100 hover:text-white bg-stone-800 hover:bg-stone-700 active:scale-95'}">
+                    ${iconFirst ? `<i class="fa-solid ${icon}"></i><span class="hidden sm:inline">${label}</span>` : `<span class="hidden sm:inline">${label}</span><i class="fa-solid ${icon}"></i>`}
+                </button>`;
+            const options = Array.from({ length: totalPages }, (_, i) => `<option value="${i + 1}" ${i + 1 === currentPage ? 'selected' : ''}>${i + 1}</option>`).join('');
             container.innerHTML = `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 rounded-lg"'}>Anterior</button>
-                <span class="text-xs text-amber-300 font-semibold px-2">Página ${currentPage} de ${totalPages}</span>
-                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-amber-200 px-3 py-1 bg-stone-900 rounded-lg"' : 'class="text-xs text-amber-100 hover:text-white px-3 py-1 bg-stone-800 rounded-lg"'}>Siguiente</button>
+                ${navButton(currentPage - 1, currentPage === 1, 'Anterior', 'fa-chevron-left', true)}
+                <label class="flex items-center gap-1.5 text-xs text-amber-300 font-semibold whitespace-nowrap">
+                    Página
+                    <select onchange="changePage(Number(this.value))" aria-label="Ir a la página" class="bg-stone-900 border border-amber-800/60 text-amber-100 rounded-lg px-2 py-1.5 min-h-[40px] focus:outline-none focus:border-amber-500">${options}</select>
+                    de ${totalPages}
+                </label>
+                ${navButton(currentPage + 1, currentPage === totalPages, 'Siguiente', 'fa-chevron-right', false)}
             `;
         }
 
@@ -1773,6 +1975,8 @@
             else if (cat === 'pending_music') pendingLabel.textContent = 'Pend: Música';
             else pendingLabel.textContent = 'Pendientes';
 
+            closeTouchDropdowns();
+            renderMobileNav();
             renderItems();
         }
 
@@ -1788,7 +1992,9 @@
             document.getElementById('gamesBtnLabel').textContent = 'Juegos';
             document.getElementById('libraryBtnLabel').textContent = 'Mi Biblioteca';
             document.getElementById('pendingBtnLabel').textContent = 'Pendientes';
+            renderMobileNav();
             renderItems();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function handleSearch() {
@@ -1810,6 +2016,10 @@
         }
 
         function closeModal() { document.getElementById('itemModal').classList.add('hidden'); }
+
+        document.getElementById('formTitle').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); autoSearchCover(); }
+        });
 
         function editItem(id) {
             if (!currentUser) return openAuthModal();
