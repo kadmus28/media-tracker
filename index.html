@@ -275,6 +275,9 @@
                         <button onclick="configureRawgApiKey()" class="w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 flex items-center gap-2.5 transition">
                             <i class="fa-solid fa-key text-amber-400 w-4 text-sm"></i> Configurar búsqueda de videojuegos
                         </button>
+                        <button id="installAppButton" onclick="installApp()" class="hidden w-full text-left px-4 py-2.5 text-xs text-amber-100 hover:bg-amber-900/50 items-center gap-2.5 transition">
+                            <i class="fa-solid fa-download text-amber-400 w-4 text-sm"></i> Instalar app
+                        </button>
                         <span class="border-b border-amber-900/40 block my-1"></span>
                         <button id="deleteAllItemsButton" onclick="deleteAllItems()" class="hidden w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-950/50 items-center gap-2.5 transition font-semibold">
                             <i class="fa-solid fa-trash-can text-rose-500 w-4 text-sm"></i> Vaciar Biblioteca
@@ -449,6 +452,19 @@
                     <option value="in_progress">En curso</option>
                     <option value="planned">Pendientes</option>
                     <option value="abandoned">Abandonados</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2 w-full md:w-auto">
+                <label for="sortSelect" class="text-xs text-amber-200/80 font-medium uppercase tracking-wider">Orden:</label>
+                <select id="sortSelect" onchange="changeSort()" class="flex-1 md:flex-none bg-stone-900 border border-amber-800/60 text-amber-100 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                    <option value="added_desc">Añadidos recientemente</option>
+                    <option value="added_asc">Añadidos primero</option>
+                    <option value="year_desc">Año (más nuevas)</option>
+                    <option value="year_asc">Año (más antiguas)</option>
+                    <option value="title_asc">Título (A-Z)</option>
+                    <option value="title_desc">Título (Z-A)</option>
+                    <option value="rating_desc">Mejor puntuadas</option>
+                    <option value="completed_desc">Vistas/terminadas recientemente</option>
                 </select>
             </div>
         </div>
@@ -736,6 +752,38 @@
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', () => { const sel = document.getElementById('sortSelect'); if (sel) sel.value = currentSort; });
+
+        // --- Instalar como app (PWA) ---
+        let deferredInstallPrompt = null;
+        const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        function showInstallButton(show) {
+            const btn = document.getElementById('installAppButton');
+            if (!btn) return;
+            btn.classList.toggle('hidden', !show);
+            btn.classList.toggle('flex', show);
+        }
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            showInstallButton(true);
+        });
+        window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; showInstallButton(false); });
+        document.addEventListener('DOMContentLoaded', () => { if (!isStandalone() && isIOS()) showInstallButton(true); });
+        async function installApp() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                await deferredInstallPrompt.userChoice.catch(() => null);
+                deferredInstallPrompt = null;
+                showInstallButton(false);
+            } else if (isIOS()) {
+                alert('Para instalarla en iPhone/iPad: pulsa el botón Compartir de Safari y elige "Añadir a pantalla de inicio".');
+            }
+        }
+        if ('serviceWorker' in navigator && location.protocol === 'https:') {
+            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+        }
 
         async function initializeApp() {
             setupTouchDropdowns();
@@ -1487,6 +1535,32 @@
                 </div>`;
         }
 
+        let currentSort = (() => { try { return localStorage.getItem('mt_sort') || 'added_desc'; } catch { return 'added_desc'; } })();
+        function changeSort() {
+            currentSort = document.getElementById('sortSelect').value;
+            try { localStorage.setItem('mt_sort', currentSort); } catch {}
+            currentPage = 1;
+            renderItems();
+        }
+        function sortItemsForDisplay(list) {
+            const time = v => { const t = Date.parse(v || ''); return isNaN(t) ? null : t; };
+            const year = it => { const y = parseInt(mediaYear(it.subtitle), 10); return isNaN(y) ? null : y; };
+            const nullsLast = (a, b, dir) => (a === null && b === null) ? 0 : a === null ? 1 : b === null ? -1 : (a - b) * dir;
+            const byTitle = (a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'es', { sensitivity: 'base', numeric: true });
+            const cmp = {
+                added_desc: (a, b) => nullsLast(time(a.created_at), time(b.created_at), -1),
+                added_asc: (a, b) => nullsLast(time(a.created_at), time(b.created_at), 1),
+                year_desc: (a, b) => nullsLast(year(a), year(b), -1) || byTitle(a, b),
+                year_asc: (a, b) => nullsLast(year(a), year(b), 1) || byTitle(a, b),
+                title_asc: byTitle,
+                title_desc: (a, b) => byTitle(b, a),
+                rating_desc: (a, b) => nullsLast(Number(a.rating) > 0 ? Number(a.rating) : null, Number(b.rating) > 0 ? Number(b.rating) : null, -1) || byTitle(a, b),
+                completed_desc: (a, b) => nullsLast(time(a.completed_at), time(b.completed_at), -1) || nullsLast(time(a.created_at), time(b.created_at), -1)
+            }[currentSort];
+            if (cmp) list.sort(cmp);
+            return list;
+        }
+
         function renderItems() {
             const container = document.getElementById('bookshelfContainer');
             container.innerHTML = '';
@@ -1532,6 +1606,8 @@
 
                 return catMatch && statusMatch && searchMatch;
             });
+
+            sortItemsForDisplay(filtered);
 
             if (filtered.length === 0) {
                 document.getElementById('emptyState').classList.remove('hidden');
