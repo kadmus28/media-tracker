@@ -8,6 +8,15 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
     <meta name="theme-color" content="#21170f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Media Tracker">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script>
+        // Captura temprana del aviso de instalación (puede llegar antes que el resto del código)
+        window.__installPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__installPrompt = e; });
+    </script>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -755,7 +764,6 @@
         document.addEventListener('DOMContentLoaded', () => { const sel = document.getElementById('sortSelect'); if (sel) sel.value = currentSort; });
 
         // --- Instalar como app (PWA) ---
-        let deferredInstallPrompt = null;
         const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         function showInstallButton(show) {
@@ -764,22 +772,34 @@
             btn.classList.toggle('hidden', !show);
             btn.classList.toggle('flex', show);
         }
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredInstallPrompt = e;
-            showInstallButton(true);
-        });
-        window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; showInstallButton(false); });
-        document.addEventListener('DOMContentLoaded', () => { if (!isStandalone() && isIOS()) showInstallButton(true); });
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; });
+        window.addEventListener('appinstalled', () => { window.__installPrompt = null; showInstallButton(false); });
+        // El botón se muestra siempre que la app no esté ya abierta como instalada
+        document.addEventListener('DOMContentLoaded', () => showInstallButton(!isStandalone()));
+        function installInstructions() {
+            const ua = navigator.userAgent;
+            const android = /android/i.test(ua);
+            if (isIOS()) return /crios|fxios|edgios/i.test(ua)
+                ? 'En iPhone/iPad, ábrela en Safari, pulsa el botón Compartir (cuadrado con flecha) y elige "Añadir a pantalla de inicio".'
+                : 'Pulsa el botón Compartir de Safari (cuadrado con flecha hacia arriba) y elige "Añadir a pantalla de inicio".';
+            if (/samsungbrowser/i.test(ua)) return 'Pulsa el menú (☰) de Samsung Internet y elige "Añadir página a" → "Pantalla de inicio".';
+            if (/firefox/i.test(ua)) return android
+                ? 'Pulsa el menú (⋮) de Firefox y elige "Instalar" o "Añadir a pantalla de inicio".'
+                : 'Firefox de ordenador no permite instalar webs como app. Ábrela en Chrome o Edge para instalarla.';
+            if (/edg\//i.test(ua)) return 'Pulsa el menú (…) de Edge → "Aplicaciones" → "Instalar este sitio como aplicación".';
+            if (android) return 'Pulsa el menú (⋮) de Chrome, arriba a la derecha, y elige "Instalar aplicación" o "Añadir a pantalla de inicio" → "Instalar".';
+            return 'En Chrome: pulsa el icono de instalar que aparece a la derecha de la barra de direcciones, o el menú (⋮) → "Transmitir, guardar y compartir" → "Instalar página como aplicación".';
+        }
         async function installApp() {
-            if (deferredInstallPrompt) {
-                deferredInstallPrompt.prompt();
-                await deferredInstallPrompt.userChoice.catch(() => null);
-                deferredInstallPrompt = null;
-                showInstallButton(false);
-            } else if (isIOS()) {
-                alert('Para instalarla en iPhone/iPad: pulsa el botón Compartir de Safari y elige "Añadir a pantalla de inicio".');
+            const promptEvent = window.__installPrompt;
+            if (promptEvent) {
+                promptEvent.prompt();
+                const choice = await promptEvent.userChoice.catch(() => null);
+                window.__installPrompt = null;
+                if (choice && choice.outcome === 'accepted') showInstallButton(false);
+                return;
             }
+            alert('Instalar Media Tracker\n\n' + installInstructions());
         }
         if ('serviceWorker' in navigator && location.protocol === 'https:') {
             window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
