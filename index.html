@@ -13,9 +13,9 @@
     <meta name="apple-mobile-web-app-title" content="Media Tracker">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script>
-        // Captura temprana del aviso de instalación (puede llegar antes que el resto del código)
+        // Guarda el aviso de instalación sin bloquear el del navegador (barra de direcciones / aviso de Chrome)
         window.__installPrompt = null;
-        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__installPrompt = e; });
+        window.addEventListener('beforeinstallprompt', function (e) { window.__installPrompt = e; });
     </script>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -693,7 +693,9 @@
         const TMDB_API_KEY = 'bfeebc72cb63d4a06f85a63290e5206f';
         const RAWG_API_KEY_STORAGE = 'media-tracker.rawg-api-key';
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Clave de sesión propia: Linkitos comparte el mismo Supabase y el mismo dominio (kadmus28.github.io),
+        // y con la clave por defecto las dos apps compartían y se pisaban la sesión.
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'media-tracker-auth', persistSession: true, autoRefreshToken: true } });
 
         let items = [];
         let currentCategoryFilter = 'all';
@@ -772,7 +774,7 @@
             btn.classList.toggle('hidden', !show);
             btn.classList.toggle('flex', show);
         }
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; });
+        window.addEventListener('beforeinstallprompt', (e) => { window.__installPrompt = e; });
         window.addEventListener('appinstalled', () => { window.__installPrompt = null; showInstallButton(false); });
         // El botón se muestra siempre que la app no esté ya abierta como instalada
         document.addEventListener('DOMContentLoaded', () => showInstallButton(!isStandalone()));
